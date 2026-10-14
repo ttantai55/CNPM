@@ -1,0 +1,33 @@
+
+
+### Biến môi trường
+@baseUrl = http://localhost:8080/api
+
+### 1. Đăng nhập để nhận Cookie (Session)
+# REST Client tự động lưu cookie vào bộ nhớ cho các request bên dưới
+# @name loginRequest
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "user01",
+  "password": "matkhaucuaban"
+}
+
+### 2. Xem thông tin cá nhân (Profile + Subscriptions)
+GET {{baseUrl}}/customer/profile
+
+### 3. Cập nhật thông tin cá nhân
+PUT {{baseUrl}}/customer/profile
+Content-Type: application/json
+
+{
+  "name": "Tô Tấn Tài",
+  "phone": "0987654321",
+  "address": "TP. Hồ Chí Minh",
+  "dateOfBirth": "2002-05-15",
+  "gender": true
+}
+
+### 4. Xem danh sách gói tập của tôi
+GET {{baseUrl}}/subscriptions/my-subscriptions
