@@ -1,4 +1,6 @@
-# BrewLite – Bối cảnh, Stakeholder và Phạm vi
+# Task 1 Khai thác và đặc tả yêu cầu
+
+# Task 1.1 - Bối cảnh, Stakeholder và Phạm vi
 
 ## 1. Vấn đề nghiệp vụ
 - Hiện trạng: quán nhận order thủ công (giấy/miệng), dễ nhầm món, chậm
@@ -17,3 +19,101 @@
 | Nhóm phát triển | Xây dựng hệ thống | Hoàn thành đúng hạn | Yêu cầu rõ, phạm vi vừa sức |
 | Đơn vị thanh toán | Cung cấp cổng thanh toán | Giao dịch đúng, an toàn | Tích hợp theo API/chuẩn của họ |
 
+## 3. Phạm vi
+### 3.1 In-scope (MVP)
+| ID | Luồng | Chức năng MVP |
+| :--- | :--- | :--- |
+| MVP-01 | Xem menu | Xem danh sách đồ uống, giá, mô tả |
+| MVP-02 | Chọn tùy chọn | Chọn size, đường, đá, topping |
+| MVP-03 | Giỏ hàng | Thêm, sửa số lượng, xóa món, xem tổng tiền |
+| MVP-04 | Đặt đơn | Xác nhận giỏ hàng thành đơn hàng |
+| MVP-05 | Thanh toán | Thanh toán giả lập (sandbox) hoặc tiền mặt tại quầy |
+| MVP-06 | Theo dõi đơn | Khách xem trạng thái: Mới → Đang pha → Sẵn sàng → Hoàn tất |
+| MVP-07 | (hỗ trợ MVP-06) | Nhân viên quầy xem đơn và cập nhật trạng thái |
+
+### 3.2 Phạm vi mở rộng (làm nếu còn thời gian)
+- Quản lý menu cho quản lý cửa hàng (thêm, sửa, xóa món)
+- Báo cáo doanh thu
+- Tài khoản khách, lịch sử đơn
+- Khuyến mãi, tích điểm
+- Thông báo khi đơn xong
+
+### 3.3 Out-of-scope (không thực hiện)
+- Ứng dụng mobile native
+- Quản lý kho nguyên liệu chi tiết
+- Quản lý nhân sự, chấm công
+- Tích hợp thanh toán thật (production)
+- Giao hàng và tracking shipper
+## 4.Giả định, ràng buộc và các rủi ro ban đầu.
+### 4.1 Giả định
+| ID | Giả định |
+|---|---|
+| A-01 | Mỗi cửa hàng dùng một hệ thống độc lập |
+| A-02 | Người dùng có kết nối internet ổn định |
+| A-03 | Thanh toán dùng sandbox/giả lập khi demo |
+
+## 4.2 Ràng buộc
+| ID | Ràng buộc |
+|---|---|
+| C-01 | Hoàn thành trong thời gian của môn học |
+| C-02 | Nhóm nhỏ, kỹ năng hạn chế |
+| C-03 | Dùng công nghệ miễn phí / mã nguồn mở |
+| C-04 | Phải demo được sản phẩm chạy |
+
+## 4.3 Rủi ro ban đầu
+| ID | Rủi ro | Mức độ | Hướng xử lý |
+|---|---|---|---|
+| R-01 | Phạm vi phình to | Cao | Chốt MVP, đưa phần còn lại vào mở rộng |
+| R-02 | Thành viên chậm tiến độ | Trung bình | Chia task nhỏ, họp nhóm hàng tuần |
+| R-03 | Tích hợp thanh toán phức tạp | Trung bình | Dùng sandbox hoặc giả lập |
+| R-04 | Yêu cầu thay đổi muộn | Trung bình | Ghi nhận và quản lý thay đổi |
+
+
+# Task 1.2 - Yêu cầu chức năng và phi chức năng 
+## 1. Yêu cầu chức năng 
+| ID | Nhóm | Yêu cầu | MoSCoW | Tiêu chí chấp nhận |
+| :--- | :--- | :--- | :--- | :--- |
+| FR-01 | Menu | Hệ thống phải hiển thị danh sách đồ uống theo danh mục | Must | Mở trang menu thấy đủ món và danh mục đã seed |
+| FR-02 | Menu | Hệ thống phải cho phép tìm món theo tên | Should | Gõ "cà phê" chỉ hiện món có tên chứa "cà phê" |
+| FR-03 | Chi tiết sản phẩm | Hệ thống phải hiển thị tên, giá, mô tả, ảnh của món | Must | Bấm vào món thấy đủ 4 thông tin |
+| FR-04 | Chi tiết sản phẩm | Hệ thống phải cho chọn tùy chọn (size, đường, đá, topping) | Must | Chọn tùy chọn thì giá tạm tính cập nhật đúng |
+| FR-05 | Giỏ hàng | Hệ thống phải cho thêm món kèm tùy chọn vào giỏ | Must | Sau khi thêm, giỏ có món với đúng tùy chọn và số lượng |
+| FR-06 | Giỏ hàng | Hệ thống phải cho sửa số lượng và xóa món | Must | Đổi số lượng thì tổng tiền tính lại đúng |
+| FR-07 | Giỏ hàng | Hệ thống phải giữ giỏ khi người dùng tải lại trang | Should | F5 không làm mất giỏ |
+| FR-08 | Xác thực | Hệ thống phải cho khách đăng ký bằng email và mật khẩu | Must | Đăng ký thành công thì có tài khoản; email trùng bị từ chối |
+| FR-09 | Xác thực | Hệ thống phải cho người dùng đăng nhập và đăng xuất | Must | Sai mật khẩu bị từ chối; đăng xuất thì không vào được trang cần đăng nhập |
+| FR-10 | Xác thực | Hệ thống phải phân quyền khách hàng và nhân viên | Must | Khách không vào được trang của nhân viên |
+| FR-11 | Đặt đơn | Hệ thống phải tạo đơn từ giỏ hàng khi khách xác nhận | Must | Sau khi đặt, giỏ rỗng và đơn có mã, tổng tiền đúng |
+| FR-12 | Đặt đơn | Hệ thống phải từ chối đặt đơn khi giỏ rỗng | Must | Bấm đặt với giỏ rỗng thì báo lỗi, không tạo đơn |
+| FR-13 | Thanh toán | Hệ thống phải cho thanh toán qua cổng giả lập (sandbox) | Must | Thanh toán thành công thì đơn chuyển sang "Đã thanh toán" |
+| FR-14 | Thanh toán | Hệ thống phải cho chọn thanh toán tiền mặt tại quầy | Should | Chọn tiền mặt thì đơn ở trạng thái "Chờ thanh toán" |
+| FR-15 | Thanh toán | Hệ thống phải xử lý thanh toán thất bại | Must | Thanh toán lỗi thì đơn không bị đánh dấu đã thanh toán, khách có thể thử lại |
+| FR-16 | Lịch sử đơn | Hệ thống phải cho khách xem danh sách đơn đã đặt | Must | Khách chỉ thấy đơn của mình, mới nhất đứng đầu |
+| FR-17 | Lịch sử đơn | Hệ thống phải cho xem chi tiết một đơn cũ | Should | Mở đơn thấy món, tùy chọn, tổng tiền, trạng thái |
+| FR-18 | Quản lý trạng thái đơn | Hệ thống phải cho nhân viên xem danh sách đơn mới | Must | Đơn vừa đặt xuất hiện ở màn hình nhân viên |
+| FR-19 | Quản lý trạng thái đơn | Hệ thống phải cho nhân viên đổi trạng thái đơn theo thứ tự Mới → Đang pha → Sẵn sàng → Hoàn tất | Must | Không cho nhảy cóc trạng thái (Mới → Hoàn tất bị từ chối) |
+| FR-20 | Quản lý trạng thái đơn | Hệ thống phải cho khách xem trạng thái đơn hiện tại | Must | Nhân viên đổi trạng thái thì khách thấy trạng thái mới sau khi làm mới |
+| FR-21 | Menu | Hệ thống nên cho quản lý thêm, sửa, xóa món | Could | Món thêm mới xuất hiện trên menu |
+| FR-22 | Thanh toán | Hệ thống sẽ không tích hợp cổng thanh toán thật | Won't | (đưa vào bản sau) |
+| FR-23 | Đặt đơn | Hệ thống sẽ không hỗ trợ giao hàng tận nơi | Won't | (đưa vào bản sau) |
+
+
+## 2. Yêu cầu phi chức năng 
+
+| ID | Nhóm | Yêu cầu | MoSCoW | Tiêu chí chấp nhận |
+| :--- | :--- | :--- | :--- | :--- |
+| NFR-01 | Hiệu năng | Trang menu phải tải nhanh | Must | Dưới 3 giây với 50 món, mạng thường |
+| NFR-02 | Hiệu năng | Thao tác đặt đơn phải phản hồi nhanh | Should | Dưới 2 giây ở 95% lần thử với 20 người dùng đồng thời |
+| NFR-03 | Bảo mật | Mật khẩu phải được băm, không lưu dạng rõ | Must | Xem CSDL không thấy mật khẩu gốc |
+| NFR-04 | Bảo mật | Dữ liệu truyền tải phải dùng HTTPS | Must | Trang production truy cập qua HTTPS |
+| NFR-05 | Bảo mật | Người dùng chỉ truy cập được dữ liệu thuộc quyền của mình | Must | Khách A không xem được đơn của khách B qua đổi ID trên URL |
+| NFR-06 | Tính khả dụng | Giao diện phải dùng được trên điện thoại | Must | Hiển thị đúng ở màn hình 375 px, không phải kéo ngang |
+| NFR-07 | Tính khả dụng | Khách mới phải đặt được đơn mà không cần hướng dẫn | Should | 3 người chưa dùng thử đặt được đơn trong dưới 3 phút |
+| NFR-08 | Tính khả dụng | Thông báo lỗi phải rõ ràng, nêu cách khắc phục | Should | Sai mật khẩu hiện thông báo dễ hiểu |
+| NFR-09 | Khả năng triển khai | Hệ thống phải chạy được từ repo bằng một lệnh | Must | `docker compose up` (hoặc lệnh tương đương) chạy được trên máy sạch |
+| NFR-10 | Khả năng triển khai | Cấu hình phải tách khỏi mã nguồn | Should | Đổi biến môi trường không cần sửa code |
+| NFR-11 | Khả năng triển khai | Hệ thống phải deploy tự động lên production qua CI/CD | Should | Merge vào nhánh chính thì bản production cập nhật |
+
+## 3. Sơ đồ UseCase tổng quát cho hệ thống 
+
+![Sơ đồ use-case tổng quát](overview-usecase-diagram.png)
