@@ -27,9 +27,12 @@
 | MVP-02 | Chọn tùy chọn | Chọn size, đường, đá, topping |
 | MVP-03 | Giỏ hàng | Thêm, sửa số lượng, xóa món, xem tổng tiền |
 | MVP-04 | Đặt đơn | Xác nhận giỏ hàng thành đơn hàng |
-| MVP-05 | Thanh toán | Thanh toán giả lập (sandbox) hoặc tiền mặt tại quầy |
+| MVP-05 | Thanh toán | Thanh toán giả lập (sandbox)|
 | MVP-06 | Theo dõi đơn | Khách xem trạng thái: Mới → Đang pha → Sẵn sàng → Hoàn tất |
 | MVP-07 | (hỗ trợ MVP-06) | Nhân viên quầy xem đơn và cập nhật trạng thái |
+| MVP-08 | Đăng nhập, đăng ký | Tạo tài khoản, định danh khách hàng |
+| MVP-09 | Lịch sử đơn | Xem lại những đơn hàng đã mua |
+
 
 ### 3.2 Phạm vi mở rộng (làm nếu còn thời gian)
 - Quản lý menu cho quản lý cửa hàng (thêm, sửa, xóa món)
@@ -44,6 +47,7 @@
 - Quản lý nhân sự, chấm công
 - Tích hợp thanh toán thật (production)
 - Giao hàng và tracking shipper
+- Thanh toán tiền mặt 
 ## 4.Giả định, ràng buộc và các rủi ro ban đầu.
 ### 4.1 Giả định
 | ID | Giả định |
@@ -51,8 +55,9 @@
 | A-01 | Mỗi cửa hàng dùng một hệ thống độc lập |
 | A-02 | Người dùng có kết nối internet ổn định |
 | A-03 | Thanh toán dùng sandbox/giả lập khi demo |
+| A-04 | Khách hàng phải có tài khoản |
 
-## 4.2 Ràng buộc
+### 4.2 Ràng buộc
 | ID | Ràng buộc |
 |---|---|
 | C-01 | Hoàn thành trong thời gian của môn học |
@@ -60,7 +65,7 @@
 | C-03 | Dùng công nghệ miễn phí / mã nguồn mở |
 | C-04 | Phải demo được sản phẩm chạy |
 
-## 4.3 Rủi ro ban đầu
+### 4.3 Rủi ro ban đầu
 | ID | Rủi ro | Mức độ | Hướng xử lý |
 |---|---|---|---|
 | R-01 | Phạm vi phình to | Cao | Chốt MVP, đưa phần còn lại vào mở rộng |
@@ -86,16 +91,18 @@
 | FR-11 | Đặt đơn | Hệ thống phải tạo đơn từ giỏ hàng khi khách xác nhận | Must | Sau khi đặt, giỏ rỗng và đơn có mã, tổng tiền đúng |
 | FR-12 | Đặt đơn | Hệ thống phải từ chối đặt đơn khi giỏ rỗng | Must | Bấm đặt với giỏ rỗng thì báo lỗi, không tạo đơn |
 | FR-13 | Thanh toán | Hệ thống phải cho thanh toán qua cổng giả lập (sandbox) | Must | Thanh toán thành công thì đơn chuyển sang "Đã thanh toán" |
-| FR-14 | Thanh toán | Hệ thống phải cho chọn thanh toán tiền mặt tại quầy | Should | Chọn tiền mặt thì đơn ở trạng thái "Chờ thanh toán" |
-| FR-15 | Thanh toán | Hệ thống phải xử lý thanh toán thất bại | Must | Thanh toán lỗi thì đơn không bị đánh dấu đã thanh toán, khách có thể thử lại |
-| FR-16 | Lịch sử đơn | Hệ thống phải cho khách xem danh sách đơn đã đặt | Must | Khách chỉ thấy đơn của mình, mới nhất đứng đầu |
-| FR-17 | Lịch sử đơn | Hệ thống phải cho xem chi tiết một đơn cũ | Should | Mở đơn thấy món, tùy chọn, tổng tiền, trạng thái |
-| FR-18 | Quản lý trạng thái đơn | Hệ thống phải cho nhân viên xem danh sách đơn mới | Must | Đơn vừa đặt xuất hiện ở màn hình nhân viên |
-| FR-19 | Quản lý trạng thái đơn | Hệ thống phải cho nhân viên đổi trạng thái đơn theo thứ tự Mới → Đang pha → Sẵn sàng → Hoàn tất | Must | Không cho nhảy cóc trạng thái (Mới → Hoàn tất bị từ chối) |
-| FR-20 | Quản lý trạng thái đơn | Hệ thống phải cho khách xem trạng thái đơn hiện tại | Must | Nhân viên đổi trạng thái thì khách thấy trạng thái mới sau khi làm mới |
-| FR-21 | Menu | Hệ thống nên cho quản lý thêm, sửa, xóa món | Could | Món thêm mới xuất hiện trên menu |
-| FR-22 | Thanh toán | Hệ thống sẽ không tích hợp cổng thanh toán thật | Won't | (đưa vào bản sau) |
-| FR-23 | Đặt đơn | Hệ thống sẽ không hỗ trợ giao hàng tận nơi | Won't | (đưa vào bản sau) |
+| FR-14 | Thanh toán | Hệ thống phải xử lý thanh toán thất bại | Must | Thanh toán lỗi thì đơn không bị đánh dấu đã thanh toán, khách có thể thử lại |
+| FR-15 | Lịch sử đơn | Hệ thống phải cho khách xem danh sách đơn đã đặt | Must | Khách chỉ thấy đơn của mình, mới nhất đứng đầu |
+| FR-16 | Lịch sử đơn | Hệ thống phải cho xem chi tiết một đơn cũ | Should | Mở đơn thấy món, tùy chọn, tổng tiền, trạng thái |
+| FR-17 | Quản lý trạng thái đơn | Hệ thống phải cho nhân viên xem danh sách đơn mới | Must | Đơn vừa đặt xuất hiện ở màn hình nhân viên |
+| FR-18 | Quản lý trạng thái đơn | Hệ thống phải cho nhân viên đổi trạng thái đơn theo thứ tự Mới → Đang pha → Sẵn sàng → Hoàn tất | Must | Không cho nhảy cóc trạng thái (Mới → Hoàn tất bị từ chối) |
+| FR-19 | Quản lý trạng thái đơn | Hệ thống phải cho khách xem trạng thái đơn hiện tại | Must | Nhân viên đổi trạng thái thì khách thấy trạng thái mới sau khi làm mới |
+| FR-20 | Menu | Hệ thống nên cho quản lý thêm, sửa, xóa món | Could | Món thêm mới xuất hiện trên menu |
+| FR-21 | Thanh toán | Hệ thống sẽ không tích hợp cổng thanh toán thật | Won't | (đưa vào bản sau) |
+| FR-22 | Đặt đơn | Hệ thống sẽ không hỗ trợ giao hàng tận nơi | Won't | (đưa vào bản sau) |
+| FR-23 | Thanh toán | Hệ thống không hỗ trợ thanh toán tiền mặt | Won't | (đưa vào bản sau) |
+| FR-24 | Trạng thái đơn | Hệ thống cho nhân viên xem tình trạng thanh toán của đơn hàng (Chờ thanh toán / Đã thanh toán / Thất bại) | Must | Không chuyển thành hoàn tất nếu chưa thanh toán | 
+
 
 
 ## 2. Yêu cầu phi chức năng 
@@ -113,7 +120,14 @@
 | NFR-09 | Khả năng triển khai | Hệ thống phải chạy được từ repo bằng một lệnh | Must | `docker compose up` (hoặc lệnh tương đương) chạy được trên máy sạch |
 | NFR-10 | Khả năng triển khai | Cấu hình phải tách khỏi mã nguồn | Should | Đổi biến môi trường không cần sửa code |
 | NFR-11 | Khả năng triển khai | Hệ thống phải deploy tự động lên production qua CI/CD | Should | Merge vào nhánh chính thì bản production cập nhật |
+| NFR-13 | Bảo mật | Không lưu thông tin thẻ, chỉ lưu mã giao dịch | Must | Ở CSDL chỉ lưu mã giao dịch |
 
 ## 3. Sơ đồ UseCase tổng quát cho hệ thống 
 
 ![Sơ đồ use-case tổng quát](overview-usecase-diagram.png)
+
+
+# Task 1.3 - Đặc tả một use-case trọng tâm
+## 1. Vẽ sơ đồ Usecase trọng tâm 
+
+![Sơ đồ use-case trọng tâm](center-usecase.png)
