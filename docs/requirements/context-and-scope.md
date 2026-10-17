@@ -190,3 +190,17 @@ Hệ thống phân loại mức độ ưu tiên theo mô hình MoSCoW bao gồm:
 ## 1. Vẽ sơ đồ Usecase trọng tâm 
 
 ![Sơ đồ use-case trọng tâm](center-usecase.png)
+
+## 6. Ma trận liên kết Use-case với Mã Yêu cầu và Mã MVP
+
+| Nội dung use-case | Mã yêu cầu | Mã MVP |
+|---|---|---|
+| Xem và sửa giỏ hàng trước khi đặt | FR-03, FR-05, FR-06 | MVP-03 |
+| Yêu cầu đăng nhập tài khoản trước khi đặt đơn | FR-08, FR-09, FR-10 | MVP-08 |
+| Kiểm tra giỏ hàng và khởi tạo đơn hàng | FR-11, FR-12 | MVP-04 |
+| Thực hiện thanh toán trực tuyến qua cổng giả lập (Sandbox/QR) | FR-13, FR-14, NFR-12, NFR-13 | MVP-05 |
+| Kiểm tra và xác nhận tình trạng thanh toán | FR-24 | MVP-05 |
+| Chuyển hướng và xem trạng thái đơn hàng sau khi đặt thành công | FR-07, FR-15, FR-19 | MVP-06, MVP-09 |
+| Đảm bảo phản hồi nhanh khi đặt hàng (Hiệu năng) | NFR-01, NFR-02 | MVP-04 |
+| Hiển thị tối ưu trên giao diện di động (Mobile-first / PWA) | NFR-06, NFR-07 | MVP-01 |
+| Đảm bảo an toàn thông tin và bảo mật đường truyền (JWT, HTTPS) | NFR-03, NFR-04, NFR-05 | MVP-08 |
