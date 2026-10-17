@@ -1,0 +1,168 @@
+\documentclass[english,12pt,a4paper]{book}
+\usepackage[width=1cm, height=2cm, left=2cm, right=2cm, top=1cm, bottom=1cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{xcolor}
+\usepackage{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage[utf8]{vietnam}
+\usepackage{multicol}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\setlist[enumerate,1]{label=(\alph*)}
+\renewcommand{\thesubsubsection}{\arabic{subsection}.\arabic{subsubsection}}
+\setcounter{secnumdepth}{2}
+\usepackage{titlesec}
+\setcounter{secnumdepth}{3}
+\titleformat{\section}
+{\normalfont\Large\bfseries}
+{\Roman{section}}  
+{1em}{}
+\titleformat{\subsection}
+{\normalfont\large\bfseries}
+{\arabic{subsection}} 
+{1em}{}
+\renewcommand{\thesubsubsection}{\arabic{subsection}.\arabic{subsubsection}}
+\titleformat{\subsubsection}
+{\normalfont\normalsize\bfseries}
+{\thesubsubsection}
+{1em}{}
+\makeatletter
+\@addtoreset{subsection}{section}
+\@addtoreset{subsubsection}{subsection} 
+\makeatother
+\everymath{\displaystyle}
+
+\begin{document}
+	\pagestyle{empty}
+\section{Task 1.1}
+\subsection{Mục tiêu và kỳ vọng của từng Stakeholder}
+\begin{enumerate}
+	\item Khách hàng \\
+	
+	Mục tiêu chính: Đặt nước uống/cà phê nhanh chóng, tiện lợi, không phải chờ đợi lâu tại quầy.\\
+	
+	Kỳ vọng chi tiết:
+	\begin{itemize}
+		\item Giao diện PWA/mobile-first trực quan, tải nhanh, dễ xem danh mục.   
+		\item Tùy biến món dễ dàng (chọn size, lượng đá, độ ngọt, topping).   
+		\item Thanh toán mượt mà qua các cổng thanh toán/ví điện tử mô phỏng.
+		\item Theo dõi trạng thái đơn hàng (Đã tiếp nhận $\rightarrow$ Đang pha $\rightarrow$ Sẵn sàng lấy) rõ ràng.   
+	\end{itemize}
+	\item Nhân viên quầy / Pha chế\\
+	
+		Mục tiêu chính: Tiếp nhận và xử lý đơn hàng chính xác, giảm nhầm lẫn và giảm áp lực order giờ cao điểm.   \\
+	
+	Kỳ vọng chi tiết:
+	\begin{itemize}
+		\item Danh sách đơn hàng cập nhật liên tục theo thời gian thực. 
+		\item Thông tin chi tiết mỗi món (size, ghi chú topping) hiển thị rõ ràng, không bị sót đơn.     
+		\item Thao tác chuyển trạng thái đơn (tiếp nhận, hoàn tất, huỷ) nhanh chỉ bằng 1-2 chạm.
+		\item Giảm thời gian giải thích menu và thanh toán tiền mặt trực tiếp.   
+	\end{itemize}
+	\item Quản lý cửa hàng\\
+	
+	Mục tiêu chính: Tối ưu hóa vận hành, kiểm soát tình trạng bán hàng và thực đơn của quán.      \\
+	
+	Kỳ vọng chi tiết:
+	\begin{itemize}
+		\item Dễ dàng cập nhật menu, giá bán và đánh dấu trạng thái hết hàng tạm thời của món/topping.
+		\item Đảm bảo dữ liệu đơn hàng và doanh thu minh bạch, không thất thoát.
+		\item Hệ thống vận hành ổn định, giảm tỷ lệ khách hàng rời bỏ do chờ đợi.
+	\end{itemize}
+	\item Giảng viên / Khách hàng nghiệm thu\\
+	
+	Mục tiêu chính: Đánh giá năng lực áp dụng quy trình công nghệ phần mềm từ khâu yêu cầu đến triển khai sản phẩm.         \\
+	
+	Kỳ vọng chi tiết:
+	\begin{itemize}
+		\item Sản phẩm bám sát đầy đủ yêu cầu SRS, traceability matrix minh bạch từ requirement đến test.   
+		\item Kiến trúc chuẩn mực (Next.js, NestJS, PostgreSQL, Docker), áp dụng clean architecture/modular
+		\item Pipeline CI/CD tự động hoá hoàn toàn và có URL production truy cập thực tế qua HTTPS.
+	\end{itemize}
+	\item Nhóm phát triển\\
+	
+	Mục tiêu chính: Xây dựng hệ thống hoàn chỉnh đúng tiến độ, dễ mở rộng, dễ kiểm thử và bàn giao thuận lợi.\\
+	
+	Kỳ vọng chi tiết:
+	\begin{itemize}
+		\item Yêu cầu nghiệp vụ rõ ràng, tiêu chí nghiệm thu (acceptance criteria) cụ thể để viết Unit/Integration/E2E test
+		\item  Mã nguồn module hóa tốt, quy trình Git Flow / CI/CD tự động chặn lỗi trước khi merge.   
+		\item  Môi trường local nhất quán qua Docker Compose giúp debug và phát triển thuận tiện.
+	\end{itemize}
+	\item Đơn vị thanh toán\\
+	
+	Mục tiêu chính: Đảm bảo tính toàn vẹn, an toàn và đồng bộ trong các giao dịch thanh toán.         \\
+	
+	Kỳ vọng chi tiết:
+	\begin{itemize}
+		\item Nhận đúng cấu trúc payload (mã đơn, số tiền, chữ ký/token nếu có).
+		\item Hỗ trợ cơ chế idempotent (tránh double-charge khi người dùng bấm thanh toán nhiều lần hoặc retry).
+		\item  Đồng bộ kết quả thanh toán chính xác về API qua callback/webhook mô phỏng.   
+	\end{itemize}
+\end{enumerate}
+	\section{Task 1.2}
+	\subsection{Tiêu chí chấp nhận có thể kiểm chứng cho từng yêu cầu (Acceptable / Verifiable Criteria)}
+	\subsubsection{A. Nhóm Yêu cầu Chức năng (Functional Requirements - FR)}
+	\begin{itemize}[]
+		\item FR-01: Hiển thị Menu sản phẩm
+		\begin{itemize}[]
+			\item AC-01.1 (Dữ liệu đầy đủ): Given khách hàng truy cập màn hình menu, When hệ thống tải trang thành công, Then danh sách sản phẩm hiển thị theo danh mục (Cà phê, Trà, Bánh...), kèm tên, hình ảnh và giá cơ bản.
+			\item AC-01.2 (Trạng thái hết hàng): Given sản phẩm $X$ có thuộc tính $is_available = false$, When render trên menu, Then nút chọn bị vô hiệu hóa (disabled) và hiển thị nhãn "Hết hàng".
+			\item AC-01.3 (Trạng thái chờ/lỗi): Given mạng bị gián đoạn hoặc API chưa trả lời, When khách hàng tải trang, Then hệ thống hiển thị Skeleton loader và thông báo lỗi kèm nút "Thử lại" nếu request thất bại.
+		\end{itemize}
+		\item FR-02: Tùy biến món (Chi tiết sản phẩm)
+		\begin{itemize}[]
+			\item AC-02.1 (Chọn kích cỡ và phụ thu): Given người dùng mở pop-up chi tiết món $A$ (giá gốc $30.000$đ), When chọn Size L (phụ thu $+10.000$đ), Then tổng giá hiển thị trên pop-up tự động cập nhật thành $40.000$đ.
+			\item AC-02.2 (Chọn topping): Given người dùng chọn thêm 2 loại topping ($5.000$đ/loại), When bấm cập nhật, Then tổng tiền cộng thêm đúng $10.000$đ.
+		\end{itemize}
+		\item FR-03: Quản lý giỏ hàng
+		\begin{itemize}[]
+			\item AC-03.1 (Thêm vào giỏ): Given người dùng đã chọn xong option cho sản phẩm, When bấm "Thêm vào giỏ hàng", Then badge số lượng giỏ hàng tăng thêm 1 và lưu dữ liệu vào LocalStorage/State.
+			\item AC-03.2 (Cập nhật số lượng/Xóa): Given giỏ hàng có 1 món, When người dùng giảm số lượng về 0 hoặc bấm nút xóa, Then hệ thống hiển thị hộp thoại xác nhận; nếu đồng ý, món đó bị xóa khỏi giỏ và tổng tiền giỏ hàng tính lại chính xác.
+		\end{itemize}
+		\item FR-04: Xác thực và Đăng nhập (JWT)
+		\begin{itemize}[]
+			\item AC-04.1 (Đăng nhập thành công): Given người dùng nhập đúng thông tin tài khoản, When gửi request POST /auth/login, Then server trả về mã HTTP 200 kèm access token dạng JWT, client lưu token và hiển thị thông tin profile.
+			\item AC-04.2 (Thông tin sai): Given thông tin đăng nhập không hợp lệ, When gửi request, Then server trả về mã HTTP 401 kèm message "Tài khoản hoặc mật khẩu không chính xác".
+		\end{itemize}
+		\item FR-05: Tạo đơn hàng và Thanh toán (Checkout)
+		\begin{itemize}[]
+			\item AC-05.1 (Tạo đơn thành công): Given giỏ hàng có ít nhất 1 sản phẩm và người dùng đã điền thông tin người nhận, When bấm "Đặt hàng", Then hệ thống tạo bản ghi Order ở trạng thái PENDING và trừ/giữ số lượng tồn kho tương ứng trong PostgreSQL.
+			\item AC-05.2 (Thanh toán mô phỏng thành công): Given đơn hàng đã tạo, When chọn cổng thanh toán giả lập và xác nhận thanh toán, Then trạng thái giao dịch chuyển sang SUCCESS, đơn hàng chuyển sang PAID và hiển thị màn hình thông báo hoàn tất.
+			\item AC-05.3 (Tính Idempotency): Given yêu cầu thanh toán đã được gửi đi, When người dùng click liên tiếp nhiều lần vào nút "Thanh toán", Then hệ thống gửi kèm idempotency-key và chỉ trừ tiền/tạo 1 transaction duy nhất.
+		\end{itemize}
+		\item  FR-06: Quản lý và Theo dõi trạng thái đơn
+		\begin{itemize}[]
+			\item AC-06.1 (Theo dõi đơn): Given đơn hàng đã thanh toán thành công, When khách hàng truy cập màn hình Theo dõi đơn, Then thấy đúng mã đơn, thời gian đặt và trạng thái hiện tại (PAID $\rightarrow$ PREPARING $\rightarrow$ READY).  
+			\item AC-06.2 (Cập nhật trạng thái từ nhân viên): Given nhân viên đổi trạng thái đơn sang COMPLETED, When khách hàng tải lại/nhận cập nhật đơn, Then giao diện hiển thị đơn hàng đã hoàn tất.
+		\end{itemize}
+	\end{itemize}
+\subsubsection{Nhóm Yêu cầu Phi chức năng (Non-Functional Requirements - NFR)}
+\begin{itemize}
+	\item NFR-01: Hiệu năng 
+	\begin{itemize}[]
+		\item AC-P01.1: Given môi trường mạng chuẩn ($4\text{G} / \text{Wifi}$ ổn định), When người dùng tải trang Menu lần đầu, Then thời gian First Contentful Paint (FCP) $\le 1.5$ giây và Largest Contentful Paint (LCP) $\le 2.5$ giây.
+		\item  AC-P01.2: Given hệ thống tải $50$ người dùng đồng thời, When gọi API GET /products hoặc POST /orders, Then thời gian phản hồi (Response Time) ở mức 95th percentile đạt dưới $800\text{ms}$.  
+	\end{itemize}
+	\item NFR-02: Bảo mật 
+	\begin{itemize}[]
+		\item AC-S01.1: Given request gọi tới các endpoint được bảo vệ (ví dụ: GET /orders/my-orders), When không có header Authorization: Bearer $<valid_token>$, Then API trả về mã lỗi 401 Unauthorized.
+		\item  AC-S02.2: Given các tham số truyền vào API (body, query, param), When dữ liệu có dấu hiệu SQL Injection hoặc XSS, Then NestJS validation pipe tự động reject và trả về mã lỗi 400 Bad Request.
+		\item AC-S03.3: Mọi kết nối giữa client và production server bắt buộc chạy qua giao thức bảo mật HTTPS.
+	\end{itemize}
+	\item FR-03: Tính khả dụng và Di động 
+	\begin{itemize}[]
+		\item AC-U01.1: Given người dùng truy cập web bằng thiết bị di động (màn hình từ $360\text{px}$ đến $430\text{px}$), When thực hiện toàn bộ luồng từ menu đến thanh toán, Then không xảy ra hiện tượng tràn chữ, vỡ layout hay xuất hiện thanh cuộn ngang. 
+		\item  AC-U01.2: Giao diện hỗ trợ cài đặt Add-to-Home-Screen (chuẩn PWA) với manifest và icon hiển thị chuẩn xác.
+	\end{itemize}
+	\item NFR-04: Khả năng triển khai và Vận hành
+	\begin{itemize}[]
+		\item AC-D01.1: Given repository được cấu hình Docker Compose, When lập trình viên mới clone về và gõ docker compose up, Then toàn bộ frontend, backend và PostgreSQL tự khởi động thành công ở local không có lỗi xung đột môi trường.
+		\item  AC-D01.2: Given server backend đang chạy, When gọi endpoint GET /health, Then hệ thống trả về HTTP 200 kèm JSON {"status": "ok", "db": "connected"} trong thời gian dưới $200\text{ms}$. 
+	\end{itemize}
+\end{itemize}
+
+\end{document}
