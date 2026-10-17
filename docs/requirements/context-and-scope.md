@@ -131,3 +131,22 @@
 ## 1. Vẽ sơ đồ Usecase trọng tâm 
 
 ![Sơ đồ use-case trọng tâm](center-usecase.png)
+
+
+
+## 4. Luồng thay thế (Alternative Flows)
+
+| Mã | Tại bước | Điều kiện | Xử lý |
+| :--- | :---: | :--- | :--- |
+| A1 | Bước 3 | Khách chọn thanh toán trực tuyến qua cổng/QR (MoMo, VNPay) thay vì COD | Hệ thống chuyển sang cổng thanh toán, hiển thị mã QR kèm số tiền và nội dung chuyển khoản. Khách quét mã thanh toán. Khi nhận tín hiệu thành công từ cổng thanh toán, hệ thống cập nhật trạng thái đơn thành "Đã thanh toán" và tiếp tục sang bước 5 của luồng chính. |
+| A2 | Bước 2 | Khách muốn sửa/xóa món, thay đổi số lượng ngay tại màn hình đặt đơn | Khách bấm nút "Chỉnh sửa giỏ hàng", hệ thống cho phép thay đổi số lượng hoặc xóa món, sau đó tính lại tổng tiền và quay lại bước 1 của luồng chính. |
+| A3 | Bước 3 | Khách áp dụng mã giảm giá (Voucher) | Khách nhập mã voucher vào ô ưu đãi. Hệ thống kiểm tra tính hợp lệ của mã, tính toán lại số tiền giảm giá và hiển thị số tiền thanh toán cuối cùng trước khi bấm xác nhận. |
+
+## 5. Luồng ngoại lệ (Exception Flows)
+
+| Mã | Tại bước | Tình huống | Xử lý |
+| :--- | :---: | :--- | :--- |
+| E1 | Bước 1 | Giỏ hàng bị trống khi bấm đặt đơn | Hệ thống hiển thị thông báo lỗi "Giỏ hàng của bạn đang trống", từ chối tạo đơn hàng và điều hướng khách quay lại trang Menu để chọn món. |
+| E2 | Bước 3 | Món ăn hoặc Topping trong giỏ hàng bị hết hàng/ngừng bán giữa chừng | Hệ thống kiểm tra kho và phát hiện món/topping không đủ tồn kho, hiển thị thông báo "Sản phẩm [Tên món] vừa hết hàng", yêu cầu khách xóa hoặc thay đổi món đó ra khỏi giỏ hàng trước khi tiếp tục. |
+| E3 | Bước 2 | Khách nhập thiếu hoặc sai định dạng số điện thoại, để trống địa chỉ nhận hàng | Hệ thống đánh dấu đỏ các trường dữ liệu không hợp lệ, hiển thị thông báo hướng dẫn sửa lỗi và chặn không cho phép bấm nút xác nhận đặt hàng cho đến khi dữ liệu chuẩn xác. |
+| E4 | A1 | Cổng thanh toán online bị lỗi, quá thời gian chờ (Timeout) sau 5 phút hoặc giao dịch bị từ chối | Hệ thống nhận phản hồi lỗi từ cổng thanh toán, hiển thị thông báo "Giao dịch thanh toán thất bại hoặc quá hạn", giữ nguyên đơn hàng ở trạng thái "Chờ thanh toán" và cung cấp nút bấm cho phép khách thử thanh toán lại. |
