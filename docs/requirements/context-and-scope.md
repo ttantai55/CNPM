@@ -19,41 +19,6 @@
 | Nhóm phát triển | Xây dựng hệ thống | Hoàn thành đúng hạn | Yêu cầu rõ, phạm vi vừa sức |
 | Đơn vị thanh toán | Cung cấp cổng thanh toán | Giao dịch đúng, an toàn | Tích hợp theo API/chuẩn của họ |
 
-# BrewLite - Yêu cầu chức năng và phi chức năng
-
-### 3. Mức ưu tiên yêu cầu theo MoSCoW
-
-Hệ thống phân loại mức độ ưu tiên theo mô hình MoSCoW bao gồm:
-- **Must Have (Bắt buộc):** Các chức năng/yêu cầu cốt lõi phải có trong phiên bản MVP (Sprint 1 & Sprint 2) để hệ thống vận hành luồng end-to-end.
-- **Should Have (Nên có):** Các chức năng/yêu cầu nên có để xử lý ngoại lệ và tăng trải nghiệm người dùng, ưu tiên làm ngay sau khi xong MVP.
-- **Could Have (Có thể có):** Các chức năng mở rộng, triển khai nếu còn đủ thời gian và nguồn lực.
-- **Won't Have (Chưa làm):** Các chức năng/phạm vi không thực hiện trong đợt phát triển này.
-
-#### Bảng phân loại mức ưu tiên MoSCoW cho các Yêu cầu:
-
-| Mã YC | Tên Yêu cầu / Tính năng | Phân loại Yêu cầu | Mức ưu tiên MoSCoW | Ghi chú / Phạm vi |
-| :---: | :--- | :---: | :---: | :--- |
-| **FR-01** | Xem menu món ăn/đồ uống | Chức năng | **Must** | Luồng cốt lõi MVP (Sprint 1) |
-| **FR-02** | Xem chi tiết sản phẩm, chọn size & topping | Chức năng | **Must** | Luồng cốt lõi MVP (Sprint 2) |
-| **FR-03** | Quản lý giỏ hàng & Tính tổng tiền | Chức năng | **Must** | Luồng cốt lõi MVP |
-| **FR-04** | Đăng ký, đăng nhập & Xác thực JWT | Chức năng | **Must** | Luồng cốt lõi MVP |
-| **FR-05** | Đặt đơn hàng | Chức năng | **Must** | Luồng cốt lõi MVP |
-| **FR-06** | Thanh toán đơn hàng (Ví/Thẻ mô phỏng) | Chức năng | **Must** | Luồng cốt lõi MVP |
-| **FR-07** | Theo dõi trạng thái & Lịch sử đơn hàng | Chức năng | **Must** | Luồng cốt lõi MVP |
-| **FR-08** | Cập nhật trạng thái đơn (Dành cho quầy) | Chức năng | **Must** | Luồng cốt lõi MVP |
-| **NFR-01** | Thiết kế giao diện Mobile-first / PWA | Phi chức năng | **Must** | Yêu cầu hạ tầng / UI |
-| **NFR-02** | Bảo mật JWT & Giữ kín Secret / Config | Phi chức năng | **Must** | Yêu cầu an toàn hệ thống |
-| **NFR-03** | Đóng gói Docker & Endpoint `/health` | Phi chức năng | **Must** | Yêu cầu triển khai |
-| **NFR-04** | Tự động hóa CI/CD pipeline & HTTPS | Phi chức năng | **Must** | Yêu cầu triển khai Production |
-| **FR-09** | Xử lý hết hàng & Cảnh báo tồn kho | Chức năng | **Should** | Xử lý luồng nâng cao |
-| **NFR-05** | Cơ chế chống lặp giao dịch (Idempotency) | Phi chức năng | **Should** | An toàn giao dịch thanh toán |
-| **NFR-06** | Cơ chế dừng pipeline & Rollback tự động | Phi chức năng | **Should** | Quản lý rủi ro khi deploy |
-| **FR-10** | Áp dụng mã giảm giá / Khuyến mãi | Chức năng | **Could** | Phạm vi mở rộng |
-| **FR-11** | Tích điểm thành viên & Đổi quà | Chức năng | **Could** | Phạm vi mở rộng |
-| **FR-12** | Gợi ý món ăn liên quan | Chức năng | **Could** | Phạm vi mở rộng |
-| **FR-13** | Tích hợp cổng thanh toán thật (Momo, VNPAY,...) | Chức năng | **Won't** | Ngoài phạm vi Assignment 2 |
-| **FR-14** | Ứng dụng di động thuần (Native Mobile App) | Chức năng | **Won't** | Ngoài phạm vi Assignment 2 |
-| **FR-15** | Tích hợp phần cứng máy POS / In hóa đơn | Chức năng | **Won't** | Ngoài phạm vi Assignment 2 |
 =======
 ## 3. Phạm vi
 ### 3.1 In-scope (MVP)
