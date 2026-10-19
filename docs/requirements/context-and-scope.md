@@ -157,7 +157,7 @@
 | Bước | Thực hiện bởi | Hành động | Phản hồi của Hệ thống |
 | :---: | :--- | :--- | :--- |
 | 1 | Khách hàng | Mở giỏ hàng | Hệ thống hiển thị danh sách các món đã chọn, chi tiết tùy chọn (size, đường, đá, topping), số lượng từng món và tổng tiền tạm tính. |
-| 2 | Khách hàng | Bấm nút "Đặt đơn" | Hệ thống kiểm tra giỏ hàng: xác thực giỏ không rỗng, đối chiếu món và giá bán hiện hành. |
+| 2 | Khách hàng | Bấm nút "Đặt đơn" | Hệ thống kiểm tra đăng nhập của khách hàng và kiểm tra giỏ hàng: xác thực giỏ không rỗng, đối chiếu món và giá bán hiện hành. |
 | 3 | Hệ thống | Hiển thị màn hình xác nhận đơn | Hệ thống hiển thị thông tin tóm tắt đơn hàng, tổng tiền cần thanh toán và tùy chọn thanh toán trực tuyến qua cổng Sandbox. |
 | 4 | Khách hàng | Bấm "Xác nhận thanh toán" | Hệ thống tạo đơn hàng tạm với trạng thái "Chờ thanh toán", tạo yêu cầu giao dịch và chuyển hướng khách sang giao diện Cổng thanh toán (sandbox). |
 | 5 | Cổng thanh toán (sandbox) | Cung cấp giao diện thanh toán | Cổng thanh toán hiển thị màn hình thanh toán giả lập kèm số tiền tương ứng với đơn hàng. |
@@ -192,6 +192,31 @@
 | Thực hiện thanh toán trực tuyến qua cổng giả lập (Sandbox/QR) | FR-13, FR-14, NFR-12, NFR-13 | MVP-05 |
 | Kiểm tra và xác nhận tình trạng thanh toán | FR-24 | MVP-05 |
 | Chuyển hướng và xem trạng thái đơn hàng sau khi đặt thành công | FR-07, FR-15, FR-19 | MVP-06, MVP-09 |
+| Xử lý thanh toán thất bại | FR-15M | VP-05 |
 | Đảm bảo phản hồi nhanh khi đặt hàng (Hiệu năng) | NFR-01, NFR-02 | MVP-04 |
 | Hiển thị tối ưu trên giao diện di động (Mobile-first / PWA) | NFR-06, NFR-07 | MVP-01 |
 | Đảm bảo an toàn thông tin và bảo mật đường truyền (JWT, HTTPS) | NFR-03, NFR-04, NFR-05 | MVP-08 |
+
+## 5. Ngoài phạm vi Usecase (Hệ thống không làm)
+• Không hỗ trợ thanh toán tiền mặt hay thanh toán tại quầy.
+• Không lưu thẻ cho lần sau.
+• Không hoàn tiền, không sửa đơn sau khi đặt.
+• Không giao hàng tận nơi.
+
+## 6. Tiêu chí chấp nhận
+| ID | Tình huống | Bối cảnh | Hành động | Kết quả mong đợi |
+| :--- | :--- | :--- | :--- | :--- |
+| AC-01 | Đặt và thanh toán thành công | Khách đã đăng nhập, giỏ không trống | Bấm “Thanh toán”, cổng trả thành công | Có đơn trạng thái “Mới”, thanh toán “Đã thanh toán”, đã lưu mã giao dịch, giỏ rỗng, nhân viên thấy đơn |
+| AC-02 | Tổng tiền đúng | Giỏ có 1 món 40.000đ, topping 5.000đ, số lượng 2 | Đặt đơn | Tổng tiền đơn là 90.000đ |
+| AC-03 | Giỏ rỗng | Khách đã đăng nhập, giỏ rỗng | Bấm “Đặt hàng” | Hiện lỗi, không có đơn mới |
+| AC-04 | Thanh toán thất bại | Đơn “Chờ thanh toán” | Cổng trả thất bại | Đơn không thành “Đã thanh toán”, khách thử lại được, giỏ còn |
+| AC-05 | Hủy sau khi thất bại | Đơn “Chờ thanh toán” sau lần thanh toán lỗi | Khách chọn hủy đơn | Thanh toán thành “Đã hủy”, nhân viên không thấy đơn |
+| AC-06 | Cổng quá thời gian | Đơn “Chờ thanh toán” | Cổng không phản hồi | Hiện thông báo, đơn không bị đánh dấu đã thanh toán |
+| AC-07 | Chưa đăng nhập | Khách chưa đăng nhập, giỏ có món | Bấm “Đặt hàng” | Chuyển sang đăng nhập, sau đó giỏ vẫn còn |
+| AC-08 | Món hết hàng | Giỏ có món đã ngừng bán | Bấm “Đặt hàng” | Hiện tên món lỗi, không tạo đơn |
+| AC-09 | Bấm đúp | Khách ở màn hình xác nhận | Bấm “Thanh toán” hai lần liên tiếp | Chỉ có một đơn được tạo |
+| AC-10 | Kết quả trùng lặp | Đơn đã “Đã thanh toán” | Cổng gửi lại kết quả thành công | Đơn không đổi, chỉ có một bản ghi thanh toán |
+| AC-11 | Kết quả sai số tiền | Đơn “Chờ thanh toán” 90.000đ | Cổng gửi thành công với số tiền khác | Đơn vẫn “Chờ thanh toán”, có log |
+| AC-12 | Đơn chưa trả tiền | Đơn “Chờ thanh toán” | Nhân viên mở danh sách đơn | Không thấy đơn này |
+| AC-13 | Quá hạn thanh toán | Đơn “Chờ thanh toán” quá 15 phút | Hệ thống kiểm tra định kỳ | Đơn thành “Đã hủy” |
+| AC-14 | Phân quyền | Khách A đã đặt đơn | Khách B mở link đơn của A | Bị từ chối truy cập |
