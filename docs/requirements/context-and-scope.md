@@ -134,13 +134,36 @@
 
 
 ## 2. Mô tả actor, trigger, tiền điều kiện và hậu điều kiện
+### Actors
+* **Tác nhân chính (Primary Actor):** Khách hàng (đã đăng nhập vào hệ thống BrewLite).
+* **Tác nhân hỗ trợ / Hệ thống ngoài (Supporting / External Actor):** Cổng thanh toán (sandbox).
 
+### Trigger (Hành động kích hoạt)
+* Khách hàng bấm nút "Đặt đơn" (hoặc "Thanh toán") từ màn hình xem giỏ hàng.
 
+### Tiền điều kiện (Preconditions)
+* Khách hàng đã đăng nhập thành công vào hệ thống BrewLite.
+* Giỏ hàng có ít nhất một sản phẩm hợp lệ kèm tùy chọn (size, đường, đá, topping).
+* Cổng thanh toán giả lập (Sandbox) đang ở trạng thái hoạt động bình thường.
+
+### Hậu điều kiện (Postconditions)
+* Đơn hàng mới được tạo và lưu thành công vào CSDL với trạng thái ban đầu là "Mới" và tình trạng thanh toán là "Đã thanh toán".
+* Mã giao dịch từ cổng thanh toán sandbox được ghi nhận vào đơn hàng (không lưu thông tin thẻ/tài khoản).
+* Giỏ hàng hiện tại của khách hàng được làm trống.
+* Đơn hàng hiển thị tức thì trên danh sách chờ xử lý của nhân viên quầy; khách hàng được điều hướng sang màn hình theo dõi đơn hàng.
 ## 3. Mô tả luồng chính, luồng thay thế và luồng ngoại lệ
 ### 3.1 Luồng chính 
-
-
-
+| Bước | Thực hiện bởi | Hành động | Phản hồi của Hệ thống |
+| :---: | :--- | :--- | :--- |
+| 1 | Khách hàng | Mở giỏ hàng | Hệ thống hiển thị danh sách các món đã chọn, chi tiết tùy chọn (size, đường, đá, topping), số lượng từng món và tổng tiền tạm tính. |
+| 2 | Khách hàng | Bấm nút "Đặt đơn" | Hệ thống kiểm tra giỏ hàng: xác thực giỏ không rỗng, đối chiếu món và giá bán hiện hành. |
+| 3 | Hệ thống | Hiển thị màn hình xác nhận đơn | Hệ thống hiển thị thông tin tóm tắt đơn hàng, tổng tiền cần thanh toán và tùy chọn thanh toán trực tuyến qua cổng Sandbox. |
+| 4 | Khách hàng | Bấm "Xác nhận thanh toán" | Hệ thống tạo đơn hàng tạm với trạng thái "Chờ thanh toán", tạo yêu cầu giao dịch và chuyển hướng khách sang giao diện Cổng thanh toán (sandbox). |
+| 5 | Cổng thanh toán (sandbox) | Cung cấp giao diện thanh toán | Cổng thanh toán hiển thị màn hình thanh toán giả lập kèm số tiền tương ứng với đơn hàng. |
+| 6 | Khách hàng | Xác thực thanh toán | Khách hàng chọn phương thức giả lập và xác nhận hoàn tất giao dịch trên giao diện sandbox. |
+| 7 | Cổng thanh toán (sandbox) | Phản hồi kết quả thanh toán | Cổng thanh toán ghi nhận giao dịch thành công và gửi tín hiệu phản hồi (kèm mã giao dịch) về cho hệ thống BrewLite. |
+| 8 | Hệ thống | Cập nhật dữ liệu đơn hàng | Hệ thống xác thực phản hồi, cập nhật tình trạng đơn hàng thành "Đã thanh toán", gán trạng thái xử lý là "Mới", lưu mã giao dịch và xóa trắng giỏ hàng của khách. |
+| 9 | Hệ thống | Thông báo thành công và chuyển hướng | Hệ thống gửi đơn hàng vào danh sách xử lý của nhân viên quầy, hiển thị thông báo "Thanh toán thành công" và tự động điều hướng khách hàng sang màn hình theo dõi trạng thái đơn hàng. |
 ### 3.2 Luồng thay thế (Alternative Flows)
 
 | Mã | Tại bước | Điều kiện | Xử lý |
