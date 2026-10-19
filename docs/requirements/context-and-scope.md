@@ -19,29 +19,6 @@
 | Nhóm phát triển | Xây dựng hệ thống | Hoàn thành đúng hạn | Yêu cầu rõ, phạm vi vừa sức |
 | Đơn vị thanh toán | Cung cấp cổng thanh toán | Giao dịch đúng, an toàn | Tích hợp theo API/chuẩn của họ |
 
-## 5. Giả định, Ràng buộc và Rủi ro ban đầu
-
-### 5.1. Giả định (Assumptions)
-- Người dùng truy cập hệ thống chủ yếu bằng thiết bị di động (sử dụng trình duyệt di động hoặc cài đặt PWA).
-- Dịch vụ thanh toán được mô phỏng phản hồi kết quả giao dịch (Thành công/Thất bại) thông qua API giả lập.
-- Kết nối mạng tại quầy và thiết bị khách hàng ổn định trong quá trình đặt đơn.
-
-### 5.2. Ràng buộc (Constraints)
-- **Công nghệ bắt buộc (Tech Stack):**
-  - **Frontend:** Next.js (Mobile-first / PWA).
-  - **Backend:** NestJS (Node.js framework).
-  - **Database:** PostgreSQL.
-  - **Containerization:** Docker & Docker Compose.
-- **Quy trình & Tiến độ:** Tuân thủ đúng thứ tự 5 Task trong Assignment 2, mỗi Task phải có commit/PR và tài liệu minh chứng trên kho mã nguồn (GitHub/Bitbucket).
-
-### 5.3. Rủi ro ban đầu (Initial Risks)
-| ID | Rủi ro | Mức độ | Biện pháp giảm thiểu |
-| :--- | :--- | :--- | :--- |
-| **R-01** | Sự cố thiết lập pipeline CI/CD khiến việc deploy tự động lên Production bị thất bại. | Cao | Thiết lập CI/CD sớm ở Sprint 1, kiểm thử pipeline với ứng dụng mẫu trước khi ghép logic phức tạp. |
-| **R-02** | Xử lý giao dịch thanh toán trùng lặp khi người dùng bấm gửi yêu cầu nhiều lần (Network retry). | Trung bình | Áp dụng cơ chế **Idempotency Key** trong các API tạo đơn và thanh toán. |
-| **R-03** | Rò rỉ thông tin cấu hình nhạy cảm (API Keys, Secret, DB Passwords) lên Repository công khai. | Cao | Sử dụng tệp `.env`, `.env.example` và thiết lập Secret variables trên GitHub Actions/Host Provider. |
-| **R-04** | Sai lệch giữa tài liệu đặc tả (SRS/Diagrams) và mã nguồn thực tế khi triển khai các Sprint. | Trung bình | Bắt buộc cập nhật tài liệu `docs/` thông qua Pull Request song song với việc viết code. |
-
 # BrewLite - Yêu cầu chức năng và phi chức năng
 
 ### 3. Mức ưu tiên yêu cầu theo MoSCoW
