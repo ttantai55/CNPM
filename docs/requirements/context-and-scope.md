@@ -140,23 +140,32 @@
 ### 3.1 Luồng chính 
 
 
-
-### 3.2 Luồng thay thế (Alternative Flows)
+## 4. Luồng thay thế (Alternative Flows)
 
 | Mã | Tại bước | Điều kiện | Xử lý |
 | :--- | :---: | :--- | :--- |
-| A1 | Bước 3 | Khách chọn thanh toán trực tuyến qua cổng/QR (MoMo, VNPay) thay vì COD | Hệ thống chuyển sang cổng thanh toán, hiển thị mã QR kèm số tiền và nội dung chuyển khoản. Khách quét mã thanh toán. Khi nhận tín hiệu thành công từ cổng thanh toán, hệ thống cập nhật trạng thái đơn thành "Đã thanh toán" và tiếp tục sang bước 5 của luồng chính. |
-| A2 | Bước 2 | Khách muốn sửa/xóa món, thay đổi số lượng ngay tại màn hình đặt đơn | Khách bấm nút "Chỉnh sửa giỏ hàng", hệ thống cho phép thay đổi số lượng hoặc xóa món, sau đó tính lại tổng tiền và quay lại bước 1 của luồng chính. |
-| A3 | Bước 3 | Khách áp dụng mã giảm giá (Voucher) | Khách nhập mã voucher vào ô ưu đãi. Hệ thống kiểm tra tính hợp lệ của mã, tính toán lại số tiền giảm giá và hiển thị số tiền thanh toán cuối cùng trước khi bấm xác nhận. |
+| A1 | Bước 4 | Khách đổi phương thức trên cổng thanh toán giả lập (từ quét mã QR Ví điện tử sang nhập Thẻ ngân hàng sandbox) | Hệ thống cổng thanh toán chuyển đổi giao diện tương ứng với phương thức khách chọn, giữ nguyên số tiền và mã giao dịch để khách hoàn tất thanh toán. |
+| A2 | Bước 1, 4 | Khách chọn "Sửa giỏ hàng" (đổi số lượng, đổi size/đường/đá/topping hoặc xóa món) trước khi xác nhận đặt | Hệ thống điều hướng khách quay lại màn hình giỏ hàng ở Bước 1, cho phép cập nhật lại món, tính lại tổng tiền tạm tính và chưa tạo đơn hàng. |
+| A3 | Bước 3 | Khách áp dụng mã khuyến mãi (Voucher) hợp lệ | Khách nhập mã ưu đãi. Hệ thống kiểm tra điều kiện áp dụng, khấu trừ số tiền giảm giá vào tổng tiền và hiển thị số tiền cần thanh toán cuối cùng. |
+| A4 | Bước 3 | Khách nhập ghi chú pha chế cho đơn hàng (ví dụ: ít đá, để riêng topping, lấy túi mang đi) | Hệ thống kiểm tra độ dài ký tự, lưu ghi chú đính kèm vào thông tin đơn hàng để hiển thị trên màn hình của nhân viên quầy khi pha chế. |
+| A5 | Bước 5 | Khách chủ động bấm "Hủy giao dịch" hoặc "Quay lại" ngay trên màn hình cổng thanh toán | Hệ thống ghi nhận khách dừng thanh toán, giữ đơn hàng ở trạng thái "Chờ thanh toán" và điều hướng khách về trang chi tiết đơn hàng. |
+| A6 | Bước 5 | Khách chọn "Thanh toán lại" cho đơn hàng đang ở trạng thái "Chờ thanh toán" | Hệ thống kiểm tra đơn hàng vẫn còn hiệu lực và món còn hàng, sau đó khởi tạo phiên giao dịch mới và đưa khách quay lại cổng thanh toán giả lập (Bước 4). |
 
-### 3.3 Luồng ngoại lệ (Exception Flows)
+## 5. Luồng ngoại lệ (Exception Flows)
 
 | Mã | Tại bước | Tình huống | Xử lý |
 | :--- | :---: | :--- | :--- |
-| E1 | Bước 1 | Giỏ hàng bị trống khi bấm đặt đơn | Hệ thống hiển thị thông báo lỗi "Giỏ hàng của bạn đang trống", từ chối tạo đơn hàng và điều hướng khách quay lại trang Menu để chọn món. |
-| E2 | Bước 3 | Món ăn hoặc Topping trong giỏ hàng bị hết hàng/ngừng bán giữa chừng | Hệ thống kiểm tra kho và phát hiện món/topping không đủ tồn kho, hiển thị thông báo "Sản phẩm [Tên món] vừa hết hàng", yêu cầu khách xóa hoặc thay đổi món đó ra khỏi giỏ hàng trước khi tiếp tục. |
-| E3 | Bước 2 | Khách nhập thiếu hoặc sai định dạng số điện thoại, để trống địa chỉ nhận hàng | Hệ thống đánh dấu đỏ các trường dữ liệu không hợp lệ, hiển thị thông báo hướng dẫn sửa lỗi và chặn không cho phép bấm nút xác nhận đặt hàng cho đến khi dữ liệu chuẩn xác. |
-| E4 | A1 | Cổng thanh toán online bị lỗi, quá thời gian chờ (Timeout) sau 5 phút hoặc giao dịch bị từ chối | Hệ thống nhận phản hồi lỗi từ cổng thanh toán, hiển thị thông báo "Giao dịch thanh toán thất bại hoặc quá hạn", giữ nguyên đơn hàng ở trạng thái "Chờ thanh toán" và cung cấp nút bấm cho phép khách thử thanh toán lại. |
+| E1 | Bước 3 | Giỏ hàng rỗng khi khách bấm "Đặt hàng" | Hệ thống báo lỗi "Giỏ hàng trống, vui lòng chọn món trước khi đặt", không tạo đơn hàng và điều hướng khách quay về trang Menu. |
+| E2 | Bước 3 | Có món hoặc topping trong giỏ vừa hết hàng hoặc ngừng bán đột xuất | Hệ thống kiểm tra tồn kho phát hiện thiếu hụt, báo rõ tên món/topping đã hết, giữ khách ở lại giỏ hàng và yêu cầu bỏ hoặc đổi món đó trước khi đặt lại. |
+| E3 | Bước 2 | Khách chưa đăng nhập hoặc phiên đăng nhập (JWT) đã hết hạn khi bấm "Đặt hàng" | Hệ thống chặn thao tác tạo đơn, thông báo "Vui lòng đăng nhập để đặt hàng", lưu giữ nguyên trạng thái giỏ hàng hiện tại và chuyển khách sang màn hình Đăng nhập. |
+| E4 | Bước 3 | Giá món ăn trên hệ thống vừa được quản lý cập nhật khác với giá lưu trong giỏ hàng của khách | Hệ thống phát hiện chênh lệch giá khi đối chiếu cơ sở dữ liệu, thông báo "Giá sản phẩm vừa được cập nhật", hiển thị lại tổng tiền mới và yêu cầu khách xác nhận lại. |
+| E5 | Bước 1, 3 | Dữ liệu giỏ hàng hoặc tùy chọn không hợp lệ (số lượng món vượt giới hạn cho phép hoặc sai định dạng) | Hệ thống kiểm tra dữ liệu (validate) thất bại, hiển thị thông báo lỗi cụ thể tại mục bị sai và từ chối tạo đơn hàng. |
+| E6 | A3 | Mã giảm giá (Voucher) không tồn tại, đã hết hạn, hết lượt dùng hoặc đơn chưa đủ giá trị tối thiểu | Hệ thống báo lỗi nêu rõ nguyên nhân không áp dụng được mã, giữ nguyên tổng tiền ban đầu và cho phép khách tiếp tục đặt đơn hoặc nhập mã khác. |
+| E7 | Bước 5 | Thanh toán thất bại trên cổng giả lập (số dư sandbox không đủ, thẻ bị từ chối hoặc sai OTP) | Hệ thống nhận kết quả thất bại, cập nhật trạng thái thanh toán là "Thất bại" (đơn hàng vẫn ở trạng thái "Chờ thanh toán"), báo lỗi rõ ràng và hiển thị nút "Thử thanh toán lại". |
+| E8 | Bước 5 | Quá thời gian chờ thanh toán (Timeout sau 5 phút khách không hoàn tất giao dịch trên cổng giả lập) | Hệ thống tự động hủy phiên giao dịch, đổi trạng thái đơn hàng thành "Đã hủy do quá hạn", hoàn lại số lượng tồn kho đã tạm giữ và thông báo để khách đặt đơn mới. |
+| E9 | Bước 2, 5 | Khách bấm nút "Đặt hàng" hoặc "Thanh toán" liên tiếp nhiều lần do mạng chậm (Gửi trùng yêu cầu)
+| E10 | Bước 3, 6 | Lỗi kết nối cơ sở dữ liệu hoặc cổng thanh toán giả lập không phản hồi (Server Error / Mất kết nối) | Hệ thống tự động hoàn tác giao dịch (Rollback transaction) để tránh sinh dữ liệu lỗi, giữ nguyên giỏ hàng và hiển thị thông báo "Hệ thống đang bận, vui lòng thử lại sau". |
+| E11 | Bước 6 | Khách đã bị trừ tiền trên cổng thanh toán online nhưng mạng gián đoạn khiến hệ thống chưa nhận được thông báo (Webhook/Callback) | Hệ thống hiển thị trạng thái "Đang chờ xác nhận giao dịch", tự động gọi API đối soát trạng thái giao dịch (Query Transaction Status) với cổng thanh toán để cập nhật đơn thành "Đã thanh toán" mà không bắt khách trả tiền lại. |
 
 ## 4. Liên kết use-case với các mã yêu cầu tương ứng 
 
