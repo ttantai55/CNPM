@@ -19,7 +19,6 @@
 | Nhóm phát triển | Xây dựng hệ thống | Hoàn thành đúng hạn | Yêu cầu rõ, phạm vi vừa sức |
 | Đơn vị thanh toán | Cung cấp cổng thanh toán | Giao dịch đúng, an toàn | Tích hợp theo API/chuẩn của họ |
 
-=======
 ## 3. Phạm vi
 ### 3.1 In-scope (MVP)
 | ID | Luồng | Chức năng MVP |
@@ -135,28 +134,23 @@
 
 
 ## 2. Mô tả actor, trigger, tiền điều kiện và hậu điều kiện
-### Actors
-* **Tác nhân chính (Primary Actor):** Khách hàng (đã đăng nhập vào hệ thống BrewLite).
-* **Tác nhân hỗ trợ / Hệ thống ngoài (Supporting / External Actor):** Cổng thanh toán (sandbox).
 
-### Trigger (Hành động kích hoạt)
-* Khách hàng bấm nút "Đặt đơn" (hoặc "Thanh toán") từ màn hình xem giỏ hàng.
 
-### Tiền điều kiện (Preconditions)
-* Khách hàng đã đăng nhập thành công vào hệ thống BrewLite.
-* Giỏ hàng có ít nhất một sản phẩm hợp lệ kèm tùy chọn (size, đường, đá, topping).
-* Cổng thanh toán giả lập (Sandbox) đang ở trạng thái hoạt động bình thường.
-
-### Hậu điều kiện (Postconditions)
-* Đơn hàng mới được tạo và lưu thành công vào CSDL với trạng thái ban đầu là "Mới" và tình trạng thanh toán là "Đã thanh toán".
-* Mã giao dịch từ cổng thanh toán sandbox được ghi nhận vào đơn hàng (không lưu thông tin thẻ/tài khoản).
-* Giỏ hàng hiện tại của khách hàng được làm trống.
-* Đơn hàng hiển thị tức thì trên danh sách chờ xử lý của nhân viên quầy; khách hàng được điều hướng sang màn hình theo dõi đơn hàng.
 ## 3. Mô tả luồng chính, luồng thay thế và luồng ngoại lệ
 ### 3.1 Luồng chính 
+| Bước | Thực hiện bởi | Hành động | Phản hồi của Hệ thống |
+| :---: | :--- | :--- | :--- |
+| 1 | Khách hàng | Mở giỏ hàng | Hệ thống hiển thị danh sách các món đã chọn, chi tiết tùy chọn (size, đường, đá, topping), số lượng từng món và tổng tiền tạm tính. |
+| 2 | Khách hàng | Bấm nút "Đặt đơn" | Hệ thống kiểm tra đăng nhập của khách hàng và kiểm tra giỏ hàng: xác thực giỏ không rỗng, đối chiếu món và giá bán hiện hành. |
+| 3 | Hệ thống | Hiển thị màn hình xác nhận đơn | Hệ thống hiển thị thông tin tóm tắt đơn hàng, tổng tiền cần thanh toán và tùy chọn thanh toán trực tuyến qua cổng Sandbox. |
+| 4 | Khách hàng | Bấm "Xác nhận thanh toán" | Hệ thống tạo đơn hàng tạm với trạng thái "Chờ thanh toán", tạo yêu cầu giao dịch và chuyển hướng khách sang giao diện Cổng thanh toán (sandbox). |
+| 5 | Cổng thanh toán (sandbox) | Cung cấp giao diện thanh toán | Cổng thanh toán hiển thị màn hình thanh toán giả lập kèm số tiền tương ứng với đơn hàng. |
+| 6 | Khách hàng | Xác thực thanh toán | Khách hàng chọn phương thức giả lập và xác nhận hoàn tất giao dịch trên giao diện sandbox. |
+| 7 | Cổng thanh toán (sandbox) | Phản hồi kết quả thanh toán | Cổng thanh toán ghi nhận giao dịch thành công và gửi tín hiệu phản hồi (kèm mã giao dịch) về cho hệ thống BrewLite. |
+| 8 | Hệ thống | Cập nhật dữ liệu đơn hàng | Hệ thống xác thực phản hồi, cập nhật tình trạng đơn hàng thành "Đã thanh toán", gán trạng thái xử lý là "Mới", lưu mã giao dịch và xóa trắng giỏ hàng của khách. |
+| 9 | Hệ thống | Thông báo thành công và chuyển hướng | Hệ thống gửi đơn hàng vào danh sách xử lý của nhân viên quầy, hiển thị thông báo "Thanh toán thành công" và tự động điều hướng khách hàng sang màn hình theo dõi trạng thái đơn hàng. |
 
-
-## 4. Luồng thay thế (Alternative Flows)
+### 3.2 Luồng thay thế (Alternative Flows)
 
 | Mã | Tại bước | Điều kiện | Xử lý |
 | :--- | :---: | :--- | :--- |
@@ -167,7 +161,7 @@
 | A5 | Bước 5 | Khách chủ động bấm "Hủy giao dịch" hoặc "Quay lại" ngay trên màn hình cổng thanh toán | Hệ thống ghi nhận khách dừng thanh toán, giữ đơn hàng ở trạng thái "Chờ thanh toán" và điều hướng khách về trang chi tiết đơn hàng. |
 | A6 | Bước 5 | Khách chọn "Thanh toán lại" cho đơn hàng đang ở trạng thái "Chờ thanh toán" | Hệ thống kiểm tra đơn hàng vẫn còn hiệu lực và món còn hàng, sau đó khởi tạo phiên giao dịch mới và đưa khách quay lại cổng thanh toán giả lập (Bước 4). |
 
-## 5. Luồng ngoại lệ (Exception Flows)
+### 3.3 Luồng ngoại lệ (Exception Flows)
 
 | Mã | Tại bước | Tình huống | Xử lý |
 | :--- | :---: | :--- | :--- |
@@ -185,39 +179,3 @@
 
 ## 4. Liên kết use-case với các mã yêu cầu tương ứng 
 
-| Nội dung use-case | Mã yêu cầu | Mã MVP |
-|---|---|---|
-| Xem và sửa giỏ hàng trước khi đặt | FR-03, FR-05, FR-06 | MVP-03 |
-| Yêu cầu đăng nhập tài khoản trước khi đặt đơn | FR-08, FR-09, FR-10 | MVP-08 |
-| Kiểm tra giỏ hàng và khởi tạo đơn hàng | FR-11, FR-12 | MVP-04 |
-| Thực hiện thanh toán trực tuyến qua cổng giả lập (Sandbox/QR) | FR-13, FR-14, NFR-12, NFR-13 | MVP-05 |
-| Kiểm tra và xác nhận tình trạng thanh toán | FR-24 | MVP-05 |
-| Chuyển hướng và xem trạng thái đơn hàng sau khi đặt thành công | FR-07, FR-15, FR-19 | MVP-06, MVP-09 |
-| Xử lý thanh toán thất bại | FR-15M | VP-05 |
-| Đảm bảo phản hồi nhanh khi đặt hàng (Hiệu năng) | NFR-01, NFR-02 | MVP-04 |
-| Hiển thị tối ưu trên giao diện di động (Mobile-first / PWA) | NFR-06, NFR-07 | MVP-01 |
-| Đảm bảo an toàn thông tin và bảo mật đường truyền (JWT, HTTPS) | NFR-03, NFR-04, NFR-05 | MVP-08 |
-
-## 5. Ngoài phạm vi Usecase (Hệ thống không làm)
-• Không hỗ trợ thanh toán tiền mặt hay thanh toán tại quầy.
-• Không lưu thẻ cho lần sau.
-• Không hoàn tiền, không sửa đơn sau khi đặt.
-• Không giao hàng tận nơi.
-
-## 6. Tiêu chí chấp nhận
-| ID | Tình huống | Bối cảnh | Hành động | Kết quả mong đợi |
-| :--- | :--- | :--- | :--- | :--- |
-| AC-01 | Đặt và thanh toán thành công | Khách đã đăng nhập, giỏ không trống | Bấm “Thanh toán”, cổng trả thành công | Có đơn trạng thái “Mới”, thanh toán “Đã thanh toán”, đã lưu mã giao dịch, giỏ rỗng, nhân viên thấy đơn |
-| AC-02 | Tổng tiền đúng | Giỏ có 1 món 40.000đ, topping 5.000đ, số lượng 2 | Đặt đơn | Tổng tiền đơn là 90.000đ |
-| AC-03 | Giỏ rỗng | Khách đã đăng nhập, giỏ rỗng | Bấm “Đặt hàng” | Hiện lỗi, không có đơn mới |
-| AC-04 | Thanh toán thất bại | Đơn “Chờ thanh toán” | Cổng trả thất bại | Đơn không thành “Đã thanh toán”, khách thử lại được, giỏ còn |
-| AC-05 | Hủy sau khi thất bại | Đơn “Chờ thanh toán” sau lần thanh toán lỗi | Khách chọn hủy đơn | Thanh toán thành “Đã hủy”, nhân viên không thấy đơn |
-| AC-06 | Cổng quá thời gian | Đơn “Chờ thanh toán” | Cổng không phản hồi | Hiện thông báo, đơn không bị đánh dấu đã thanh toán |
-| AC-07 | Chưa đăng nhập | Khách chưa đăng nhập, giỏ có món | Bấm “Đặt hàng” | Chuyển sang đăng nhập, sau đó giỏ vẫn còn |
-| AC-08 | Món hết hàng | Giỏ có món đã ngừng bán | Bấm “Đặt hàng” | Hiện tên món lỗi, không tạo đơn |
-| AC-09 | Bấm đúp | Khách ở màn hình xác nhận | Bấm “Thanh toán” hai lần liên tiếp | Chỉ có một đơn được tạo |
-| AC-10 | Kết quả trùng lặp | Đơn đã “Đã thanh toán” | Cổng gửi lại kết quả thành công | Đơn không đổi, chỉ có một bản ghi thanh toán |
-| AC-11 | Kết quả sai số tiền | Đơn “Chờ thanh toán” 90.000đ | Cổng gửi thành công với số tiền khác | Đơn vẫn “Chờ thanh toán”, có log |
-| AC-12 | Đơn chưa trả tiền | Đơn “Chờ thanh toán” | Nhân viên mở danh sách đơn | Không thấy đơn này |
-| AC-13 | Quá hạn thanh toán | Đơn “Chờ thanh toán” quá 15 phút | Hệ thống kiểm tra định kỳ | Đơn thành “Đã hủy” |
-| AC-14 | Phân quyền | Khách A đã đặt đơn | Khách B mở link đơn của A | Bị từ chối truy cập |
