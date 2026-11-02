@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import vn.doan.domain.enums.OrderStatus;
+
 public class Order {
     private String id;
     private Customer customer;
