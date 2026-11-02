@@ -1,4 +1,5 @@
 package vn.doan.domain;
+
 import jakarta.persistence.*;
 import vn.doan.domain.enums.UnitType;
 
@@ -22,7 +23,13 @@ public class Ingredient {
 
     @Column(name = "min_alert_threshold", nullable = false)
     private double minAlertThreshold;
-    
+
+    // QUAN HỆ NHIỀU - 1: Nhiều nguyên liệu được lưu trữ trong 1 kho tổng
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "inventory_id")
+    private Inventory inventory;
+
+    // BẮT BUỘC CHO JPA: Constructor không tham số
     public Ingredient() {
     }
 
@@ -33,7 +40,17 @@ public class Ingredient {
         this.minAlertThreshold = minAlertThreshold;
     }
 
-    // Getters and Setters
+    public Ingredient(String id, String name, UnitType unit, int currentStock, double minAlertThreshold, Inventory inventory) {
+        this.id = id;
+        this.name = name;
+        this.unit = unit;
+        this.currentStock = currentStock;
+        this.minAlertThreshold = minAlertThreshold;
+        this.inventory = inventory;
+    }
+
+    // --- GETTERS & SETTERS ---
+
     public String getId() {
         return id;
     }

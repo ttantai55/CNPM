@@ -1,25 +1,8 @@
 package vn.doan.domain;
 
 import jakarta.persistence.*;
-
-
-@Entity
-@Table(name = "toppings")
-
-public class Topping {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
-
-    @Column(nullable = false, length = 100)
-    private String name;
-
-    @Column(nullable = false)
-    private long price;
-
-    @Column(name = "is_available", nullable = false)
-    private boolean isAvailable;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "toppings")
@@ -38,15 +21,15 @@ public class Topping {
     @Column(name = "is_available", nullable = false)
     private boolean isAvailable = true;
 
-    // QUAN HỆ NHIỀU - NHIỀU: Nhiều Topping thuộc về nhiều Product khác nhau
+    // QUAN HỆ NHIỀU - NHIỀU: Một Topping có thể thuộc nhiều Product
     @ManyToMany(mappedBy = "toppings")
     private List<Product> products = new ArrayList<>();
 
-    // QUAN HỆ 1 - NHIỀU: 1 Topping được tham chiếu trong nhiều dòng OrderItemTopping
+    // QUAN HỆ 1 - NHIỀU: Một Topping xuất hiện trong nhiều OrderItemTopping
     @OneToMany(mappedBy = "topping")
     private List<OrderItemTopping> orderItemToppings = new ArrayList<>();
 
-    // BẮT BUỘC: Constructor không tham số cho JPA
+    // BẮT BUỘC CHO JPA: Constructor không tham số
     public Topping() {
     }
 
@@ -56,7 +39,15 @@ public class Topping {
         this.isAvailable = isAvailable;
     }
 
-    // Getters and Setters
+    public Topping(String id, String name, long price, boolean isAvailable) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+        this.isAvailable = isAvailable;
+    }
+
+    // --- GETTERS & SETTERS ---
+
     public String getId() {
         return id;
     }

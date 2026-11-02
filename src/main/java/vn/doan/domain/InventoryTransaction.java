@@ -1,4 +1,5 @@
 package vn.doan.domain;
+
 import jakarta.persistence.*;
 import vn.doan.domain.enums.InventoryTransactionType;
 
@@ -13,25 +14,20 @@ public class InventoryTransaction {
     private String id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "type", nullable = false)
     private InventoryTransactionType type;
 
     @Column(name = "create_at", nullable = false)
     private LocalDateTime createAt;
 
-
     private String note;
-   // Quan hệ 1 - 1 hoặc Nhiều - 1 với bảng chi tiết giao dịch kho
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "details_id")
-    private InventoryTransactionDetails details;
 
-    // Quan hệ Nhiều - 1: Nhiều giao dịch được thực hiện bởi 1 Barista
+    // QUAN HỆ NHIỀU - 1: Nhiều giao dịch kho do 1 Barista thực hiện
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "barista_id", nullable = false)
     private Barista barista;
 
-    // QUAN HỆ 1 - 1: Mỗi giao dịch kho gắn liền với 1 chi tiết giao dịch kho
+    // QUAN HỆ 1 - 1: Mỗi giao dịch kho gắn với 1 chi tiết giao dịch
     @OneToOne(mappedBy = "inventoryTransaction", cascade = CascadeType.ALL, orphanRemoval = true)
     private InventoryTransactionDetails details;
 
@@ -47,7 +43,17 @@ public class InventoryTransaction {
         this.createAt = LocalDateTime.now();
     }
 
-    // Getters and Setters
+    public InventoryTransaction(String id, InventoryTransactionType type, LocalDateTime createAt, String note, Barista barista, InventoryTransactionDetails details) {
+        this.id = id;
+        this.type = type;
+        this.createAt = createAt;
+        this.note = note;
+        this.barista = barista;
+        this.setDetails(details);
+    }
+
+    // --- GETTERS & SETTERS ---
+
     public String getId() {
         return id;
     }
