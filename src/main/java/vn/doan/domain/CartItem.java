@@ -4,14 +4,7 @@ import java.io.Serializable;
 
 public class CartItem implements Serializable {
     private static final long serialVersionUID = 1L;
-    /* 
-    private String id;           // Mã định danh món hàng (packageId hoặc productId)
-    private String name;         // Tên hiển thị (Tên gói tập hoặc tên sản phẩm)
-    private String imageUrl;     // Ảnh đại diện
-    private long price;          // Đơn giá tại thời điểm thêm vào giỏ
-    private int quantity;        // Số lượng (với gói tập luôn là 1)
-    private boolean isPackage;   // true nếu là Gói tập, false nếu là Sản phẩm
-    */
+
     private Package pkg;
     private Product product;
     private int quantity;
