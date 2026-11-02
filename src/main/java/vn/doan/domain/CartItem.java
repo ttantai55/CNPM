@@ -5,7 +5,6 @@ import java.io.Serializable;
 public class CartItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private Package pkg;
     private Product product;
     private int quantity;
 
@@ -13,36 +12,26 @@ public class CartItem implements Serializable {
     }
 
 
-    public CartItem(Package pkg){
-        this.pkg = pkg;
-        this.product = null;
-        this.quantity = 1;
-    }
 
     public CartItem(Product product, int quantity) {
-        this.pkg = null;
         this.product = product;
         this.quantity = quantity;
     }
 
-   // Kiểm tra nhanh xem đây là gói tập hay sản phẩm
-    public boolean isPackage() {
-        return this.pkg != null;
-    }
-
+  
     // Lấy ID định danh của món hàng
     public String getId() {
-        return isPackage() ? this.pkg.getId() : this.product.getId();
+        return this.product.getId();
     }
 
     // Lấy tên hiển thị
     public String getName() {
-        return isPackage() ? this.pkg.getName() : this.product.getName();
+        return this.product.getName();
     }
 
     // Lấy đơn giá
     public long getPrice() {
-        return isPackage() ? this.pkg.getPrice() : this.product.getPrice();
+        return this.product.getPrice();
     }
 
     // Tính thành tiền của món này (đơn giá x số lượng)
@@ -52,13 +41,6 @@ public class CartItem implements Serializable {
 
     // --- Getters & Setters ---
 
-    public Package getPkg() {
-        return pkg;
-    }
-
-    public void setPkg(Package pkg) {
-        this.pkg = pkg;
-    }
 
     public Product getProduct() {
         return product;
