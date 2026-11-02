@@ -4,3 +4,4 @@ target/
 *.war
 .idea/
 .vscode/
+.github/modernize/
