@@ -1,0 +1,92 @@
+@startuml sequence-checkout
+autonumber
+skinparam roundcorner 10
+skinparam ParticipantPadding 15
+skinparam BoxPadding 15
+
+box "Khu vực Frontend" #LightCyan
+actor "Customer" as C
+participant "Next.js UI\n(Mobile/PWA)" as UI
+end box
+
+box "Khu vực Backend" #LightYellow
+participant "NestJS API\n(Server)" as API
+database "PostgreSQL\n(Database)" as DB
+end box
+
+box "Bên thứ 3" #E8F5E9
+participant "Payment\n(Sandbox)" as PAY
+end box
+
+C -> UI: Bấm "Thanh toán"
+activate UI
+
+UI -> API: POST /checkout (items, JWT, Idempotency-Key)
+activate API
+
+== 1. Xác thực & Kiểm tra Validation ==
+API -> API: Verify JWT & Validate Body
+opt JWT Hết hạn / Dữ liệu lỗi
+    API --> UI: 401 / 400 Bad Request
+    UI --> C: Yêu cầu đăng nhập lại / Sửa giỏ hàng
+end
+
+|||
+== 2. Kiểm tra trùng lặp (Idempotency) ==
+API -> DB: SELECT key FROM idempotency_keys
+activate DB
+DB --> API: record (nếu có)
+deactivate DB
+
+opt Key đã tồn tại
+    API --> UI: 200 OK (Kết quả giao dịch cũ)
+    UI --> C: Hiển thị đơn hàng đã tạo
+end
+|||
+== 3. Giao dịch Database & Xử lý Tồn kho ==
+API -> DB: BEGIN TRANSACTION
+activate DB
+
+API -> DB: SELECT stock FROM products FOR UPDATE
+DB --> API: current stock
+
+alt [\n TH1: Không đủ hàng]
+    API -> DB: ROLLBACK
+    API --> UI: 400 Bad Request ("Món vừa hết hàng")
+    UI --> C: Thông báo khách sửa lại giỏ hàng
+else [\n TH2: Đủ hàng trong kho]
+    API -> DB: UPDATE stock & INSERT order (PENDING)
+    API -> DB: COMMIT
+end
+deactivate DB
+
+|||
+== 4. Xử lý Thanh toán & Hoàn tất ==
+API -> PAY: POST /charge (orderId, amount)
+activate PAY
+PAY --> API: payment result (SUCCESS/FAILED)
+deactivate PAY
+
+alt [TH1: Thanh toán SUCCESS]
+    API -> DB: UPDATE order (CONFIRMED) & payment (SUCCESS)
+    API --> UI: 200 OK (orderId, CONFIRMED)
+    UI --> C: Hiển thị "Đặt hàng thành công"
+
+else [TH2: Thanh toán FAILED / Timeout]
+    API -> DB: BEGIN TRANSACTION
+    activate DB
+    API -> DB: UPDATE stock (+ quantity) & order (CANCELLED)
+    API -> DB: COMMIT
+    deactivate DB
+
+    API --> UI: 402 Payment Required ("Thanh toán thất bại")
+    UI --> C: Hiển thị nút "Thử thanh toán lại"
+end
+
+deactivate API
+deactivate UI
+
+@enduml
+
+// tách server thành cấu trúc phan tầng
+tách ra từng

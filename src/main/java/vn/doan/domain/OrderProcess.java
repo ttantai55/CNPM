@@ -2,6 +2,8 @@ package vn.doan.domain;
 
 import java.time.LocalDateTime;
 
+import vn.doan.domain.enums.OrderStatus;
+
 public class OrderProcess {
     private String id;
     private Order order;

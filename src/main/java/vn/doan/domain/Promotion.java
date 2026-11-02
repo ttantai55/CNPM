@@ -2,6 +2,8 @@ package vn.doan.domain;
 
 import java.time.LocalDate;
 
+import vn.doan.domain.enums.DiscountType;
+
 public class Promotion {
     private String id;
     private String voucherCode;

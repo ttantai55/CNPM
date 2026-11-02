@@ -1,4 +1,4 @@
-package vn.doan.domain;
+package vn.doan.domain.enums;
 
 public enum DiscountType {
     PERCENTAGE,
