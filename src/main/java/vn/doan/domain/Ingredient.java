@@ -26,19 +26,11 @@ public class Ingredient {
     public Ingredient() {
     }
 
-    public Ingredient(String id, String name, UnitType unit, int currentStock, double minAlertThreshold) {
-        this.id = id;
+    public Ingredient(String name, UnitType unit, int currentStock, double minAlertThreshold) {
         this.name = name;
         this.unit = unit;
         this.currentStock = currentStock;
         this.minAlertThreshold = minAlertThreshold;
-    }
-
-    /**
-     * Kiểm tra lượng tồn kho có dưới ngưỡng cảnh báo hay không
-     */
-    public boolean isBelowThreshold() {
-        return this.currentStock <= this.minAlertThreshold;
     }
 
     // Getters and Setters
@@ -80,5 +72,13 @@ public class Ingredient {
 
     public void setMinAlertThreshold(double minAlertThreshold) {
         this.minAlertThreshold = minAlertThreshold;
+    }
+
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+    public void setInventory(Inventory inventory) {
+        this.inventory = inventory;
     }
 }

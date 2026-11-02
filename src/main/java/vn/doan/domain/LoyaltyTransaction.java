@@ -40,22 +40,20 @@ public class LoyaltyTransaction {
     private LocalDate createDate;
 
     public LoyaltyTransaction() {
+        this.createDate = LocalDate.now();
     }
 
-    // Constructor đầy đủ tham số
-    public LoyaltyTransaction(String id, User user, Order order, LoyalType transactionType, int points, int balancedAfter, String description, LocalDate createDate) {
-        this.id = id;
+    public LoyaltyTransaction(User user, Order order, LoyalType transactionType, int points, int balancedAfter, String description) {
         this.user = user;
         this.order = order;
         this.transactionType = transactionType;
         this.points = points;
         this.balancedAfter = balancedAfter;
         this.description = description;
-        this.createDate = createDate;
+        this.createDate = LocalDate.now();
     }
 
-    // --- GETTER & SETTER ---
-
+    // Getters and Setters
     public String getId() {
         return id;
     }

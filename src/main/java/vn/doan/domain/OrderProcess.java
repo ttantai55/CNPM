@@ -1,20 +1,34 @@
 package vn.doan.domain;
 
-import java.time.LocalDateTime;
-
+import jakarta.persistence.*;
 import vn.doan.domain.enums.OrderStatus;
 
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "order_processes")
 public class OrderProcess {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
     private OrderStatus status;
+
+    @Column(name = "update_at", nullable = false)
     private LocalDateTime updateAt;
 
+    // BẮT BUỘC CHO JPA: Constructor không tham số
     public OrderProcess() {
     }
 
-    public OrderProcess(String id, Order order, OrderStatus status) {
-        this.id = id;
+    public OrderProcess(Order order, OrderStatus status) {
         this.order = order;
         this.status = status;
         this.updateAt = LocalDateTime.now();
@@ -27,6 +41,7 @@ public class OrderProcess {
         this.updateAt = updateAt;
     }
 
+    // Getters and Setters
     public String getId() {
         return id;
     }

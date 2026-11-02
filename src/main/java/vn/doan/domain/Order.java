@@ -1,39 +1,61 @@
 package vn.doan.domain;
 
+import jakarta.persistence.*;
+import vn.doan.domain.enums.OrderStatus;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import vn.doan.domain.enums.OrderStatus;
-
+@Entity
+@Table(name = "orders")
 public class Order {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
     private Customer customer;
+
+    @Column(name = "total_amount")
     private long totalAmount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promotion_id")
     private Promotion discount;
+
+    @Column(name = "final_amount")
     private long finalAmount;
-    private OrderStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private OrderStatus status = OrderStatus.PENDING;
+
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderProcess> processes = new ArrayList<>();
 
+    // BẮT BUỘC CHO JPA: Constructor không tham số
     public Order() {
         this.status = OrderStatus.PENDING;
         this.createdAt = LocalDateTime.now();
     }
 
-    public Order(String id, Customer customer) {
-        this.id = id;
+    public Order(Customer customer) {
         this.customer = customer;
         this.status = OrderStatus.PENDING;
         this.createdAt = LocalDateTime.now();
         recordProcess(OrderStatus.PENDING);
     }
 
-    /**
-     * Chuyển trạng thái đơn hàng kèm ghi nhận lịch sử vào OrderProcess
-     */
     public void changeStatus(OrderStatus newStatus) {
         if (!this.status.canTransitionTo(newStatus)) {
             throw new IllegalStateException(
@@ -45,12 +67,7 @@ public class Order {
     }
 
     private void recordProcess(OrderStatus newStatus) {
-        OrderProcess process = new OrderProcess(
-            UUID.randomUUID().toString(),
-            this,
-            newStatus,
-            LocalDateTime.now()
-        );
+        OrderProcess process = new OrderProcess(this, newStatus);
         this.processes.add(process);
     }
 

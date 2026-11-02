@@ -24,11 +24,11 @@ public class InventoryTransactionDetails {
     public InventoryTransactionDetails() {
     }
 
-    public InventoryTransactionDetails(String id, double quantity, long price, Ingredient ingredient) {
-        this.id = id;
+    public InventoryTransactionDetails(InventoryTransaction inventoryTransaction, Ingredient ingredient, double quantity, long price) {
+        this.inventoryTransaction = inventoryTransaction;
+        this.ingredient = ingredient;
         this.quantity = quantity;
         this.price = price;
-        this.ingredient = ingredient;
     }
 
     // Getters and Setters
@@ -38,6 +38,22 @@ public class InventoryTransactionDetails {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public InventoryTransaction getInventoryTransaction() {
+        return inventoryTransaction;
+    }
+
+    public void setInventoryTransaction(InventoryTransaction inventoryTransaction) {
+        this.inventoryTransaction = inventoryTransaction;
+    }
+
+    public Ingredient getIngredient() {
+        return ingredient;
+    }
+
+    public void setIngredient(Ingredient ingredient) {
+        this.ingredient = ingredient;
     }
 
     public double getQuantity() {
@@ -54,13 +70,5 @@ public class InventoryTransactionDetails {
 
     public void setPrice(long price) {
         this.price = price;
-    }
-
-    public Ingredient getIngredient() {
-        return ingredient;
-    }
-
-    public void setIngredient(Ingredient ingredient) {
-        this.ingredient = ingredient;
     }
 }

@@ -24,15 +24,25 @@ import jakarta.persistence.*;
 
     @Column(nullable = false)
     private int quantity;
+
+    @Column(nullable = false)
     private long price;
 
-    // Constructor rỗng (Mặc định)
+    // BẮT BUỘC CHO JPA: Constructor không tham số
     public OrderItemTopping() {
     }
 
-    // Constructor đầy đủ tham số
-    public OrderItemTopping(String id, int quantity, long price) {
+    public OrderItemTopping(OrderItem orderItem, Topping topping, int quantity, long price) {
+        this.orderItem = orderItem;
+        this.topping = topping;
+        this.quantity = quantity;
+        this.price = price;
+    }
+
+    public OrderItemTopping(String id, OrderItem orderItem, Topping topping, int quantity, long price) {
         this.id = id;
+        this.orderItem = orderItem;
+        this.topping = topping;
         this.quantity = quantity;
         this.price = price;
     }
@@ -45,6 +55,22 @@ import jakarta.persistence.*;
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public OrderItem getOrderItem() {
+        return orderItem;
+    }
+
+    public void setOrderItem(OrderItem orderItem) {
+        this.orderItem = orderItem;
+    }
+
+    public Topping getTopping() {
+        return topping;
+    }
+
+    public void setTopping(Topping topping) {
+        this.topping = topping;
     }
 
     public int getQuantity() {
@@ -63,5 +89,3 @@ import jakarta.persistence.*;
         this.price = price;
     }
 }
-    
-

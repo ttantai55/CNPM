@@ -1,6 +1,7 @@
 package vn.doan.domain;
 import jakarta.persistence.*;
 import vn.doan.domain.enums.InventoryTransactionType;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -30,18 +31,20 @@ public class InventoryTransaction {
     @JoinColumn(name = "barista_id", nullable = false)
     private Barista barista;
 
+    // QUAN HỆ 1 - 1: Mỗi giao dịch kho gắn liền với 1 chi tiết giao dịch kho
+    @OneToOne(mappedBy = "inventoryTransaction", cascade = CascadeType.ALL, orphanRemoval = true)
+    private InventoryTransactionDetails details;
+
+    // BẮT BUỘC CHO JPA: Constructor không tham số
     public InventoryTransaction() {
         this.createAt = LocalDateTime.now();
     }
 
-    public InventoryTransaction(String id, InventoryTransactionType type, String note, 
-                                InventoryTransactionDetails details, Barista barista) {
-        this.id = id;
+    public InventoryTransaction(InventoryTransactionType type, String note, Barista barista) {
         this.type = type;
-        this.createAt = LocalDateTime.now();
         this.note = note;
-        this.details = details;
         this.barista = barista;
+        this.createAt = LocalDateTime.now();
     }
 
     // Getters and Setters
@@ -77,19 +80,22 @@ public class InventoryTransaction {
         this.note = note;
     }
 
-    public InventoryTransactionDetails getDetails() {
-        return details;
-    }
-
-    public void setDetails(InventoryTransactionDetails details) {
-        this.details = details;
-    }
-
     public Barista getBarista() {
         return barista;
     }
 
     public void setBarista(Barista barista) {
         this.barista = barista;
+    }
+
+    public InventoryTransactionDetails getDetails() {
+        return details;
+    }
+
+    public void setDetails(InventoryTransactionDetails details) {
+        this.details = details;
+        if (details != null) {
+            details.setInventoryTransaction(this);
+        }
     }
 }

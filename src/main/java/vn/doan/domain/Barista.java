@@ -23,11 +23,22 @@ public class Barista {
     private List<InventoryTransaction> transactions = new ArrayList<>();
     
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @Column(nullable = false, length = 100)
+    private String name;
+
+    // QUAN HỆ 1 - NHIỀU: 1 Barista có thể tạo nhiều giao dịch nhập/xuất/kiểm kê kho
+    @OneToMany(mappedBy = "barista")
+    private List<InventoryTransaction> inventoryTransactions = new ArrayList<>();
+
+    // BẮT BUỘC: Constructor không tham số cho JPA
     public Barista() {
     }
 
-    public Barista(String id, String name) {
-        this.id = id;
+    public Barista(String name) {
         this.name = name;
     }
 
@@ -48,11 +59,11 @@ public class Barista {
         this.name = name;
     }
 
-    public List<InventoryTransaction> getTransactions() {
-        return transactions;
+    public List<InventoryTransaction> getInventoryTransactions() {
+        return inventoryTransactions;
     }
 
-    public void setTransactions(List<InventoryTransaction> transactions) {
-        this.transactions = transactions;
+    public void setInventoryTransactions(List<InventoryTransaction> inventoryTransactions) {
+        this.inventoryTransactions = inventoryTransactions;
     }
 }
