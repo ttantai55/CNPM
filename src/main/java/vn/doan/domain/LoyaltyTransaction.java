@@ -1,20 +1,44 @@
 package vn.doan.domain;
 
+import jakarta.persistence.*;
+
 import java.time.LocalDate;
 
 import vn.doan.domain.enums.LoyalType;
 
+@Entity
+@Table(name = "loyalty_transactions")
+
 public class LoyaltyTransaction {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    // Quan hệ Nhiều - 1: Nhiều giao dịch điểm thuộc về 1 User
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+// Quan hệ Nhiều - 1: Nhiều giao dịch có thể liên quan tới 1 Order cụ thể
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
     private Order order;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "transaction_type", nullable = false)
     private LoyalType transactionType;
+
+    @Column(nullable = false)
     private int points;
+
+    @Column(name = "balanced_after", nullable = false)
     private int balancedAfter;
+
     private String description;
+
+    @Column(name = "create_date")
     private LocalDate createDate;
 
-    // Constructor rỗng (Mặc định)
     public LoyaltyTransaction() {
     }
 

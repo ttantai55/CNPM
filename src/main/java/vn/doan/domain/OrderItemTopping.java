@@ -1,7 +1,28 @@
 package vn.doan.domain;
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "order_item_toppings")
 
     public class OrderItemTopping {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    // Quan hệ Nhiều - 1: Nhiều lựa chọn topping thuộc về 1 dòng chi tiết sản phẩm (OrderItem)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_item_id", nullable = false)
+    private OrderItem orderItem;
+
+    // Quan hệ Nhiều - 1: Lựa chọn này ứng với Topping nào trong menu
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "topping_id", nullable = false)
+
+    @Column(nullable = false)
+    private Topping topping;
+
+    @Column(nullable = false)
     private int quantity;
     private long price;
 

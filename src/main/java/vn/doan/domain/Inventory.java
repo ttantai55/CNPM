@@ -1,11 +1,22 @@
 package vn.doan.domain;
-
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
-
+@Entity
+@Table(name = "inventories")
 public class Inventory {
-    private List<Ingredient> items = new ArrayList<>();
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    // Quan hệ 1 - Nhiều: 1 Kho chứa nhiều nguyên liệu (Ingredient)
+    // Nếu trong bảng Ingredient có cột foreign key `inventory_id` thì dùng mappedBy = "inventory"
+  
+   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "inventory_id") // Tạo cột khóa ngoại bên bảng ingredients
+    private List<Ingredient> items = new ArrayList<>();
+    
     public Inventory() {
     }
 

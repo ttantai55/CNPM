@@ -1,9 +1,24 @@
 package vn.doan.domain;
 
+import jakarta.persistence.*;
+
+
+@Entity
+@Table(name = "toppings")
+
 public class Topping {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @Column(nullable = false, length = 100)
     private String name;
+
+    @Column(nullable = false)
     private long price;
+
+    @Column(name = "is_available", nullable = false)
     private boolean isAvailable;
 
     public Topping() {

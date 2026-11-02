@@ -1,11 +1,26 @@
 package vn.doan.domain;
 
-public class InventoryTransactionDetails {
-    private String id;
-    private double quantity;
-    private long price;
-    private Ingredient ingredient;
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "inventory_transaction_details")
+public class InventoryTransactionDetails {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @Column(nullable = false)
+    private double quantity;
+
+    @Column(nullable = false)
+    private long price;
+
+    // Quan hệ Nhiều - 1: Nhiều chi tiết giao dịch kho liên quan đến 1 Nguyên liệu (Ingredient)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ingredient_id", nullable = false)
+    private Ingredient ingredient;
+    
     public InventoryTransactionDetails() {
     }
 
