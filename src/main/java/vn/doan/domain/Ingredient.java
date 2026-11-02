@@ -1,14 +1,28 @@
 package vn.doan.domain;
-
+import jakarta.persistence.*;
 import vn.doan.domain.enums.UnitType;
 
+@Entity
+@Table(name = "ingredients")
 public class Ingredient {
-    private String id;
-    private String name;
-    private UnitType unit;
-    private int currentStock;
-    private double minAlertThreshold;
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @Column(nullable = false, length = 100)
+    private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UnitType unit;
+
+    @Column(name = "current_stock", nullable = false)
+    private int currentStock;
+
+    @Column(name = "min_alert_threshold", nullable = false)
+    private double minAlertThreshold;
+    
     public Ingredient() {
     }
 

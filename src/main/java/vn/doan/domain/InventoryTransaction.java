@@ -1,14 +1,33 @@
 package vn.doan.domain;
-
+import jakarta.persistence.*;
 import vn.doan.domain.enums.InventoryTransactionType;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "inventory_transactions")
 public class InventoryTransaction {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private InventoryTransactionType type;
+
+    @Column(name = "create_at", nullable = false)
     private LocalDateTime createAt;
+
+
     private String note;
+   // Quan hệ 1 - 1 hoặc Nhiều - 1 với bảng chi tiết giao dịch kho
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "details_id")
     private InventoryTransactionDetails details;
+
+    // Quan hệ Nhiều - 1: Nhiều giao dịch được thực hiện bởi 1 Barista
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "barista_id", nullable = false)
     private Barista barista;
 
     public InventoryTransaction() {

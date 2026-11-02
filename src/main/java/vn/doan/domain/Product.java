@@ -1,17 +1,39 @@
 package vn.doan.domain;
 
 import java.io.Serializable;
+import jakarta.persistence.*;
 
+@Entity
+@Table(name = "products")
 public class Product implements Serializable{
     private static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @Column(nullable = false, length = 100)
     private String name;
+
+    @Column(nullable = false)
     private long price;
+
+    @Column(name = "stock_quantity", nullable = false)
     private long stockQuantity;
+
     private String description;
+
+    @Column(name = "image_url")
     private String imageUrl;
+
+    @Column(nullable = false)
     private boolean status;
 
+    // --- QUAN HỆ NHIỀU - MỘT (MANY-TO-ONE) ---
+    // Nhiều Product thuộc về 1 Category
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false) // Khóa ngoại trỏ về bảng categories
+    private Category category;
     public Product() {
     }
 

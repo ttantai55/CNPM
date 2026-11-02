@@ -1,8 +1,29 @@
 package vn.doan.domain;
 
+import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "categories")
+
 public class Category {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @Column(nullable = false, length = 100)
     private String name;
+
+    // --- QUAN HỆ 1 - NHIỀU (ONE-TO-MANY) ---
+    // 1. 1 Category có nhiều Product
+    // 2. mappedBy = "category": Báo cho JPA biết biến `category` bên class Product 
+    //    mới là phía nắm giữ khóa ngoại (foreign key).
+    // 3. cascade = CascadeType.ALL: Khi thao tác với Category (lưu/xóa), 
+    //    nó sẽ lan truyền hành động đó xuống các Product bên trong.
+    // 4. orphanRemoval = true: Nếu xóa một Product ra khỏi danh sách này, 
+    //    nó sẽ tự động bị xóa khỏi cơ sở dữ liệu.
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private String description;
 
     // Constructor rỗng (Mặc định)
