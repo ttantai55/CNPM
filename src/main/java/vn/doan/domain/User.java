@@ -7,11 +7,12 @@ public class User {
     private String hashPassword;
     private String role;
     private String email;
+    private Customer info;
     private String avatarUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public User(String id, String username, String hashPassword, String role, String email,
+    public User(String id,Customer info, String username, String hashPassword, String role, String email,
             String avatarUrl, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.username = username;
