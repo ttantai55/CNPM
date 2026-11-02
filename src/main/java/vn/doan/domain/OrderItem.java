@@ -1,26 +1,35 @@
 package vn.doan.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class OrderItem {
     private String id;
-    private String orderId;
-    private String packageId;
-    private String productId;
+    private Order order;
+    private Product product;
     private long quantity;
-    private long price;
+    private long unitPrice;
+    private String note;
+    private List<OrderItemTopping> orderItemToppings = new ArrayList<>();
 
     public OrderItem() {
     }
 
-    public OrderItem(String id, String orderId, String packageId, String productId, long quantity, long price) {
+    public OrderItem(String id, Order order, Product product, long quantity, long unitPrice, String note) {
         this.id = id;
-        this.orderId = orderId;
-        this.packageId = packageId;
-        this.productId = productId;
+        this.order = order;
+        this.product = product;
         this.quantity = quantity;
-        this.price = price;
-        validate();
+        this.unitPrice = unitPrice;
+        this.note = note;
     }
 
+    // Tính thành tiền cho item (đơn giá * số lượng)
+    public long calculateSubtotal() {
+        return this.unitPrice * this.quantity;
+    }
+
+    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -29,28 +38,20 @@ public class OrderItem {
         this.id = id;
     }
 
-    public String getOrderId() {
-        return orderId;
+    public Order getOrder() {
+        return order;
     }
 
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
+    public void setOrder(Order order) {
+        this.order = order;
     }
 
-    public String getPackageId() {
-        return packageId;
+    public Product getProduct() {
+        return product;
     }
 
-    public void setPackageId(String packageId) {
-        this.packageId = packageId;
-    }
-
-    public String getProductId() {
-        return productId;
-    }
-
-    public void setProductId(String productId) {
-        this.productId = productId;
+    public void setProduct(Product product) {
+        this.product = product;
     }
 
     public long getQuantity() {
@@ -58,65 +59,30 @@ public class OrderItem {
     }
 
     public void setQuantity(long quantity) {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
-        }
-        if (isPackage() && quantity != 1) {
-            throw new IllegalArgumentException("Gói tập chỉ có số lượng bằng 1");
-        }
         this.quantity = quantity;
     }
 
-    public long getPrice() {
-        return price;
+    public long getUnitPrice() {
+        return unitPrice;
     }
 
-    public void setPrice(long price) {
-        if (price < 0) {
-            throw new IllegalArgumentException("Giá không được âm");
-        }
-        this.price = price;
+    public void setUnitPrice(long unitPrice) {
+        this.unitPrice = unitPrice;
     }
 
-    public long getSubTotal() {
-        return Math.multiplyExact(price, quantity);
+    public String getNote() {
+        return note;
     }
 
-    public boolean isProduct() {
-        return hasText(productId);
+    public void setNote(String note) {
+        this.note = note;
     }
 
-    public boolean isPackage() {
-        return hasText(packageId);
+    public List<OrderItemTopping> getOrderItemToppings() {
+        return orderItemToppings;
     }
 
-    public void validate() {
-        requireText(id, "Mã dòng đơn hàng không được để trống");
-        requireText(orderId, "Mã đơn hàng không được để trống");
-
-        if (isProduct() == isPackage()) {
-            throw new IllegalStateException("Món hàng phải là sản phẩm hoặc gói tập");
-        }
-        if (quantity <= 0) {
-            throw new IllegalStateException("Số lượng phải lớn hơn 0");
-        }
-        if (isPackage() && quantity != 1) {
-            throw new IllegalStateException("Gói tập chỉ có số lượng bằng 1");
-        }
-        if (price < 0) {
-            throw new IllegalStateException("Giá không được âm");
-        }
-
-        getSubTotal();
-    }
-
-    private static boolean hasText(String value) {
-        return value != null && !value.isBlank();
-    }
-
-    private static void requireText(String value, String message) {
-        if (!hasText(value)) {
-            throw new IllegalStateException(message);
-        }
+    public void setOrderItemToppings(List<OrderItemTopping> orderItemToppings) {
+        this.orderItemToppings = orderItemToppings;
     }
 }
