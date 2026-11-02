@@ -3,12 +3,12 @@ package vn.doan.domain.enums;
 import java.util.Set;
 
 public enum OrderStatus {
-    PENDING("Chờ xác nhận"),
-    CONFIRM("Đã xác nhận"),
-    PREPARING("Đang chuẩn bị"),
-    READY("Sẵn sàng giao / lấy"),
-    COMPLETED("Đã hoàn thành"),
-    CANCELED("Đã hủy");
+    PENDING,
+    CONFIRM,
+    PREPARING,
+    READY,
+    COMPLETED,
+    CANCELED;
 
     private final String description;
 
