@@ -4,5 +4,5 @@ public enum LoyalType {
     EARN,
     REDEEM,
     ADJUSTMENT,
-    EXPIRE;
+    EXPIRE
 }
