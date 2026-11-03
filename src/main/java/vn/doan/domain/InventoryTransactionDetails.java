@@ -10,34 +10,65 @@ public class InventoryTransactionDetails {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    // QUAN HỆ 1 - 1: Thuộc về một phiếu giao dịch kho cụ thể
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "transaction_id", nullable = false, unique = true)
+    private InventoryTransaction inventoryTransaction;
+
+    // QUAN HỆ NHIỀU - 1: Chi tiết giao dịch gắn với một nguyên liệu cụ thể
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ingredient_id", nullable = false)
+    private Ingredient ingredient;
+
     @Column(nullable = false)
     private double quantity;
 
     @Column(nullable = false)
     private long price;
 
-    // Quan hệ Nhiều - 1: Nhiều chi tiết giao dịch kho liên quan đến 1 Nguyên liệu (Ingredient)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ingredient_id", nullable = false)
-    private Ingredient ingredient;
-    
+    // BẮT BUỘC CHO JPA: Constructor không tham số
     public InventoryTransactionDetails() {
     }
 
-    public InventoryTransactionDetails(String id, double quantity, long price, Ingredient ingredient) {
-        this.id = id;
+    public InventoryTransactionDetails(InventoryTransaction inventoryTransaction, Ingredient ingredient, double quantity, long price) {
+        this.inventoryTransaction = inventoryTransaction;
+        this.ingredient = ingredient;
         this.quantity = quantity;
         this.price = price;
-        this.ingredient = ingredient;
     }
 
-    // Getters and Setters
+    public InventoryTransactionDetails(String id, InventoryTransaction inventoryTransaction, Ingredient ingredient, double quantity, long price) {
+        this.id = id;
+        this.inventoryTransaction = inventoryTransaction;
+        this.ingredient = ingredient;
+        this.quantity = quantity;
+        this.price = price;
+    }
+
+    // --- GETTERS & SETTERS ---
+
     public String getId() {
         return id;
     }
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public InventoryTransaction getInventoryTransaction() {
+        return inventoryTransaction;
+    }
+
+    public void setInventoryTransaction(InventoryTransaction inventoryTransaction) {
+        this.inventoryTransaction = inventoryTransaction;
+    }
+
+    public Ingredient getIngredient() {
+        return ingredient;
+    }
+
+    public void setIngredient(Ingredient ingredient) {
+        this.ingredient = ingredient;
     }
 
     public double getQuantity() {
@@ -54,13 +85,5 @@ public class InventoryTransactionDetails {
 
     public void setPrice(long price) {
         this.price = price;
-    }
-
-    public Ingredient getIngredient() {
-        return ingredient;
-    }
-
-    public void setIngredient(Ingredient ingredient) {
-        this.ingredient = ingredient;
     }
 }

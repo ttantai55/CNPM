@@ -1,46 +1,72 @@
-package vn.doan.domain; // hoặc vn.doan.dto tùy cấu trúc dự án của bạn
+package vn.doan.domain;
 
+import jakarta.persistence.*;
 import java.io.Serializable;
 
+@Entity
+@Table(name = "cart_items")
 public class CartItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    // QUAN HỆ NHIỀU - 1: Nhiều CartItem nằm trong 1 Cart
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cart_id", nullable = false)
+    private Cart cart;
+
+    // QUAN HỆ NHIỀU - 1: Mỗi dòng CartItem tham chiếu tới 1 Product
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
+
+    @Column(nullable = false)
     private int quantity;
 
+    // BẮT BUỘC CHO JPA: Constructor không tham số
     public CartItem() {
     }
 
-
+    public CartItem(Cart cart, Product product, int quantity) {
+        this.cart = cart;
+        this.product = product;
+        this.quantity = quantity;
+    }
 
     public CartItem(Product product, int quantity) {
         this.product = product;
         this.quantity = quantity;
     }
 
-  
-    // Lấy ID định danh của món hàng
+    // --- CÁC HÀM TIỆN ÍCH NGHIỆP VỤ ---
+
+    // Lấy thành tiền = Đơn giá sản phẩm * số lượng
+    public long getSubtotal() {
+        if (this.product == null) {
+            return 0;
+        }
+        return this.product.getPrice() * this.quantity;
+    }
+
+    // --- GETTERS & SETTERS ---
+
     public String getId() {
-        return this.product.getId();
+        return id;
     }
 
-    // Lấy tên hiển thị
-    public String getName() {
-        return this.product.getName();
+    public void setId(String id) {
+        this.id = id;
     }
 
-    // Lấy đơn giá
-    public long getPrice() {
-        return this.product.getPrice();
+    public Cart getCart() {
+        return cart;
     }
 
-    // Tính thành tiền của món này (đơn giá x số lượng)
-    public long getSubTotal() {
-        return getPrice() * this.quantity;
+    public void setCart(Cart cart) {
+        this.cart = cart;
     }
-
-    // --- Getters & Setters ---
-
 
     public Product getProduct() {
         return product;

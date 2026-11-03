@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "products")
-public class Product implements Serializable{
+public class Product implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
@@ -29,16 +29,18 @@ public class Product implements Serializable{
     @Column(nullable = false)
     private boolean status;
 
-    // --- QUAN HỆ NHIỀU - MỘT (MANY-TO-ONE) ---
-    // Nhiều Product thuộc về 1 Category
+    // QUAN HỆ NHIỀU - 1: Nhiều Product thuộc về 1 Category
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false) // Khóa ngoại trỏ về bảng categories
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    // 1. Constructor không tham số cho JPA
     public Product() {
     }
 
+    // 2. Constructor đầy đủ tham số 
     public Product(String id, String name, long price, long stockQuantity,
-            String description, String imageUrl, boolean status) {
+                   String description, String imageUrl, boolean status, Category category) {
         this.id = id;
         this.name = name;
         this.price = price;
@@ -46,15 +48,10 @@ public class Product implements Serializable{
         this.description = description;
         this.imageUrl = imageUrl;
         this.status = status;
+        this.category = category;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public boolean isStatus() {
-        return status;
-    }
+    // --- CÁC HÀM NGHIỆP VỤ ---
 
     public void activate() {
         status = true;
@@ -62,6 +59,44 @@ public class Product implements Serializable{
 
     public void deactivate() {
         status = false;
+    }
+
+    public boolean hasEnoughStock(long quantity) {
+        return quantity > 0 && stockQuantity >= quantity;
+    }
+
+    public boolean isOutOfStock() {
+        return stockQuantity == 0;
+    }
+
+    public void decreaseStock(long quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
+        }
+        if (!hasEnoughStock(quantity)) {
+            throw new IllegalStateException("Không đủ hàng trong kho");
+        }
+        stockQuantity -= quantity;
+    }
+
+    public void increaseStock(long quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
+        }
+        stockQuantity += quantity;
+    }
+
+    public void changePrice(long newPrice) {
+        if (newPrice < 0) {
+            throw new IllegalArgumentException("Giá không được âm");
+        }
+        price = newPrice;
+    }
+
+    // --- GETTERS & SETTERS ---
+
+    public String getId() {
+        return id;
     }
 
     public void setId(String id) {
@@ -85,11 +120,6 @@ public class Product implements Serializable{
             throw new IllegalArgumentException("Giá sản phẩm không được âm");
         }
         this.price = price;
-    }
-
-    @Deprecated
-    public void setPice(long price) {
-        setPrice(price);
     }
 
     public long getStockQuantity() {
@@ -119,53 +149,19 @@ public class Product implements Serializable{
         this.imageUrl = imageUrl;
     }
 
-    public boolean hasEnoughStock(long quantity) {
-        return quantity > 0 && stockQuantity >= quantity;
+    public boolean isStatus() {
+        return status;
     }
 
-    public boolean isOutOfStock() {
-        return stockQuantity == 0;
+    public void setStatus(boolean status) {
+        this.status = status;
     }
 
-    public void decreaseStock(long quantity) {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
-        }
-        if (!hasEnoughStock(quantity)) {
-            throw new IllegalStateException("Không đủ hàng trong kho");
-        }
-
-        stockQuantity -= quantity;
+    public Category getCategory() {
+        return category;
     }
 
-    public void increaseStock(long quantity) {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
-        }
-
-        stockQuantity += quantity;
-    }
-
-    public void changePrice(long newPrice) {
-        if (newPrice < 0) {
-            throw new IllegalArgumentException("Giá không được âm");
-        }
-
-        price = newPrice;
-    }
-
-    public void validate() {
-        if (id == null || id.isBlank()) {
-            throw new IllegalArgumentException("Mã sản phẩm không được để trống");
-        }
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Tên sản phẩm không được để trống");
-        }
-        if (price < 0) {
-            throw new IllegalArgumentException("Giá sản phẩm không được âm");
-        }
-        if (stockQuantity < 0) {
-            throw new IllegalArgumentException("Số lượng tồn kho không được âm");
-        }
+    public void setCategory(Category category) {
+        this.category = category;
     }
 }

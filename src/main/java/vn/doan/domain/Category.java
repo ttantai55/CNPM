@@ -26,19 +26,26 @@ public class Category {
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private String description;
 
-    // Constructor rỗng (Mặc định)
+    // QUAN HỆ 1 - NHIỀU: 1 Category có nhiều Product
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Product> products = new ArrayList<>();
+
+    // BẮT BUỘC: Constructor không tham số cho JPA
     public Category() {
     }
 
-    // Constructor đầy đủ tham số
+    public Category(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
+
     public Category(String id, String name, String description) {
         this.id = id;
         this.name = name;
         this.description = description;
     }
 
-    // --- GETTER & SETTER ---
-
+    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -61,5 +68,13 @@ public class Category {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public List<Product> getProducts() {
+        return products;
+    }
+
+    public void setProducts(List<Product> products) {
+        this.products = products;
     }
 }
