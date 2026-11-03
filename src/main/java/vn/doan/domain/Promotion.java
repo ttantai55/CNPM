@@ -46,10 +46,11 @@ public class Promotion {
     @OneToMany(mappedBy = "discount")
     private List<Order> orders = new ArrayList<>();
 
-    // BẮT BUỘC: Constructor không tham số cho JPA
+    // 1. Constructor không tham số 
     public Promotion() {
     }
 
+    // 2. Constructor tạo mới nhanh
     public Promotion(String voucherCode, String description, DiscountType discountType,
                      long discountValue, LocalDate startDate, LocalDate endDate, long usageLimit) {
         this.voucherCode = voucherCode;
@@ -61,6 +62,22 @@ public class Promotion {
         this.usageLimit = usageLimit;
         this.usedCount = 0;
         this.isActive = true;
+    }
+
+    // 3. Constructor đầy đủ tham số 
+    public Promotion(String id, String voucherCode, String description, DiscountType discountType,
+                     long discountValue, LocalDate startDate, LocalDate endDate, long usageLimit,
+                     long usedCount, boolean isActive) {
+        this.id = id;
+        this.voucherCode = voucherCode;
+        this.description = description;
+        this.discountType = discountType;
+        this.discountValue = discountValue;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.usageLimit = usageLimit;
+        this.usedCount = usedCount;
+        this.isActive = isActive;
     }
 
     public boolean isValid() {
@@ -84,7 +101,8 @@ public class Promotion {
         return 0;
     }
 
-    // Getters and Setters
+    // --- GETTERS & SETTERS ---
+
     public String getId() {
         return id;
     }

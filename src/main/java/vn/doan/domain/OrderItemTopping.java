@@ -1,10 +1,10 @@
 package vn.doan.domain;
+
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "order_item_toppings")
-
-    public class OrderItemTopping {
+public class OrderItemTopping {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -18,8 +18,6 @@ import jakarta.persistence.*;
     // Quan hệ Nhiều - 1: Lựa chọn này ứng với Topping nào trong menu
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "topping_id", nullable = false)
-
-    @Column(nullable = false)
     private Topping topping;
 
     @Column(nullable = false)

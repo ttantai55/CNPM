@@ -39,6 +39,12 @@ public class Category {
         this.description = description;
     }
 
+    public Category(String id, String name, String description) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+    }
+
     // Getters and Setters
     public String getId() {
         return id;

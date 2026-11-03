@@ -34,11 +34,22 @@ public class OrderItem {
     @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItemTopping> orderItemToppings = new ArrayList<>();
 
-    // BẮT BUỘC: Constructor không tham số cho JPA
+    // 1. Constructor không tham số 
     public OrderItem() {
     }
 
+    // 2. Constructor tạo mới tiện lợi khi thêm món vào đơn
     public OrderItem(Order order, Product product, long quantity, long unitPrice, String note) {
+        this.order = order;
+        this.product = product;
+        this.quantity = quantity;
+        this.unitPrice = unitPrice;
+        this.note = note;
+    }
+
+    // 3. Constructor đầy đủ tham số CÓ ID (dùng cho mock test, seed data, mapping)
+    public OrderItem(String id, Order order, Product product, long quantity, long unitPrice, String note) {
+        this.id = id;
         this.order = order;
         this.product = product;
         this.quantity = quantity;
@@ -50,7 +61,8 @@ public class OrderItem {
         return this.unitPrice * this.quantity;
     }
 
-    // Getters and Setters
+    // --- GETTERS & SETTERS ---
+
     public String getId() {
         return id;
     }

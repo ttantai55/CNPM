@@ -37,6 +37,14 @@ public class Invoices {
         this.issuedDate = LocalDateTime.now();
     }
 
+    public Invoices(String id, String invoiceNumber, Order order, long totalPaid) {
+        this.id =id;
+        this.invoiceNumber = invoiceNumber;
+        this.order = order;
+        this.totalPaid = totalPaid;
+        this.issuedDate = LocalDateTime.now();
+    }
+
     // Getters and Setters
     public String getId() {
         return id;

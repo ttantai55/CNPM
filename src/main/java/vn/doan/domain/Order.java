@@ -6,7 +6,6 @@ import vn.doan.domain.enums.OrderStatus;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "orders")
@@ -43,18 +42,34 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderProcess> processes = new ArrayList<>();
 
-    // BẮT BUỘC CHO JPA: Constructor không tham số
+    // 1. Constructor không tham số
     public Order() {
         this.status = OrderStatus.PENDING;
         this.createdAt = LocalDateTime.now();
     }
 
+    // 2. Constructor tạo mới nhanh trong Service khi đặt đơn
     public Order(Customer customer) {
         this.customer = customer;
         this.status = OrderStatus.PENDING;
         this.createdAt = LocalDateTime.now();
         recordProcess(OrderStatus.PENDING);
     }
+
+    // 3. Constructor đầy đủ tham số CÓ ID (dùng cho mock test, seed data, map DTO)
+    public Order(String id, Customer customer, long totalAmount, Promotion discount, 
+                 long finalAmount, OrderStatus status, LocalDateTime createdAt) {
+        this.id = id;
+        this.customer = customer;
+        this.totalAmount = totalAmount;
+        this.discount = discount;
+        this.finalAmount = finalAmount;
+        this.status = status != null ? status : OrderStatus.PENDING;
+        this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
+        recordProcess(this.status);
+    }
+
+    // --- CÁC HÀM NGHIỆP VỤ ---
 
     public void changeStatus(OrderStatus newStatus) {
         if (!this.status.canTransitionTo(newStatus)) {
@@ -71,7 +86,8 @@ public class Order {
         this.processes.add(process);
     }
 
-    // Getters and Setters
+    // --- GETTERS & SETTERS ---
+
     public String getId() {
         return id;
     }

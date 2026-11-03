@@ -33,12 +33,13 @@ public class Payment {
     @Column(name = "payment_date", nullable = false)
     private LocalDateTime paymentDate;
 
-    // BẮT BUỘC: Constructor không tham số cho JPA
+    // 1. Constructor không tham số 
     public Payment() {
         this.paymentStatus = PaymentStatus.PENDING;
         this.paymentDate = LocalDateTime.now();
     }
 
+    // 2. Constructor tạo mới nhanh
     public Payment(Order order, long totalAmount, PaymentMethod paymentMethod) {
         this.order = order;
         this.totalAmount = totalAmount;
@@ -47,7 +48,19 @@ public class Payment {
         this.paymentDate = LocalDateTime.now();
     }
 
-    // Getters and Setters
+    // 3. Constructor đầy đủ tham số 
+    public Payment(String id, Order order, long totalAmount, PaymentMethod paymentMethod, 
+                   PaymentStatus paymentStatus, LocalDateTime paymentDate) {
+        this.id = id;
+        this.order = order;
+        this.totalAmount = totalAmount;
+        this.paymentMethod = paymentMethod;
+        this.paymentStatus = paymentStatus != null ? paymentStatus : PaymentStatus.PENDING;
+        this.paymentDate = paymentDate != null ? paymentDate : LocalDateTime.now();
+    }
+
+    // --- GETTERS & SETTERS ---
+
     public String getId() {
         return id;
     }
