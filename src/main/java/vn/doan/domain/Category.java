@@ -1,8 +1,6 @@
 package vn.doan.domain;
 
 import jakarta.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "categories")
@@ -26,9 +24,7 @@ public class Category {
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private String description;
 
-    // QUAN HỆ 1 - NHIỀU: 1 Category có nhiều Product
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Product> products = new ArrayList<>();
+    
 
     // BẮT BUỘC: Constructor không tham số cho JPA
     public Category() {
@@ -70,11 +66,5 @@ public class Category {
         this.description = description;
     }
 
-    public List<Product> getProducts() {
-        return products;
-    }
-
-    public void setProducts(List<Product> products) {
-        this.products = products;
-    }
+    
 }
