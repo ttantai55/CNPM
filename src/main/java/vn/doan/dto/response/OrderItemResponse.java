@@ -35,63 +35,31 @@ public class OrderItemResponse {
         return id; 
         }
 
-    public void setId(String id) { 
-        this.id = id; 
-        }
-
     public String getProductId() { 
         return productId; 
-        }
-
-    public void setProductId(String productId) { 
-        this.productId = productId; 
         }
 
     public String getProductName() { 
         return productName; 
         }
 
-    public void setProductName(String productName) { 
-        this.productName = productName; 
-        }
-
     public long getQuantity() { 
         return quantity; 
-        }
-
-    public void setQuantity(long quantity) { 
-        this.quantity = quantity; 
         }
 
     public long getUnitPrice() { 
         return unitPrice; 
         }
 
-    public void setUnitPrice(long unitPrice) { 
-        this.unitPrice = unitPrice; 
-        }
-
     public long getSubtotal() { 
         return subtotal; 
-        }
-
-    public void setSubtotal(long subtotal) { 
-        this.subtotal = subtotal; 
         }
 
     public String getNote() { 
         return note; 
         }
 
-    public void setNote(String note) { 
-        this.note = note; 
-        }
-
     public List<String> getToppingNames() { 
         return toppingNames; 
-        }
-
-    public void setToppingNames(List<String> toppingNames) { 
-        this.toppingNames = toppingNames; 
         }
 }

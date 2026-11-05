@@ -13,15 +13,21 @@ public class InvoiceDetailResponse {
 
     public InvoiceDetailResponse() {}
 
+    public InvoiceDetailResponse(String invoiceNumber, LocalDateTime issuedDate, String baristaName, long totalPaid, List<OrderItemResponse> items) {
+        this.invoiceNumber = invoiceNumber;
+        this.issuedDate = issuedDate;
+        this.baristaName = baristaName;
+        this.totalPaid = totalPaid;
+        this.items = items;
+    }
     // Getters & Setters
     public String getInvoiceNumber() { return invoiceNumber; }
-    public void setInvoiceNumber(String invoiceNumber) { this.invoiceNumber = invoiceNumber; }
+    
     public LocalDateTime getIssuedDate() { return issuedDate; }
-    public void setIssuedDate(LocalDateTime issuedDate) { this.issuedDate = issuedDate; }
+    
     public String getBaristaName() { return baristaName; }
-    public void setBaristaName(String baristaName) { this.baristaName = baristaName; }
+    
     public long getTotalPaid() { return totalPaid; }
-    public void setTotalPaid(long totalPaid) { this.totalPaid = totalPaid; }
+   
     public List<OrderItemResponse> getItems() { return items; }
-    public void setItems(List<OrderItemResponse> items) { this.items = items; }
 }

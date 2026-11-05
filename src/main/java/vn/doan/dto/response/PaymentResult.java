@@ -16,9 +16,8 @@ public class PaymentResult {
     }
 
     public PaymentStatus getStatus() { return status; }
-    public void setStatus(PaymentStatus status) { this.status = status; }
+    
     public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
+    
     public String getOrderId() { return orderId; }
-    public void setOrderId(String orderId) { this.orderId = orderId; }
 }

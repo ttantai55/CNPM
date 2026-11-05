@@ -16,9 +16,8 @@ public class PaymentUrlResponse {
     }
 //--- GETTER & SETTER ---
     public String getOrderId() { return orderId; }
-    public void setOrderId(String orderId) { this.orderId = orderId; }
+    
     public String getPaymentUrl() { return paymentUrl; }
-    public void setPaymentUrl(String paymentUrl) { this.paymentUrl = paymentUrl; }
+    
     public LocalDateTime getExpiredAt() { return expiredAt; }
-    public void setExpiredAt(LocalDateTime expiredAt) { this.expiredAt = expiredAt; }
 }
