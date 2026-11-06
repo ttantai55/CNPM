@@ -23,15 +23,15 @@ public class IngredientResponse {
 
     // Getters & Setters
     public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+
     public UnitType getUnit() { return unit; }
-    public void setUnit(UnitType unit) { this.unit = unit; }
+
     public int getCurrentStock() { return currentStock; }
-    public void setCurrentStock(int currentStock) { this.currentStock = currentStock; }
+
     public double getMinAlertThreshold() { return minAlertThreshold; }
-    public void setMinAlertThreshold(double minAlertThreshold) { this.minAlertThreshold = minAlertThreshold; }
+
     public boolean isBelowThreshold() { return isBelowThreshold; }
-    public void setBelowThreshold(boolean belowThreshold) { isBelowThreshold = belowThreshold; }
+
 }

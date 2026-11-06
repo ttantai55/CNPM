@@ -6,8 +6,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "baristas")
-
-
 public class Barista {
 
     @Id
@@ -17,13 +15,16 @@ public class Barista {
     @Column(nullable = false, length = 100)
     private String name;
 
-    // Quan hệ 1 - Nhiều: 1 Barista thực hiện nhiều InventoryTransaction
-    // mappedBy = "barista" trỏ đến biến barista ở phía InventoryTransaction
-    @OneToMany(mappedBy = "barista", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<InventoryTransaction> transactions = new ArrayList<>();
-    
+    // QUAN HỆ 1 - NHIỀU: 1 Barista có thể tạo nhiều giao dịch kho
+    @OneToMany(mappedBy = "barista")
+    private List<InventoryTransaction> inventoryTransactions = new ArrayList<>();
 
+    // BẮT BUỘC CHO JPA: Constructor không tham số
     public Barista() {
+    }
+
+    public Barista(String name) {
+        this.name = name;
     }
 
     public Barista(String id, String name) {
@@ -31,7 +32,8 @@ public class Barista {
         this.name = name;
     }
 
-    // Getters and Setters
+    // --- GETTERS & SETTERS ---
+
     public String getId() {
         return id;
     }
@@ -48,11 +50,11 @@ public class Barista {
         this.name = name;
     }
 
-    public List<InventoryTransaction> getTransactions() {
-        return transactions;
+    public List<InventoryTransaction> getInventoryTransactions() {
+        return inventoryTransactions;
     }
 
-    public void setTransactions(List<InventoryTransaction> transactions) {
-        this.transactions = transactions;
+    public void setInventoryTransactions(List<InventoryTransaction> inventoryTransactions) {
+        this.inventoryTransactions = inventoryTransactions;
     }
 }

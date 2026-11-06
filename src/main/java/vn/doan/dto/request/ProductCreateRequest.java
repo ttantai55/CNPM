@@ -2,16 +2,16 @@ package vn.doan.dto.request;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public class ProductCreateRequest {
     
     @NotBlank(message = "Tên sản phẩm không được để trống")
     private String name;
 
+    @NotNull(message = "Giá sản phẩm không được để trống")
     @Min(value = 0, message = "Giá sản phẩm không được âm")
-    private long price;
-
-
+    private Long price;
 
 
     private String description;

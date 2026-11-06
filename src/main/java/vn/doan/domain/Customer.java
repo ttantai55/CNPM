@@ -1,28 +1,63 @@
 package vn.doan.domain;
-import java.time.LocalDate;
 
-public class Customer{
+import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "customers")
+public class Customer {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    private String userId;
+
+    // QUAN HỆ 1 - 1: Ánh xạ 2 chiều ngược về User thông qua trường info ở class User
+    @OneToOne(mappedBy = "info", fetch = FetchType.LAZY)
+    private User user;
+
+    @Column(nullable = false, length = 100)
     private String name;
+
+    @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
+
+    @Column(nullable = false)
     private boolean gender;
+
     private String address;
+
+    @Column(length = 20)
     private String phone;
 
-    public Customer(String id, String userId, String name, LocalDate dateOfBirth, boolean gender, String address,
-    String phone) {
-        this.id = id;
-        this.userId = userId;
+    // QUAN HỆ 1 - NHIỀU: 1 Customer thực hiện nhiều đơn hàng Order
+    @OneToMany(mappedBy = "customer")
+    private List<Order> orders = new ArrayList<>();
+
+    // BẮT BUỘC CHO JPA: Constructor không tham số
+    public Customer() {
+    }
+
+    public Customer(String name, LocalDate dateOfBirth, boolean gender, String address, String phone) {
         this.name = name;
         this.dateOfBirth = dateOfBirth;
         this.gender = gender;
         this.address = address;
         this.phone = phone;
     }
-    
-    public Customer() {
+
+    public Customer(String id, User user, String name, LocalDate dateOfBirth, boolean gender, String address, String phone) {
+        this.id = id;
+        this.user = user;
+        this.name = name;
+        this.dateOfBirth = dateOfBirth;
+        this.gender = gender;
+        this.address = address;
+        this.phone = phone;
     }
+
+    // --- GETTERS & SETTERS ---
 
     public String getId() {
         return id;
@@ -32,12 +67,12 @@ public class Customer{
         this.id = id;
     }
 
-    public String getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public String getName() {
@@ -80,4 +115,11 @@ public class Customer{
         this.phone = phone;
     }
 
+    public List<Order> getOrders() {
+        return orders;
+    }
+
+    public void setOrders(List<Order> orders) {
+        this.orders = orders;
+    }
 }

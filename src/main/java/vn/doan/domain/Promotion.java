@@ -1,27 +1,58 @@
 package vn.doan.domain;
 
-import java.time.LocalDate;
-
+import jakarta.persistence.*;
 import vn.doan.domain.enums.DiscountType;
 
-public class Promotion {
-    private String id;
-    private String voucherCode;
-    private String description;
-    private DiscountType discountType;
-    private long discountValue;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private long usageLimit;
-    private long usedCount;
-    private boolean isActive;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
+@Entity
+@Table(name = "promotions")
+public class Promotion {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @Column(name = "voucher_code", nullable = false, unique = true, length = 50)
+    private String voucherCode;
+
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "discount_type", nullable = false)
+    private DiscountType discountType;
+
+    @Column(name = "discount_value", nullable = false)
+    private long discountValue;
+
+    @Column(name = "start_date")
+    private LocalDate startDate;
+
+    @Column(name = "end_date")
+    private LocalDate endDate;
+
+    @Column(name = "usage_limit")
+    private long usageLimit;
+
+    @Column(name = "used_count")
+    private long usedCount;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
+
+    // QUAN HỆ 1 - NHIỀU: 1 Voucher khuyến mãi có thể được áp dụng ở nhiều Order
+    @OneToMany(mappedBy = "discount")
+    private List<Order> orders = new ArrayList<>();
+
+    // 1. Constructor không tham số 
     public Promotion() {
     }
 
-    public Promotion(String id, String voucherCode, String description, DiscountType discountType,
+    // 2. Constructor tạo mới nhanh
+    public Promotion(String voucherCode, String description, DiscountType discountType,
                      long discountValue, LocalDate startDate, LocalDate endDate, long usageLimit) {
-        this.id = id;
         this.voucherCode = voucherCode;
         this.description = description;
         this.discountType = discountType;
@@ -33,9 +64,22 @@ public class Promotion {
         this.isActive = true;
     }
 
-    /**
-     * Kiểm tra điều kiện hiệu lực của khuyến mãi
-     */
+    // 3. Constructor đầy đủ tham số 
+    public Promotion(String id, String voucherCode, String description, DiscountType discountType,
+                     long discountValue, LocalDate startDate, LocalDate endDate, long usageLimit,
+                     long usedCount, boolean isActive) {
+        this.id = id;
+        this.voucherCode = voucherCode;
+        this.description = description;
+        this.discountType = discountType;
+        this.discountValue = discountValue;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.usageLimit = usageLimit;
+        this.usedCount = usedCount;
+        this.isActive = isActive;
+    }
+
     public boolean isValid() {
         LocalDate today = LocalDate.now();
         boolean withinDateRange = (startDate == null || !today.isBefore(startDate))
@@ -44,9 +88,6 @@ public class Promotion {
         return isActive && withinDateRange && withinLimit;
     }
 
-    /**
-     * Tính toán số tiền được giảm giá dựa trên tổng tiền ban đầu
-     */
     public long calculateDiscount(long totalAmount) {
         if (!isValid() || totalAmount <= 0) {
             return 0;
@@ -60,7 +101,8 @@ public class Promotion {
         return 0;
     }
 
-    // Getters and Setters
+    // --- GETTERS & SETTERS ---
+
     public String getId() {
         return id;
     }
@@ -139,5 +181,13 @@ public class Promotion {
 
     public void setActive(boolean active) {
         isActive = active;
+    }
+
+    public List<Order> getOrders() {
+        return orders;
+    }
+
+    public void setOrders(List<Order> orders) {
+        this.orders = orders;
     }
 }

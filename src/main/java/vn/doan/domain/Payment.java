@@ -1,31 +1,65 @@
 package vn.doan.domain;
 
-import java.time.LocalDateTime;
-
+import jakarta.persistence.*;
 import vn.doan.domain.enums.PaymentMethod;
 import vn.doan.domain.enums.PaymentStatus;
 
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "payments")
 public class Payment {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    private String orderId;
+
+    // QUAN HỆ 1 - 1: Mỗi thanh toán ứng với 1 đơn hàng cụ thể
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    private Order order;
+
+    @Column(name = "total_amount", nullable = false)
     private long totalAmount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", nullable = false)
     private PaymentMethod paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus;
+
+    @Column(name = "payment_date", nullable = false)
     private LocalDateTime paymentDate;
-    
+
+    // 1. Constructor không tham số 
     public Payment() {
+        this.paymentStatus = PaymentStatus.PENDING;
+        this.paymentDate = LocalDateTime.now();
     }
 
-    public Payment(String id, String orderId, long totalAmount, PaymentMethod paymentMethod, PaymentStatus paymentStatus,
-            LocalDateTime paymentDate) {
-        this.id = id;
-        this.orderId = orderId;
+    // 2. Constructor tạo mới nhanh
+    public Payment(Order order, long totalAmount, PaymentMethod paymentMethod) {
+        this.order = order;
         this.totalAmount = totalAmount;
         this.paymentMethod = paymentMethod;
-        this.paymentStatus = paymentStatus;
-        this.paymentDate = paymentDate;
+        this.paymentStatus = PaymentStatus.PENDING;
+        this.paymentDate = LocalDateTime.now();
     }
+
+    // 3. Constructor đầy đủ tham số 
+    public Payment(String id, Order order, long totalAmount, PaymentMethod paymentMethod, 
+                   PaymentStatus paymentStatus, LocalDateTime paymentDate) {
+        this.id = id;
+        this.order = order;
+        this.totalAmount = totalAmount;
+        this.paymentMethod = paymentMethod;
+        this.paymentStatus = paymentStatus != null ? paymentStatus : PaymentStatus.PENDING;
+        this.paymentDate = paymentDate != null ? paymentDate : LocalDateTime.now();
+    }
+
+    // --- GETTERS & SETTERS ---
 
     public String getId() {
         return id;
@@ -35,12 +69,12 @@ public class Payment {
         this.id = id;
     }
 
-    public String getOrderId() {
-        return orderId;
+    public Order getOrder() {
+        return order;
     }
 
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
+    public void setOrder(Order order) {
+        this.order = order;
     }
 
     public long getTotalAmount() {
@@ -48,9 +82,6 @@ public class Payment {
     }
 
     public void setTotalAmount(long totalAmount) {
-        if (totalAmount < 0) {
-            throw new IllegalArgumentException("Số tiền thanh toán không được âm");
-        }
         this.totalAmount = totalAmount;
     }
 
@@ -59,9 +90,6 @@ public class Payment {
     }
 
     public void setPaymentMethod(PaymentMethod paymentMethod) {
-        if (paymentMethod == null) {
-            throw new IllegalArgumentException("Phương thức thanh toán không được để trống");
-        }
         this.paymentMethod = paymentMethod;
     }
 
@@ -69,15 +97,7 @@ public class Payment {
         return paymentStatus;
     }
 
-    // Alias getter để khớp với InvoiceService khi gọi p.getStatus()
-    public PaymentStatus getStatus() {
-        return paymentStatus;
-    }
-
     public void setPaymentStatus(PaymentStatus paymentStatus) {
-        if (paymentStatus == null) {
-            throw new IllegalArgumentException("Trạng thái thanh toán không được để trống");
-        }
         this.paymentStatus = paymentStatus;
     }
 
@@ -87,57 +107,5 @@ public class Payment {
 
     public void setPaymentDate(LocalDateTime paymentDate) {
         this.paymentDate = paymentDate;
-    }
-        
-    public boolean isPending() {
-        return this.paymentStatus == PaymentStatus.PENDING;
-    }
-
-    public boolean isPaid() {
-        return this.paymentStatus == PaymentStatus.SUCCESS;
-    }
-
-    public void markPaid(LocalDateTime paidAt) {
-        if (paidAt == null) {
-            throw new IllegalArgumentException("Thời gian thanh toán không được để trống");
-        }
-
-        if (!isPending()) {
-            throw new IllegalStateException("Giao dịch không còn ở trạng thái chờ");
-        }
-
-        this.paymentStatus = PaymentStatus.SUCCESS;
-        this.paymentDate = paidAt;
-    }
-
-    public void markFailed() {
-        if (!isPending()) {
-            throw new IllegalStateException("Giao dịch không còn ở trạng thái chờ");
-        }
-
-        this.paymentStatus = PaymentStatus.FAILED;
-    }
-
-    public void validate() {
-        requireText(id, "Mã thanh toán không được để trống");
-        requireText(orderId, "Mã đơn hàng không được để trống");
-        if (totalAmount < 0) {
-            throw new IllegalStateException("Số tiền thanh toán không được âm");
-        }
-        if (paymentMethod == null) {
-            throw new IllegalStateException("Phương thức thanh toán không hợp lệ: " + paymentMethod);
-        }
-        if (paymentStatus == null) {
-            throw new IllegalStateException("Trạng thái thanh toán không hợp lệ: " + paymentStatus);
-        }
-        if (paymentStatus == PaymentStatus.SUCCESS && paymentDate == null) {
-            throw new IllegalStateException("Thanh toán thành công phải có thời gian thanh toán");
-        }
-    }
-
-    private static void requireText(String value, String message) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalStateException(message);
-        }
     }
 }

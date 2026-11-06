@@ -7,6 +7,7 @@ public enum OrderStatus {
     CONFIRM,
     PREPARING,
     READY,
+ 
     COMPLETED,
     CANCELED;
     public boolean canTransitionTo(OrderStatus next) {

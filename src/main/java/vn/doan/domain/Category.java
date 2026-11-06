@@ -1,13 +1,20 @@
 package vn.doan.domain;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "categories")
-
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Category {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -15,51 +22,15 @@ public class Category {
     @Column(nullable = false, length = 100)
     private String name;
 
-    // --- QUAN HỆ 1 - NHIỀU (ONE-TO-MANY) ---
-    // 1. 1 Category có nhiều Product
-    // 2. mappedBy = "category": Báo cho JPA biết biến `category` bên class Product 
-    //    mới là phía nắm giữ khóa ngoại (foreign key).
-    // 3. cascade = CascadeType.ALL: Khi thao tác với Category (lưu/xóa), 
-    //    nó sẽ lan truyền hành động đó xuống các Product bên trong.
-    // 4. orphanRemoval = true: Nếu xóa một Product ra khỏi danh sách này, 
-    //    nó sẽ tự động bị xóa khỏi cơ sở dữ liệu.
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    // Constructor rỗng (Mặc định)
-    public Category() {
-    }
+    // --- QUAN HỆ 1 - NHIỀU (ONE-TO-MANY) ---
+    // 1 Category có nhiều Product -> Kiểu dữ liệu phải là List<Product>
+    // mappedBy = "category" trỏ tới field `private Category category;` trong entity Product
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Product> products = new ArrayList<>();
 
-    // Constructor đầy đủ tham số
-    public Category(String id, String name, String description) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-    }
-
-    // --- GETTER & SETTER ---
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    
 }

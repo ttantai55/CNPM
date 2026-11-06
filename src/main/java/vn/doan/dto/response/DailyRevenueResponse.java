@@ -17,9 +17,9 @@ public class DailyRevenueResponse {
 
     // Getters & Setters
     public LocalDate getDate() { return date; }
-    public void setDate(LocalDate date) { this.date = date; }
+
     public int getTotalOrders() { return totalOrders; }
-    public void setTotalOrders(int totalOrders) { this.totalOrders = totalOrders; }
+
     public long getTotalRevenue() { return totalRevenue; }
-    public void setTotalRevenue(long totalRevenue) { this.totalRevenue = totalRevenue; }
+
 }
