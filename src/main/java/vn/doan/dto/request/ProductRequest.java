@@ -20,4 +20,10 @@ public class ProductRequest {
     private String imageUrl;
 
    
+
+
+
+
+
+    
 }
