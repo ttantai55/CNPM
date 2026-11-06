@@ -1,3 +1,4 @@
+*.zip
 target/
 *.class
 *.jar
@@ -5,4 +6,3 @@ target/
 .idea/
 .vscode/
 .github/modernize/
-*.zip
