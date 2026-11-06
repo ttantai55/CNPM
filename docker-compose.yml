@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: drinkshop
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: drinkshop_db
+      POSTGRES_USER: 5TL
+      POSTGRES_PASSWORD: taidz@2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Tự động thực thi init.sql ngay lần đầu container khởi chạy:
+      - ./DB.sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U 5TL -d drinkshop_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
+    driver: local
