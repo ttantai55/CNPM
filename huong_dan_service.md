@@ -59,12 +59,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+<<<<<<< HEAD
+public class CategoryServiceImpl implements CategoryService {
+=======
 public class CategoryService {
+>>>>>>> c42e5fe65974e8af6a5fba71fbddb7dfccc36e65
 
     // Tiêm phụ thuộc (Dependency Injection) Repository vào để tương tác với Database
     private final CategoryRepository categoryRepository;
 
+<<<<<<< HEAD
+    public CategoryServiceImpl(CategoryRepository categoryRepository) {
+=======
     public CategoryService(CategoryRepository categoryRepository) {
+>>>>>>> c42e5fe65974e8af6a5fba71fbddb7dfccc36e65
         this.categoryRepository = categoryRepository;
     }
 
