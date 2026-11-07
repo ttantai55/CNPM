@@ -15,10 +15,8 @@ import vn.doan.repository.PromotionRepository;
 import vn.doan.repository.ToppingRepository;
 import vn.doan.repository.UserRepository;
 import vn.doan.repository.PaymentRepository;
-
-import vn.doan.repository.UserRepository;
 import vn.doan.repository.CategoryRepository;
-import vn.doan.repository.ProductRepository;
+
 
 @SpringBootTest
 @Import(DoAnApplicationTests.TestJdbcConfiguration.class) 
@@ -31,10 +29,8 @@ class DoAnApplicationTests {
     @MockBean private ToppingRepository toppingRepository;
     @MockBean private UserRepository userRepository;
     @MockBean private PaymentRepository paymentRepository;
-    @MockBean private UserRepository userRepository;
     @MockBean private CategoryRepository categoryRepository;
-    @MockBean private ProductRepository productRepository;
-
+    
     @Test
     void contextLoads() {
     }
