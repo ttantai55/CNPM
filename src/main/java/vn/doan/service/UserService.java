@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.doan.domain.Customer;
 import vn.doan.domain.User;
+import vn.doan.dto.request.CustomerCreateRequest;
+import vn.doan.dto.request.CustomerUpdateRequest;
 import vn.doan.dto.response.CustomerResponse;
 import vn.doan.dto.response.UserResponse;
 import vn.doan.repository.UserRepository;
@@ -26,10 +28,8 @@ public class UserService {
 
         return mapToResponse(user);
     }
-
     
     // * 2. Lấy danh sách toàn bộ người dùng
-    
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
             .stream()
@@ -37,7 +37,7 @@ public class UserService {
             .collect(Collectors.toList());
     }
 
-    // *3. Cập nhật quyền cho nhân viên
+    // * 3. Cập nhật quyền cho nhân viên
     @Transactional
     public UserResponse updateStaffRole(String targetUserId, String newRole) {
         User user = userRepository.findById(targetUserId)
@@ -47,7 +47,7 @@ public class UserService {
         return mapToResponse(user);
     }
 
-    // *4. Lấy danh sách toàn bộ khách hàng
+    // * 4. Lấy danh sách toàn bộ khách hàng
     public List<CustomerResponse> getAllCustomers(){
         List<User> users = userRepository.findAll();
         
@@ -57,7 +57,7 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    // *5. Tìm kiếm khách hàng theo sdt
+    // * 5. Tìm kiếm khách hàng theo sdt
     public CustomerResponse getCustomerByPhone(String phone) {
         User user = userRepository.findByInfo_Phone(phone)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng với số điện thoại: " + phone));
@@ -65,9 +65,54 @@ public class UserService {
         return mapToResponse(user.getInfo(), user);
     }
 
+    // * 6. Tạo mới hồ sơ khách hàng (Gắn vào một User đã tồn tại)
+    @Transactional
+    public CustomerResponse createCustomerProfile(CustomerCreateRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với ID: " + request.getUserId()));
+
+        if (user.getInfo() != null) {
+            throw new IllegalStateException("Tài khoản này đã có hồ sơ khách hàng.");
+        }
+
+        Customer customer = new Customer(
+                request.getName(),
+                request.getDateOfBirth(),
+                request.isGender(),
+                request.getAddress(),
+                request.getPhone()
+        );
+
+        customer.setUser(user);
+        user.setInfo(customer);
+
+        User savedUser = userRepository.save(user);
+
+        return mapToResponse(savedUser.getInfo(), savedUser);
+    }
+
+    // * 7. Cập nhật hồ sơ khách hàng
+    @Transactional
+    public CustomerResponse updateCustomerProfile(String userId, CustomerUpdateRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với ID: " + userId));
+
+        Customer customer = user.getInfo();
+        if (customer == null) {
+            throw new RuntimeException("Tài khoản này chưa có hồ sơ khách hàng để cập nhật.");
+        }
+
+        customer.setName(request.getName());
+        customer.setDateOfBirth(request.getDateOfBirth());
+        customer.setGender(request.isGender());
+        customer.setAddress(request.getAddress());
+        customer.setPhone(request.getPhone());
+
+        return mapToResponse(customer, user);
+    }
+
     // --- HÀM TIỆN ÍCH DÙNG ĐỂ MAP ENTITY SANG DTO ---
     
-    // Hàm 1: Map từ User sang UserResponse
     private UserResponse mapToResponse(User user) {
         String customerId = null;
         String fullName = null;
@@ -78,7 +123,6 @@ public class UserService {
             phone = user.getInfo().getPhone();
         }
 
-        // Lấy thông tin từ Barista
         String baristaId = null;
         if (user.getBarista() != null) {
             baristaId = user.getBarista().getId();
@@ -98,7 +142,7 @@ public class UserService {
                 phone
         );
     }
-    
+
     private CustomerResponse mapToResponse(Customer customer, User user) {
         return new CustomerResponse(
                 customer.getId(),
