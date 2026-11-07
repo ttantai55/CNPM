@@ -17,7 +17,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService JwtService; // Lớp sinh token JWT của nhóm
+
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -26,21 +26,20 @@ public class AuthService {
             throw new BusinessValidationException("Email đã được sử dụng!");
         }
 
-        // 2. Khởi tạo User mới bám sát Entity của ông
+        // 2. Khởi tạo User mới
         User user = new User();
-        user.setUsername(request.getName()); // Lấy tên gán vào username
+        user.setUsername(request.getName());
         user.setEmail(request.getEmail());
         user.setHashPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole("ROLE_CUSTOMER"); // Mặc định khách đăng ký là CUSTOMER
+        user.setRole("ROLE_CUSTOMER");
 
         // 3. Lưu xuống Database
         User savedUser = userRepository.save(user);
 
-        // 4. Sinh JWT Token
-        String token = JwtService.generateToken(savedUser);
+
 
         return new AuthResponse(
-                token,
+
                 savedUser.getId(),
                 savedUser.getUsername(),
                 savedUser.getRole(),
@@ -60,12 +59,11 @@ public class AuthService {
             throw new BusinessValidationException("Tài khoản hoặc mật khẩu không chính xác");
         }
 
-        // 3. Sinh token khi đăng nhập thành công
-        String token = JwtService.generateToken(user);
 
-        // 4. Trả về AuthResponse khớp tuyệt đối constructor[cite: 9]
+        
+
         return new AuthResponse(
-                token,
+                
                 user.getId(),
                 user.getUsername(),
                 user.getRole(),

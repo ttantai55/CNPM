@@ -2,8 +2,7 @@ package vn.doan.dto.response;
 
 public class AuthResponse {
 
-    private String accessToken;
-    private String tokenType = "Bearer";
+
     
     // Các thông tin cơ bản để Frontend lưu trữ phiên đăng nhập
     private String id;
@@ -16,8 +15,8 @@ public class AuthResponse {
     public AuthResponse() {
     }
 
-    public AuthResponse(String accessToken, String id, String username, String role, String fullName, String avatarUrl) {
-        this.accessToken = accessToken;
+    public AuthResponse( String id, String username, String role, String fullName, String avatarUrl) {
+
         this.id = id;
         this.username = username;
         this.role = role;
@@ -26,13 +25,6 @@ public class AuthResponse {
     }
 
     // --- GETTERS & SETTERS ---
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public String getTokenType() {
-        return tokenType;
-    }
 
     public String getId() {
         return id;
