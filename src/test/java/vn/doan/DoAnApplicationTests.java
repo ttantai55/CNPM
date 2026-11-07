@@ -9,12 +9,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
-
+import vn.doan.repository.UserRepository;
 @SpringBootTest
 @Import(DoAnApplicationTests.TestJdbcConfiguration.class)
 class DoAnApplicationTests {
 
-
+@MockBean
+    private UserRepository userRepository;
+    
     @Test
     void contextLoads() {
     }
