@@ -19,7 +19,7 @@ import vn.doan.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.time.LocalDateTime;
+import java.time.LocalDateTime; 
 import java.util.stream.Collectors;
 
 @Service
@@ -57,7 +57,7 @@ public class OrderService {
     // * 3. Chốt đơn hàng
     @Transactional
     public OrderResponse checkout(OrderCreateRequest request) {
-        // Lấy tt khách hàng
+        // Lấy tt khách hàng thông qua UserRepository
         User user = userRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại."));
         Customer customer = user.getInfo();
@@ -174,15 +174,20 @@ public class OrderService {
         }
     }
 
-    // * 6. Lịch sử đơn hàng cho khách hàng
+    // * 6. Lịch sử đơn hàng cho khách hàng (ĐÃ SỬA LỖI Ở ĐÂY)
     public List<OrderResponse> getCustomerOrderHistory(String customerId) {
-    Customer customer = customerRepository.findById(customerId)
-            .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại."));
+        User user = userRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại."));
+        
+        Customer customer = user.getInfo();
+        if (customer == null) {
+            throw new RuntimeException("Tài khoản này chưa có hồ sơ khách hàng.");
+        }
 
-    return orderRepository.findByCustomerOrderByCreatedAtDesc(customer)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+        return orderRepository.findByCustomerOrderByCreatedAtDesc(customer)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     // * 7. Thống kê doanh thu theo khoảng thời gian
@@ -204,6 +209,7 @@ public class OrderService {
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
+
     // --- HÀM TIỆN ÍCH MAP SANG DTO RESPONSE ---
     private OrderResponse mapToResponse(Order order) {
         

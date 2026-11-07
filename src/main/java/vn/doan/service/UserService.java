@@ -3,10 +3,11 @@ package vn.doan.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.doan.domain.Customer;
 import vn.doan.domain.User;
+import vn.doan.dto.response.CustomerResponse;
 import vn.doan.dto.response.UserResponse;
 import vn.doan.repository.UserRepository;
-import vn.doan.dto.response.CustomerResponse;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,9 +32,9 @@ public class UserService {
     
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+            .stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
     }
 
     // *3. Cập nhật quyền cho nhân viên
@@ -63,7 +64,10 @@ public class UserService {
         
         return mapToResponse(user.getInfo(), user);
     }
+
     // --- HÀM TIỆN ÍCH DÙNG ĐỂ MAP ENTITY SANG DTO ---
+    
+    // Hàm 1: Map từ User sang UserResponse
     private UserResponse mapToResponse(User user) {
         String customerId = null;
         String fullName = null;
@@ -92,6 +96,19 @@ public class UserService {
                 baristaId,
                 fullName,
                 phone
+        );
+    }
+    
+    private CustomerResponse mapToResponse(Customer customer, User user) {
+        return new CustomerResponse(
+                customer.getId(),
+                customer.getName(),
+                customer.getDateOfBirth(),
+                customer.isGender(),
+                customer.getAddress(),
+                customer.getPhone(),
+                user.getId(),
+                user.getEmail()
         );
     }
 }
