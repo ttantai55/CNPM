@@ -1,26 +1,25 @@
 package vn.doan.service;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.doan.domain.Customer;
 import vn.doan.domain.User;
-import vn.doan.dto.request.CustomerCreateRequest;
-import vn.doan.dto.request.CustomerUpdateRequest;
-import vn.doan.dto.response.CustomerResponse;
-import vn.doan.dto.response.UserResponse;
+import vn.doan.dto.request.UpdateRoleRequest;
+import vn.doan.dto.response.UpdateRoleResponse;
+import vn.doan.dto.response.UserProfileResponse;
+import vn.doan.exception.ResourceNotFoundException;
 import vn.doan.repository.UserRepository;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(readOnly = true) // Tối ưu hiệu năng đọc cho toàn class
 public class UserService {
 
     private final UserRepository userRepository;
 
+<<<<<<< HEAD
     // * 1. Lấy thông tin hồ sơ tài khoản
     public UserResponse getUserProfile(String userId) {
         User user = userRepository.findById(userId)
@@ -153,6 +152,37 @@ public class UserService {
                 customer.getPhone(),
                 user.getId(),
                 user.getEmail()
+=======
+    public UserProfileResponse getUserProfile(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin người dùng"));
+
+        return new UserProfileResponse(
+                user.getId(), 
+                user.getUsername(), 
+                user.getEmail(), 
+                user.getAvatarUrl(),
+                user.getRole()
+        );
+    }
+
+   @Transactional
+   @PreAuthorize("hasRole('ADMIN')")
+    public UpdateRoleResponse updateStaffRole( String targetUserId, UpdateRoleRequest request) {
+        // 1. Tìm nhân viên cần đổi quyền trong DB
+        User user = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng này trong hệ thống"));
+
+        // 2. Cập nhật role mới (Hibernate tự động Dirty Checking)
+        user.setRole(request.getNewRole());
+
+        // 3. Đúc gói Response trả về cho Frontend
+        return new UpdateRoleResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getRole(),
+                "Cập nhật quyền cho nhân viên thành công!"
+>>>>>>> 588da0f172ce78ad6a0bf0eae51d3685fac2ddcb
         );
     }
 }

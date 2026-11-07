@@ -14,4 +14,8 @@ public interface CategoryRepository extends JpaRepository<Category, String> {
 
     // 2. Tìm danh mục gần đúng theo tên (Hỗ trợ tìm kiếm không phân biệt hoa thường)
     List<Category> findByNameContainingIgnoreCase(String name);
+
+    boolean existsByName(String name);
+
+
 }
