@@ -29,6 +29,10 @@ public class Product implements Serializable {
     @Column(nullable = false)
     private boolean status;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
 
     // 1. Constructor không tham số cho JPA
     public Product() {
@@ -44,6 +48,7 @@ public class Product implements Serializable {
         this.description = description;
         this.imageUrl = imageUrl;
         this.status = status;
+        this.category = category;
     }
 
     // --- CÁC HÀM NGHIỆP VỤ ---
@@ -150,6 +155,14 @@ public class Product implements Serializable {
 
     public void setStatus(boolean status) {
         this.status = status;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
     }
 
 
