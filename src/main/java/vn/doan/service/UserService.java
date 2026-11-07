@@ -45,6 +45,23 @@ public class UserService {
         return mapToResponse(user);
     }
 
+    // *4. Lấy danh sách toàn bộ khách hàng
+    public List<CustomerResponse> getAllCustomers(){
+        List<User> users = userRepository.findAll();
+        
+        return users.stream()
+                .filter(user -> user.getInfo() != null)
+                .map(user -> mapToResponse(user.getInfo(), user))
+                .collect(Collectors.toList());
+    }
+
+    // *5. Tìm kiếm khách hàng theo sdt
+    public CustomerResponse getCustomerByPhone(String phone) {
+        User user = userRepository.findByInfo_Phone(phone)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng với số điện thoại: " + phone));
+        
+        return mapToResponse(user.getInfo(), user);
+    }
     // --- HÀM TIỆN ÍCH DÙNG ĐỂ MAP ENTITY SANG DTO ---
     private UserResponse mapToResponse(User user) {
         String customerId = null;
