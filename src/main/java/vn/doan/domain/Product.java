@@ -122,16 +122,8 @@ public class Product implements Serializable {
         this.price = price;
     }
 
-    public long getStockQuantity() {
-        return stockQuantity;
-    }
 
-    public void setStockQuantity(long stockQuantity) {
-        if (stockQuantity < 0) {
-            throw new IllegalArgumentException("Số lượng tồn kho không được âm");
-        }
-        this.stockQuantity = stockQuantity;
-    }
+    
 
     public String getDescription() {
         return description;
