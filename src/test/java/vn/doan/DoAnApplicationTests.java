@@ -8,14 +8,30 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-
+import vn.doan.repository.CategoryRepository;
 import vn.doan.repository.UserRepository;
+
+import vn.doan.repository.ProductRepository;
+
+import vn.doan.repository.IngredientRepository; 
+import vn.doan.repository.InventoryTransactionRepository;
+
 @SpringBootTest
 @Import(DoAnApplicationTests.TestJdbcConfiguration.class)
 class DoAnApplicationTests {
 
 @MockBean
     private UserRepository userRepository;
+@MockBean
+    private CategoryRepository categoryRepository;
+@MockBean
+    private ProductRepository productRepository;
+
+    @MockBean
+     private IngredientRepository ingredientRepository;
+    
+    @MockBean
+    private InventoryTransactionRepository inventoryTransactionRepository;
     
     @Test
     void contextLoads() {
