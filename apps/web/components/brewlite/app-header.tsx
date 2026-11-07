@@ -1,0 +1,199 @@
+'use client'
+
+import { useState } from 'react'
+import { Bell, ChevronDown, Coffee, LogOut, Search, ShoppingBag, UserRound, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+export type User = { name: string; email: string }
+
+type AppHeaderProps = {
+  query: string
+  onQueryChange: (value: string) => void
+  user: User | null
+  onOpenAuth: () => void
+  onLogout: () => void
+  cartCount: number
+  onOpenCart: () => void
+}
+
+const NOTIFICATIONS = [
+  { id: 1, title: 'Giảm 20% nước ép', body: 'Áp dụng cho mọi đơn từ 2 ly trong hôm nay.' },
+  { id: 2, title: 'Món mới: Mocha Caramel Nướng', body: 'Thử ngay hương caramel nướng thơm lừng.' },
+]
+
+export function AppHeader({
+  query,
+  onQueryChange,
+  user,
+  onOpenAuth,
+  onLogout,
+  cartCount,
+  onOpenCart,
+}: AppHeaderProps) {
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [unread, setUnread] = useState(NOTIFICATIONS.length)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+
+  function toggleNotifications() {
+    setNotificationsOpen((open) => !open)
+    setAccountMenuOpen(false)
+    setUnread(0)
+  }
+
+  function handleAccountClick() {
+    setNotificationsOpen(false)
+    if (!user) {
+      onOpenAuth()
+      return
+    }
+    setAccountMenuOpen((open) => !open)
+  }
+
+  const searchField = (id: string, className?: string) => (
+    <form
+      role="search"
+      onSubmit={(event) => event.preventDefault()}
+      className={cn('relative', className)}
+    >
+      <label htmlFor={id} className="sr-only">
+        Tìm kiếm thức uống
+      </label>
+      <Search
+        className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden="true"
+      />
+      <input
+        id={id}
+        type="search"
+        value={query}
+        onChange={(event) => onQueryChange(event.target.value)}
+        placeholder="Tìm kiếm cà phê, trà sữa, nước ép..."
+        className="h-10 w-full rounded-xl border border-input bg-muted/60 pl-10 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-caramel focus:bg-card focus:outline-none focus:ring-2 focus:ring-caramel/30 [&::-webkit-search-cancel-button]:hidden"
+      />
+      {query && (
+        <button
+          type="button"
+          onClick={() => onQueryChange('')}
+          className="absolute right-2 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
+        >
+          <X className="size-3.5" aria-hidden="true" />
+          <span className="sr-only">Xóa từ khóa</span>
+        </button>
+      )}
+    </form>
+  )
+
+  return (
+    <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur">
+      <div className="flex h-16 items-center gap-3 px-4 md:h-[68px] md:gap-6 md:px-6">
+        <a href="/" className="flex shrink-0 items-center gap-2.5" aria-label="BrewLite trang chủ">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+            <Coffee className="size-5" aria-hidden="true" />
+          </span>
+          <span className="hidden flex-col leading-none sm:flex">
+            <span className="text-lg font-bold tracking-tight text-primary">
+              Brew<span className="text-caramel">Lite</span>
+            </span>
+            <span className="mt-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Mỗi ngày một vị ngon
+            </span>
+          </span>
+        </a>
+
+        {searchField('search-desktop', 'hidden max-w-md flex-1 md:block')}
+
+        <div className="ml-auto flex items-center gap-2">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={toggleNotifications}
+              aria-expanded={notificationsOpen}
+              aria-haspopup="true"
+              className="relative flex size-10 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-muted"
+            >
+              <Bell className="size-[18px]" aria-hidden="true" />
+              {unread > 0 && (
+                <span className="absolute right-2 top-2 size-2 rounded-full bg-destructive ring-2 ring-card" />
+              )}
+              <span className="sr-only">
+                Thông báo{unread > 0 ? `, ${unread} chưa đọc` : ''}
+              </span>
+            </button>
+            {notificationsOpen && (
+              <div className="absolute right-0 top-12 w-72 rounded-2xl border border-border bg-popover p-2 shadow-lg animate-in fade-in slide-in-from-top-2">
+                <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Thông báo
+                </p>
+                <ul className="flex flex-col">
+                  {NOTIFICATIONS.map((n) => (
+                    <li key={n.id} className="rounded-xl px-3 py-2.5 hover:bg-muted">
+                      <p className="text-sm font-semibold text-foreground">{n.title}</p>
+                      <p className="text-xs leading-relaxed text-muted-foreground">{n.body}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={onOpenCart}
+            className="relative flex size-10 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-muted"
+          >
+            <ShoppingBag className="size-[18px]" aria-hidden="true" />
+            {cartCount > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground ring-2 ring-card">
+                {cartCount}
+              </span>
+            )}
+            <span className="sr-only">Mở giỏ hàng, {cartCount} món</span>
+          </button>
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={handleAccountClick}
+              aria-expanded={user ? accountMenuOpen : undefined}
+              className="flex h-10 items-center gap-2.5 rounded-xl border border-border px-1.5 transition-colors hover:bg-muted sm:pr-3"
+            >
+              <span className="flex size-7 items-center justify-center rounded-full border-2 border-foreground/70 text-foreground">
+                <UserRound className="size-4" aria-hidden="true" />
+              </span>
+              <span className="hidden flex-col text-left leading-tight sm:flex">
+                <span className="max-w-32 truncate text-xs font-semibold text-foreground">
+                  {user ? user.name : 'Khách hàng'}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {user ? 'Thành viên BrewLite' : 'Đăng nhập / Đăng ký'}
+                </span>
+              </span>
+              <ChevronDown className="hidden size-4 text-muted-foreground sm:block" aria-hidden="true" />
+              <span className="sr-only sm:hidden">{user ? 'Tài khoản' : 'Đăng nhập hoặc đăng ký'}</span>
+            </button>
+            {user && accountMenuOpen && (
+              <div className="absolute right-0 top-12 w-56 rounded-2xl border border-border bg-popover p-2 shadow-lg animate-in fade-in slide-in-from-top-2">
+                <div className="px-3 py-2">
+                  <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAccountMenuOpen(false)
+                    onLogout()
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-destructive hover:bg-muted"
+                >
+                  <LogOut className="size-4" aria-hidden="true" />
+                  Đăng xuất
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="px-4 pb-3 md:hidden">{searchField('search-mobile')}</div>
+    </header>
+  )
+}
