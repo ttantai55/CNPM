@@ -29,10 +29,10 @@ public class Product implements Serializable {
     @Column(nullable = false)
     private boolean status;
 
+    // QUAN HỆ NHIỀU - 1: Nhiều sản phẩm thuộc về 1 danh mục
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
-
 
     // 1. Constructor không tham số cho JPA
     public Product() {
@@ -122,9 +122,6 @@ public class Product implements Serializable {
         this.price = price;
     }
 
-
-    
-
     public String getDescription() {
         return description;
     }
@@ -156,6 +153,4 @@ public class Product implements Serializable {
     public void setCategory(Category category) {
         this.category = category;
     }
-
-
 }
