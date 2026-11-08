@@ -52,21 +52,24 @@ public class User {
     @JoinColumn(name = "barista_id", unique = true)
     private Barista barista;
 
+    private String phone;
+
     // BẮT BUỘC CHO JPA: Constructor không tham số
     public User() {
     }
 
-    public User(String username, String hashPassword, String role, String email, Customer info, String avatarUrl) {
+    public User(String username, String hashPassword, String role, String email, Customer info, String avatarUrl,String phone) {
         this.username = username;
         this.hashPassword = hashPassword;
         this.role = role;
         this.email = email;
         this.info = info;
         this.avatarUrl = avatarUrl;
+        this.phone=phone;
     }
 
     public User(String id, String username, String hashPassword, String role, String email,
-                Customer info, String avatarUrl, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                Customer info, String avatarUrl, LocalDateTime createdAt, LocalDateTime updatedAt, String phone) {
         this.id = id;
         this.username = username;
         this.hashPassword = hashPassword;
@@ -76,6 +79,7 @@ public class User {
         this.avatarUrl = avatarUrl;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.phone=phone;
     }
 
     // Tự động gán thời gian khi tạo hoặc cập nhật bản ghi
@@ -188,4 +192,11 @@ public class User {
     public void setBarista(Barista barista) {
         this.barista = barista;
     }
+    public String getPhone() {
+    return phone;
+}
+
+public void setPhone(String phone) {
+    this.phone = phone;
+}
 }
