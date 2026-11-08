@@ -14,6 +14,12 @@ import {
   UserRound,
 } from 'lucide-react'
 import { authStore, createDemoSession, dashboardForRole, type Role } from '@/lib/session'
+import {
+  createCustomerAccount,
+  customerAccountStore,
+  staffAccountStore,
+  verifyPassword,
+} from '@/lib/auth'
 import { cartStore } from '@/lib/cart'
 
 const DEMO_ACCOUNTS: { role: Role; label: string; email: string; initials: string }[] = [
@@ -23,6 +29,7 @@ const DEMO_ACCOUNTS: { role: Role; label: string; email: string; initials: strin
 ]
 
 const identifierPattern = /^(?:[^\s@]+@[^\s@]+\.[^\s@]+|(?:\+?84|0)\d{9,10}|[\p{L}\d_.-]{3,40})$/u
+const contactPattern = /^(?:[^\s@]+@[^\s@]+\.[^\s@]+|(?:\+?84|0)\d{9,10})$/u
 
 export function LoginPage() {
   const router = useRouter()
@@ -33,14 +40,20 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [notice, setNotice] = useState('')
+  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [registerName, setRegisterName] = useState('')
+  const [registerContact, setRegisterContact] = useState('')
+  const [registerPassword, setRegisterPassword] = useState('')
+  const [registerConfirm, setRegisterConfirm] = useState('')
+  const [registrationComplete, setRegistrationComplete] = useState(false)
 
   const identifierError =
-    submitted && !identifierPattern.test(identifier.trim())
+    mode === 'login' && submitted && !identifierPattern.test(identifier.trim())
       ? 'Vui lòng nhập email, số điện thoại hoặc tên đăng nhập hợp lệ.'
       : ''
-  const passwordError = submitted && password.length < 6 ? 'Mật khẩu cần có ít nhất 6 ký tự.' : ''
+  const passwordError = mode === 'login' && submitted && password.length < 6 ? 'Mật khẩu cần có ít nhất 6 ký tự.' : ''
 
-  function signIn(role?: Role, demoEmail?: string) {
+  async function signIn(role?: Role, demoEmail?: string) {
     const loginAs = demoEmail ?? identifier.trim()
     if (!role) {
       setSubmitted(true)
@@ -48,7 +61,63 @@ export function LoginPage() {
     }
 
     setSubmitting(true)
-    window.setTimeout(() => {
+    try {
+      const normalized = loginAs.trim().toLowerCase()
+      const staff = staffAccountStore.get().find(
+        (account) =>
+          [account.username, account.email, account.phone].some((value) => value.toLowerCase() === normalized),
+      )
+      const customer = customerAccountStore.get().find(
+        (account) =>
+          [account.username, account.contact].some((value) => value.toLowerCase() === normalized),
+      )
+      if (!role && staff) {
+        if (!staff.isActive) {
+          setNotice('Tài khoản nhân viên đã bị tạm khóa.')
+          return
+        }
+        if (!(await verifyPassword(password, staff.passwordSalt, staff.passwordHash))) {
+          setNotice('Tên đăng nhập hoặc mật khẩu không chính xác.')
+          return
+        }
+        const session = {
+          ...createDemoSession(staff.email, 'STAFF'),
+          id: staff.id,
+          name: staff.fullName,
+          username: staff.username,
+        }
+        authStore.set(session)
+        const checkoutRequested =
+          new URLSearchParams(window.location.search).get('next') === 'checkout' &&
+          cartStore.get().length > 0
+        if (checkoutRequested) window.sessionStorage.setItem('brewlite.checkout-after-login', 'true')
+        router.replace(dashboardForRole(session.role))
+        return
+      }
+      if (!role && customer) {
+        if (!(await verifyPassword(password, customer.passwordSalt, customer.passwordHash))) {
+          setNotice('Tên đăng nhập hoặc mật khẩu không chính xác.')
+          return
+        }
+        const session = {
+          ...createDemoSession(customer.contact, 'CUSTOMER'),
+          id: customer.id,
+          email: customer.contact,
+          name: customer.name?.trim() || customer.username,
+          username: customer.username,
+        }
+        authStore.set(session)
+        const checkoutRequested =
+          new URLSearchParams(window.location.search).get('next') === 'checkout' &&
+          cartStore.get().length > 0
+        if (checkoutRequested) window.sessionStorage.setItem('brewlite.checkout-after-login', 'true')
+        router.replace(dashboardForRole(session.role))
+        return
+      }
+      if (customer || staff) {
+        setNotice('Tài khoản không hoạt động hoặc thông tin đăng nhập không hợp lệ.')
+        return
+      }
       const session = createDemoSession(loginAs, role)
       authStore.set(session)
       const checkoutRequested =
@@ -59,7 +128,42 @@ export function LoginPage() {
       }
       setSubmitting(false)
       router.replace(dashboardForRole(session.role))
-    }, 450)
+    } catch {
+      setNotice('Không thể xác thực tài khoản. Vui lòng thử lại.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function register(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSubmitted(true)
+    const username = registerName.trim()
+    const contact = registerContact.trim()
+    if (username.length < 3 || !contactPattern.test(contact) || registerPassword.length < 8 || registerPassword !== registerConfirm) {
+      return
+    }
+    const duplicate = [...customerAccountStore.get(), ...staffAccountStore.get()].some((account) =>
+      [account.username, 'contact' in account ? account.contact : account.email, 'phone' in account ? account.phone : '']
+        .some((value) => value.toLowerCase() === contact.toLowerCase() || value.toLowerCase() === username.toLowerCase()),
+    )
+    if (duplicate) {
+      setNotice('Tên đăng nhập, email hoặc số điện thoại đã được đăng ký.')
+      return
+    }
+    setSubmitting(true)
+    try {
+      const account = await createCustomerAccount(username, contact, registerPassword)
+      setRegisterName(account.username)
+      setIdentifier(account.username)
+      setRegisterPassword('')
+      setRegisterConfirm('')
+      setRegistrationComplete(true)
+    } catch {
+      setNotice('Không thể tạo tài khoản. Vui lòng thử lại.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -123,13 +227,34 @@ export function LoginPage() {
             <span className="flex size-10 items-center justify-center rounded-xl bg-[#173d34] text-white"><Coffee className="size-5" /></span>
             <span className="text-xl font-bold text-[#173d34]">BrewLite</span>
           </a>
+          {registrationComplete ? (
+            <div className="rounded-2xl border border-[#dce9df] bg-[#f5faf6] p-6 text-center">
+              <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#e1f0e5] text-[#32735a]">
+                <Check className="size-6" />
+              </span>
+              <h2 className="mt-4 text-2xl font-semibold text-[#23372f]">Đăng ký thành công!</h2>
+              <p className="mt-2 text-sm text-[#7d8781]">Tài khoản đã được lưu. Đăng nhập để tiếp tục.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setRegistrationComplete(false)
+                  setMode('login')
+                  setSubmitted(false)
+                  setNotice('')
+                }}
+                className="mt-5 h-11 w-full rounded-xl bg-[#285b4b] text-sm font-semibold text-white hover:bg-[#204d3f]"
+              >
+                Quay lại đăng nhập
+              </button>
+            </div>
+          ) : <>
           <div className="mb-8">
-            <p className="text-sm font-semibold text-[#b17b4c]">Chào mừng trở lại!</p>
-            <h2 className="mt-2 text-[34px] font-semibold tracking-tight text-[#23372f]">Đăng nhập BrewLite</h2>
-            <p className="mt-2 text-sm text-[#7d8781]">Chọn tài khoản và tiếp tục hành trình vị giác của bạn.</p>
+            <p className="text-sm font-semibold text-[#b17b4c]">{mode === 'login' ? 'Chào mừng trở lại!' : 'Tham gia BrewLite'}</p>
+            <h2 className="mt-2 text-[34px] font-semibold tracking-tight text-[#23372f]">{mode === 'login' ? 'Đăng nhập BrewLite' : 'Tạo tài khoản'}</h2>
+            <p className="mt-2 text-sm text-[#7d8781]">{mode === 'login' ? 'Chọn tài khoản và tiếp tục hành trình vị giác của bạn.' : 'Đăng ký tài khoản khách hàng mới.'}</p>
           </div>
 
-          <form
+          {mode === 'login' ? <form
             noValidate
             onSubmit={(event) => {
               event.preventDefault()
@@ -214,9 +339,43 @@ export function LoginPage() {
                 <>Đăng nhập <ArrowRight className="size-4" /></>
               )}
             </button>
-          </form>
+          </form> : (
+            <form noValidate onSubmit={register} className="space-y-4">
+              <div>
+                <label htmlFor="register-username" className="mb-2 block text-[13px] font-semibold text-[#35463e]">Tên đăng nhập</label>
+                <input id="register-username" required minLength={3} autoComplete="username" value={registerName} onChange={(event) => setRegisterName(event.target.value)} className="h-[50px] w-full rounded-xl border border-[#e4e9e5] bg-white px-4 text-sm outline-none focus:border-[#4b806c] focus:ring-4 focus:ring-[#4b806c]/10" />
+                {submitted && registerName.trim().length < 3 && <p className="mt-1 text-xs text-red-600">Tên đăng nhập tối thiểu 3 ký tự.</p>}
+              </div>
+              <div>
+                <label htmlFor="register-contact" className="mb-2 block text-[13px] font-semibold text-[#35463e]">Email hoặc số điện thoại</label>
+                <input id="register-contact" required autoComplete="email" value={registerContact} onChange={(event) => setRegisterContact(event.target.value)} placeholder="ban@email.com hoặc 090..." className="h-[50px] w-full rounded-xl border border-[#e4e9e5] bg-white px-4 text-sm outline-none focus:border-[#4b806c] focus:ring-4 focus:ring-[#4b806c]/10" />
+                {submitted && !identifierPattern.test(registerContact.trim()) && <p className="mt-1 text-xs text-red-600">Email, số điện thoại hoặc tên đăng nhập không hợp lệ.</p>}
+              </div>
+              <div>
+                <label htmlFor="register-password" className="mb-2 block text-[13px] font-semibold text-[#35463e]">Mật khẩu</label>
+                <input id="register-password" required minLength={8} type="password" autoComplete="new-password" value={registerPassword} onChange={(event) => setRegisterPassword(event.target.value)} className="h-[50px] w-full rounded-xl border border-[#e4e9e5] bg-white px-4 text-sm outline-none focus:border-[#4b806c] focus:ring-4 focus:ring-[#4b806c]/10" />
+                {submitted && registerPassword.length < 8 && <p className="mt-1 text-xs text-red-600">Mật khẩu tối thiểu 8 ký tự.</p>}
+              </div>
+              <div>
+                <label htmlFor="register-confirm" className="mb-2 block text-[13px] font-semibold text-[#35463e]">Nhập lại mật khẩu</label>
+                <input id="register-confirm" required type="password" autoComplete="new-password" value={registerConfirm} onChange={(event) => setRegisterConfirm(event.target.value)} className="h-[50px] w-full rounded-xl border border-[#e4e9e5] bg-white px-4 text-sm outline-none focus:border-[#4b806c] focus:ring-4 focus:ring-[#4b806c]/10" />
+                {submitted && registerConfirm !== registerPassword && <p className="mt-1 text-xs text-red-600">Mật khẩu xác nhận không khớp.</p>}
+              </div>
+              {notice && <p role="status" className="rounded-lg bg-[#edf5f0] px-3 py-2 text-xs text-[#32735a]">{notice}</p>}
+              <button type="submit" disabled={submitting} className="flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#285b4b] text-sm font-semibold text-white disabled:opacity-70">
+                {submitting ? 'Đang tạo tài khoản...' : <>Đăng ký <ArrowRight className="size-4" /></>}
+              </button>
+            </form>
+          )}
 
-          <div className="my-7 flex items-center gap-3">
+          <p className="mt-5 text-center text-sm text-[#66736b]">
+            {mode === 'login' ? 'Chưa có tài khoản?' : 'Đã có tài khoản?'}{' '}
+            <button type="button" onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setSubmitted(false); setNotice('') }} className="font-semibold text-[#32735a] hover:text-[#214d3d]">
+              {mode === 'login' ? 'Đăng ký ngay' : 'Đăng nhập'}
+            </button>
+          </p>
+
+          {mode === 'login' && <><div className="my-7 flex items-center gap-3">
             <span className="h-px flex-1 bg-[#e9ede9]" />
             <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#a2aba5]">Tài khoản demo</span>
             <span className="h-px flex-1 bg-[#e9ede9]" />
@@ -245,6 +404,8 @@ export function LoginPage() {
           <p className="mt-6 flex items-center justify-center gap-1.5 text-[11px] text-[#a0a9a2]">
             <Check className="size-3.5 text-[#6e9a80]" /> {remember ? 'Phiên đăng nhập được lưu trên thiết bị này' : 'Phiên demo chỉ lưu trong trình duyệt'}
           </p>
+          </>}
+          </>}
         </div>
       </section>
     </main>

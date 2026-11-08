@@ -22,6 +22,7 @@ type ProductSectionProps = {
   onAdd: (product: Product) => void
   query: string
   onResetFilters: () => void
+  noProductsMessage?: string
 }
 
 export function ProductSection({
@@ -33,6 +34,7 @@ export function ProductSection({
   onAdd,
   query,
   onResetFilters,
+  noProductsMessage,
 }: ProductSectionProps) {
   const readyCount = products.filter((p) => p.inStock).length
 
@@ -79,7 +81,7 @@ export function ProductSection({
       {products.length > 0 ? (
         <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-[repeat(auto-fill,minmax(210px,1fr))]">
           {products.map((product) => (
-            <li key={product.id} className="flex flex-col [&>article]:flex-1">
+            <li id={`product-${product.id}`} key={product.id} className="flex flex-col [&>article]:flex-1">
               <ProductCard
                 product={product}
                 isFavorite={favorites.has(product.id)}
@@ -94,8 +96,12 @@ export function ProductSection({
           <span className="flex size-12 items-center justify-center rounded-full bg-secondary text-primary">
             <SearchX className="size-5" aria-hidden="true" />
           </span>
-          <p className="mt-4 font-semibold text-foreground">Không tìm thấy món phù hợp</p>
-          <p className="mt-1 text-sm text-muted-foreground">Thử từ khóa khác hoặc xem tất cả danh mục.</p>
+          <p className="mt-4 font-semibold text-foreground">
+            {noProductsMessage ? 'Chưa có món yêu thích' : 'Không tìm thấy món phù hợp'}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {noProductsMessage ?? 'Thử từ khóa khác hoặc xem tất cả danh mục.'}
+          </p>
           <button
             type="button"
             onClick={onResetFilters}

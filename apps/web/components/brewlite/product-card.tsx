@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { Heart, Plus, Star } from 'lucide-react'
-import { CATEGORY_LABELS, formatPrice, type Product } from '@/lib/menu'
+import { formatPrice, type Product } from '@/lib/menu'
 import { cn } from '@/lib/utils'
 
 type ProductCardProps = {
@@ -32,14 +32,6 @@ export function ProductCard({ product, isFavorite, onToggleFavorite, onAdd }: Pr
               Phổ biến
             </span>
           )}
-          <span
-            className={cn(
-              'rounded-full px-2.5 py-1 text-[10px] font-semibold',
-              product.inStock ? 'bg-card/95 text-success' : 'bg-foreground/80 text-card',
-            )}
-          >
-            {product.inStock ? 'Còn hàng' : 'Hết hàng'}
-          </span>
         </div>
         <button
           type="button"
@@ -58,11 +50,8 @@ export function ProductCard({ product, isFavorite, onToggleFavorite, onAdd }: Pr
       </div>
 
       <div className="flex flex-1 flex-col p-4">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            {CATEGORY_LABELS[product.category]}
-          </span>
-          <span className="flex items-center gap-1 text-xs font-semibold text-foreground/80">
+        <div className="flex items-center justify-start text-left">
+          <span className="flex items-center justify-start gap-1 text-left text-xs font-semibold text-foreground/80">
             <Star className="size-3.5 fill-caramel text-caramel" aria-hidden="true" />
             <span className="sr-only">Đánh giá</span>
             {product.rating.toFixed(1)}
@@ -71,24 +60,25 @@ export function ProductCard({ product, isFavorite, onToggleFavorite, onAdd }: Pr
         <h3 className="mt-2 text-[15px] font-semibold leading-snug text-foreground text-balance">
           {product.name}
         </h3>
+        <p className="mt-1 text-[10px] font-medium text-caramel">
+          🔥 Đã bán: {product.weeklySalesCount.toLocaleString('vi-VN')} lượt/tuần
+        </p>
         <p className="mb-4 mt-1.5 text-xs leading-relaxed text-muted-foreground text-pretty">
           {product.description}
         </p>
 
-        <div className="mt-auto flex items-end justify-between gap-2 border-t border-border pt-4">
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-4">
           <div>
-            <p className="whitespace-nowrap text-lg font-bold leading-none text-foreground">{formatPrice(product.price)}</p>
-            <p className="mt-1.5 text-[10px] text-muted-foreground">Giá từ</p>
+            <p className="whitespace-nowrap text-lg font-bold leading-none text-[#2e2520]">{formatPrice(product.price)}</p>
           </div>
           <button
             type="button"
             onClick={() => onAdd(product)}
             disabled={!product.inStock}
-            className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+            aria-label={product.inStock ? `Thêm ${product.name} vào giỏ hàng` : `${product.name} tạm hết`}
+            className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#548565] text-white shadow-sm transition hover:scale-105 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
           >
-            <Plus className="size-3.5" aria-hidden="true" />
-            {product.inStock ? 'Thêm món' : 'Tạm hết'}
-            <span className="sr-only"> {product.name}</span>
+            <Plus className="size-5" aria-hidden="true" />
           </button>
         </div>
       </div>

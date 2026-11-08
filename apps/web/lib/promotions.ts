@@ -1,0 +1,63 @@
+'use client'
+
+import { createPersistentStore } from './persistent-store'
+
+export type Promotion = {
+  id: string
+  voucherCode: string
+  description: string
+  discountType: 'PERCENTAGE' | 'FIX_AMOUNT'
+  discountValue: number
+  startDate: string
+  endDate: string
+  usageLimit: number
+  usedCount: number
+  isActive: boolean
+}
+
+export const promotionStore = createPersistentStore<Promotion[]>('brewlite.promotions', [])
+export const usedVouchersStore = createPersistentStore<Record<string, string[]>>(
+  'brewlite.used-vouchers',
+  {},
+)
+
+export function recordVoucherUse(userId: string, voucherCode: string) {
+  if (!userId || !voucherCode) return
+  usedVouchersStore.set((current) => {
+    const used = current[userId] ?? []
+    return used.some((code) => code.toUpperCase() === voucherCode.toUpperCase())
+      ? current
+      : { ...current, [userId]: [...used, voucherCode.toUpperCase()] }
+  })
+}
+
+export function getEligiblePromotions(promotions: Promotion[], subtotal: number, now = new Date()) {
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  return promotions.filter(
+    (promotion) =>
+      promotion.isActive &&
+      promotion.startDate <= today &&
+      promotion.endDate >= today &&
+      promotion.usedCount < promotion.usageLimit &&
+      subtotal > 0,
+  )
+}
+
+export function getDiscountAmount(promotion: Promotion | undefined, subtotal: number) {
+  if (!promotion || subtotal <= 0) return 0
+  const amount =
+    promotion.discountType === 'PERCENTAGE'
+      ? Math.round((subtotal * promotion.discountValue) / 100)
+      : promotion.discountValue
+  return Math.min(subtotal, Math.max(0, amount))
+}
+
+export function recordPromotionUse(id: string) {
+  promotionStore.set((promotions) =>
+    promotions.map((promotion) =>
+      promotion.id === id && promotion.usedCount < promotion.usageLimit
+        ? { ...promotion, usedCount: promotion.usedCount + 1 }
+        : promotion,
+    ),
+  )
+}

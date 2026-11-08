@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { ShoppingBag, Trash2 } from 'lucide-react'
 import { TOPPINGS, formatPrice, getProduct, getUnitPrice, type CartItem } from '@/lib/menu'
+import { getDiscountAmount, getEligiblePromotions, type Promotion } from '@/lib/promotions'
 import { cn } from '@/lib/utils'
 import { QuantityStepper } from './customize-dialog'
 
@@ -11,6 +12,9 @@ type CartPanelProps = {
   onQuantityChange: (key: string, quantity: number) => void
   onRemove: (key: string) => void
   onCheckout: () => void
+  promotions: Promotion[]
+  selectedPromotionId: string
+  onSelectPromotion: (id: string) => void
   showHeader?: boolean
   className?: string
 }
@@ -20,10 +24,16 @@ export function CartPanel({
   onQuantityChange,
   onRemove,
   onCheckout,
+  promotions,
+  selectedPromotionId,
+  onSelectPromotion,
   showHeader = true,
   className,
 }: CartPanelProps) {
   const subtotal = items.reduce((sum, item) => sum + getUnitPrice(item) * item.quantity, 0)
+  const eligiblePromotions = getEligiblePromotions(promotions, subtotal)
+  const selectedPromotion = eligiblePromotions.find((promotion) => promotion.id === selectedPromotionId)
+  const discountAmount = getDiscountAmount(selectedPromotion, subtotal)
   const lineCount = items.length
 
   return (
@@ -109,18 +119,37 @@ export function CartPanel({
       )}
 
       <div className="border-t border-border bg-muted/50 px-4 pb-4 pt-4">
+        <label className="mb-3 block text-xs font-medium text-foreground" htmlFor="cart-promotion">
+          Chọn mã khuyến mãi
+          <select
+            id="cart-promotion"
+            value={selectedPromotion?.id ?? ''}
+            onChange={(event) => onSelectPromotion(event.target.value)}
+            disabled={eligiblePromotions.length === 0}
+            className="mt-1.5 h-10 w-full rounded-lg border border-border bg-card px-3 text-xs disabled:text-muted-foreground"
+          >
+            <option value="">Không áp dụng</option>
+            {eligiblePromotions.map((promotion) => (
+              <option key={promotion.id} value={promotion.id}>
+                {promotion.voucherCode} · {promotion.discountType === 'PERCENTAGE' ? `${promotion.discountValue}%` : formatPrice(promotion.discountValue)}
+              </option>
+            ))}
+          </select>
+        </label>
         <dl className="flex flex-col gap-2 text-sm">
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Tạm tính</dt>
             <dd className="font-semibold text-foreground">{formatPrice(subtotal)}</dd>
           </div>
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">Phí giao hàng</dt>
-            <dd className="font-semibold text-success">Tính khi thanh toán</dd>
-          </div>
+          {selectedPromotion && (
+            <div className="flex justify-between">
+              <dt className="text-success">Ưu đãi · {selectedPromotion.voucherCode}</dt>
+              <dd className="font-semibold text-success">−{formatPrice(discountAmount)}</dd>
+            </div>
+          )}
           <div className="mt-2 flex items-center justify-between border-t border-border pt-3">
             <dt className="font-semibold text-foreground">Tổng cộng</dt>
-            <dd className="text-xl font-bold text-foreground">{formatPrice(subtotal)}</dd>
+            <dd className="text-xl font-bold text-foreground">{formatPrice(subtotal - discountAmount)}</dd>
           </div>
         </dl>
         <button

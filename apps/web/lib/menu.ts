@@ -1,14 +1,23 @@
 import { createPersistentStore } from './persistent-store'
 
-export type CategoryId = 'all' | 'coffee' | 'milk-tea' | 'juice'
+export type CategoryId = string
+export type BuiltInCategoryId = 'all' | 'coffee' | 'milk-tea' | 'juice'
+
+export type MenuCategory = {
+  id: string
+  name: string
+  slug: string
+  isActive: boolean
+}
 
 export type Product = {
   id: string
   name: string
   description: string
-  category: Exclude<CategoryId, 'all'>
+  category: string
   price: number
   rating: number
+  weeklySalesCount: number
   popular?: boolean
   inStock: boolean
   image: string
@@ -31,12 +40,18 @@ export type CartItem = {
   quantity: number
 }
 
-export const CATEGORY_LABELS: Record<CategoryId, string> = {
+export const CATEGORY_LABELS: Record<BuiltInCategoryId, string> = {
   all: 'Tất cả',
   coffee: 'Cà phê',
   'milk-tea': 'Trà sữa',
   juice: 'Nước ép',
 }
+
+export const categoryStore = createPersistentStore<MenuCategory[]>('brewlite.menu-categories', [
+  { id: 'coffee', name: 'Cà phê', slug: 'coffee', isActive: true },
+  { id: 'milk-tea', name: 'Trà sữa', slug: 'milk-tea', isActive: true },
+  { id: 'juice', name: 'Nước ép', slug: 'juice', isActive: true },
+])
 
 export const SIZE_SURCHARGE: Record<SizeOption, number> = { M: 0, L: 6000 }
 export const SUGAR_OPTIONS: SugarOption[] = ['0%', '25%', '50%', '75%', '100%']
@@ -58,6 +73,7 @@ export const PRODUCTS: Product[] = [
     category: 'coffee',
     price: 56000,
     rating: 4.9,
+    weeklySalesCount: 128,
     popular: true,
     inStock: true,
     image: '/images/latte-kem-sua.png',
@@ -69,6 +85,7 @@ export const PRODUCTS: Product[] = [
     category: 'coffee',
     price: 58000,
     rating: 4.8,
+    weeklySalesCount: 112,
     inStock: true,
     image: '/images/cold-brew.png',
   },
@@ -79,6 +96,7 @@ export const PRODUCTS: Product[] = [
     category: 'coffee',
     price: 62000,
     rating: 4.7,
+    weeklySalesCount: 96,
     popular: true,
     inStock: true,
     image: '/images/mocha-caramel.png',
@@ -90,6 +108,7 @@ export const PRODUCTS: Product[] = [
     category: 'milk-tea',
     price: 45000,
     rating: 4.9,
+    weeklySalesCount: 184,
     popular: true,
     inStock: true,
     image: '/images/tra-sua-tran-chau.png',
@@ -101,6 +120,7 @@ export const PRODUCTS: Product[] = [
     category: 'milk-tea',
     price: 49000,
     rating: 4.6,
+    weeklySalesCount: 103,
     inStock: true,
     image: '/images/tra-sua-matcha.png',
   },
@@ -111,6 +131,7 @@ export const PRODUCTS: Product[] = [
     category: 'milk-tea',
     price: 47000,
     rating: 4.5,
+    weeklySalesCount: 72,
     inStock: false,
     image: '/images/tra-sua-khoai-mon.png',
   },
@@ -121,6 +142,7 @@ export const PRODUCTS: Product[] = [
     category: 'juice',
     price: 56000,
     rating: 4.9,
+    weeklySalesCount: 156,
     popular: true,
     inStock: true,
     image: '/images/thanh-long-xoai.png',
@@ -132,6 +154,7 @@ export const PRODUCTS: Product[] = [
     category: 'juice',
     price: 52000,
     rating: 4.7,
+    weeklySalesCount: 91,
     inStock: true,
     image: '/images/buoi-hong.png',
   },
@@ -142,6 +165,7 @@ export const PRODUCTS: Product[] = [
     category: 'juice',
     price: 50000,
     rating: 4.9,
+    weeklySalesCount: 142,
     popular: true,
     inStock: true,
     image: '/images/dua-hau.png',
@@ -153,6 +177,7 @@ export const PRODUCTS: Product[] = [
     category: 'juice',
     price: 48000,
     rating: 4.8,
+    weeklySalesCount: 87,
     inStock: true,
     image: '/images/chanh-day.png',
   },
@@ -163,6 +188,7 @@ export const PRODUCTS: Product[] = [
     category: 'juice',
     price: 54000,
     rating: 4.6,
+    weeklySalesCount: 65,
     inStock: true,
     image: '/images/xanh-thanh-loc.png',
   },
@@ -172,6 +198,7 @@ export const menuProductStore = createPersistentStore<Product[]>(
   'brewlite_menu_products',
   PRODUCTS,
 )
+export const favoriteProductStore = createPersistentStore<string[]>('brewlite.favorite-products', [])
 
 export function normalizeMenuProducts(products: Product[]) {
   return products.map((product) => {
@@ -183,6 +210,7 @@ export function normalizeMenuProducts(products: Product[]) {
       description: product.description ?? '',
       inStock: product.inStock ?? true,
       rating: product.rating ?? 5,
+      weeklySalesCount: product.weeklySalesCount ?? 0,
       image: product.image || '/images/cold-brew.png',
     }
   })

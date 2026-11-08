@@ -1,43 +1,58 @@
 'use client'
 
 import { useState } from 'react'
-import { Bell, ChevronDown, Coffee, LogOut, Search, ShoppingBag, UserRound, X } from 'lucide-react'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { Bell, ChevronDown, Clock3, Coffee, History, LogOut, Search, ShoppingBag, UserRound, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { formatPrice } from '@/lib/menu'
+import { STATUS_LABEL, type Order } from '@/lib/orders'
+import { notificationStore } from '@/lib/notifications'
+import { Modal } from './modal'
 
-export type User = { name: string; email: string }
+export type User = { name: string; displayName?: string; email: string; avatarUrl?: string }
 
 type AppHeaderProps = {
   query: string
   onQueryChange: (value: string) => void
   user: User | null
   onOpenAuth: () => void
+  onOpenProfile: () => void
+  latestOrderCode?: string
+  activeOrderCount: number
+  customerOrders: Order[]
   onLogout: () => void
   cartCount: number
   onOpenCart: () => void
 }
-
-const NOTIFICATIONS = [
-  { id: 1, title: 'Giảm 20% nước ép', body: 'Áp dụng cho mọi đơn từ 2 ly trong hôm nay.' },
-  { id: 2, title: 'Món mới: Mocha Caramel Nướng', body: 'Thử ngay hương caramel nướng thơm lừng.' },
-]
 
 export function AppHeader({
   query,
   onQueryChange,
   user,
   onOpenAuth,
+  onOpenProfile,
+  latestOrderCode,
+  activeOrderCount,
+  customerOrders,
   onLogout,
   cartCount,
   onOpenCart,
 }: AppHeaderProps) {
+  const router = useRouter()
+  const notifications = notificationStore.useStore()
   const [notificationsOpen, setNotificationsOpen] = useState(false)
-  const [unread, setUnread] = useState(NOTIFICATIONS.length)
+  const unread = notifications.filter((notification) => !notification.isRead).length
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
+  const [orderHistoryOpen, setOrderHistoryOpen] = useState(false)
+  const displayName = user?.displayName?.trim() || user?.name || 'Khách hàng'
 
   function toggleNotifications() {
-    setNotificationsOpen((open) => !open)
+    const opening = !notificationsOpen
+    setNotificationsOpen(opening)
+    if (opening) notificationStore.set((items) => items.map((item) => ({ ...item, isRead: true })))
     setAccountMenuOpen(false)
-    setUnread(0)
   }
 
   function handleAccountClick() {
@@ -84,6 +99,7 @@ export function AppHeader({
   )
 
   return (
+    <>
     <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur">
       <div className="flex h-16 items-center gap-3 px-4 md:h-[68px] md:gap-6 md:px-6">
         <a href="/" className="flex shrink-0 items-center gap-2.5" aria-label="BrewLite trang chủ">
@@ -125,16 +141,38 @@ export function AppHeader({
                   Thông báo
                 </p>
                 <ul className="flex flex-col">
-                  {NOTIFICATIONS.map((n) => (
-                    <li key={n.id} className="rounded-xl px-3 py-2.5 hover:bg-muted">
-                      <p className="text-sm font-semibold text-foreground">{n.title}</p>
-                      <p className="text-xs leading-relaxed text-muted-foreground">{n.body}</p>
+                  {notifications.slice(0, 5).map((notification) => (
+                    <li key={notification.id} className="rounded-xl px-3 py-2.5 hover:bg-muted">
+                      <p className="text-sm font-semibold text-foreground">{notification.title}</p>
+                      <p className="text-xs leading-relaxed text-muted-foreground">{notification.body}</p>
+                      <time className="mt-1 block text-[10px] text-muted-foreground">
+                        {new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(notification.createdAt)}
+                      </time>
                     </li>
                   ))}
+                  {notifications.length === 0 && (
+                    <li className="px-3 py-5 text-center text-xs text-muted-foreground">Chưa có thông báo mới.</li>
+                  )}
                 </ul>
               </div>
             )}
           </div>
+
+          <button
+            type="button"
+            disabled={!latestOrderCode}
+            onClick={() => latestOrderCode && router.push(`/orders/${encodeURIComponent(latestOrderCode)}`)}
+            aria-label={`Theo dõi đơn hàng${activeOrderCount ? `, ${activeOrderCount} đơn đang xử lý` : ''}`}
+            className="relative flex size-10 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Clock3 className="size-[18px]" aria-hidden="true" />
+            {activeOrderCount > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white ring-2 ring-card">
+                {activeOrderCount}
+              </span>
+            )}
+            <span className="sr-only">Theo dõi đơn hàng</span>
+          </button>
 
           <button
             type="button"
@@ -157,12 +195,16 @@ export function AppHeader({
               aria-expanded={user ? accountMenuOpen : undefined}
               className="flex h-10 items-center gap-2.5 rounded-xl border border-border px-1.5 transition-colors hover:bg-muted sm:pr-3"
             >
-              <span className="flex size-7 items-center justify-center rounded-full border-2 border-foreground/70 text-foreground">
-                <UserRound className="size-4" aria-hidden="true" />
+              <span className="flex size-7 items-center justify-center overflow-hidden rounded-full border-2 border-foreground/70 text-foreground">
+                {user?.avatarUrl ? (
+                  <Image src={user.avatarUrl} alt="" width={28} height={28} unoptimized className="size-full object-cover" />
+                ) : (
+                  <UserRound className="size-4" aria-hidden="true" />
+                )}
               </span>
               <span className="hidden flex-col text-left leading-tight sm:flex">
                 <span className="max-w-32 truncate text-xs font-semibold text-foreground">
-                  {user ? user.name : 'Khách hàng'}
+                  {displayName}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
                   {user ? 'Thành viên BrewLite' : 'Đăng nhập / Đăng ký'}
@@ -174,14 +216,36 @@ export function AppHeader({
             {user && accountMenuOpen && (
               <div className="absolute right-0 top-12 w-56 rounded-2xl border border-border bg-popover p-2 shadow-lg animate-in fade-in slide-in-from-top-2">
                 <div className="px-3 py-2">
-                  <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+                  <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
                   <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
                     setAccountMenuOpen(false)
-                    onLogout()
+                    onOpenProfile()
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-foreground hover:bg-muted"
+                >
+                  <UserRound className="size-4" aria-hidden="true" />
+                  Hồ sơ của tôi
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAccountMenuOpen(false)
+                    setOrderHistoryOpen(true)
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-foreground hover:bg-muted"
+                >
+                  <History className="size-4" aria-hidden="true" />
+                  Lịch sử đơn hàng
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAccountMenuOpen(false)
+                    setLogoutConfirmOpen(true)
                   }}
                   className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-destructive hover:bg-muted"
                 >
@@ -195,5 +259,84 @@ export function AppHeader({
       </div>
       <div className="px-4 pb-3 md:hidden">{searchField('search-mobile')}</div>
     </header>
+    <Modal
+      open={logoutConfirmOpen}
+      onClose={() => setLogoutConfirmOpen(false)}
+      title="Xác nhận đăng xuất"
+      description="Bạn có chắc muốn đăng xuất không ?"
+      className="p-5"
+    >
+      <div className="flex justify-end gap-2 px-5 pb-5">
+        <button
+          type="button"
+          onClick={() => setLogoutConfirmOpen(false)}
+          className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+        >
+          Hủy
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setLogoutConfirmOpen(false)
+            onLogout()
+          }}
+          className="rounded-xl bg-destructive px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-destructive/90"
+        >
+          Xác nhận đăng xuất
+        </button>
+      </div>
+    </Modal>
+    <Modal
+      open={orderHistoryOpen}
+      onClose={() => setOrderHistoryOpen(false)}
+      title="Lịch sử đơn hàng"
+      description="Các đơn hàng bạn đã đặt tại BrewLite"
+      className="max-h-[85dvh]"
+    >
+      <div className="overflow-y-auto px-5 py-4">
+        {customerOrders.length === 0 ? (
+          <div className="py-10 text-center">
+            <ShoppingBag className="mx-auto size-8 text-muted-foreground" aria-hidden="true" />
+            <p className="mt-3 text-sm font-semibold text-foreground">Bạn chưa có đơn hàng nào</p>
+            <p className="mt-1 text-xs text-muted-foreground">Đơn hàng đã đặt sẽ xuất hiện tại đây.</p>
+          </div>
+        ) : (
+          <ul className="space-y-3">
+            {customerOrders.map((order) => (
+              <li key={order.code} className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-bold text-foreground">#{order.code}</p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(order.createdAt)}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-semibold text-primary">
+                    {STATUS_LABEL[order.status]}
+                  </span>
+                </div>
+                <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                  {order.lines.map((line) => `${line.quantity}× ${line.name}`).join(', ')}
+                </p>
+                <div className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-3">
+                  <span className="text-sm font-bold text-foreground">{formatPrice(order.total)}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOrderHistoryOpen(false)
+                      router.push(`/orders/${encodeURIComponent(order.code)}`)
+                    }}
+                    className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
+                  >
+                    Xem chi tiết
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </Modal>
+    </>
   )
 }

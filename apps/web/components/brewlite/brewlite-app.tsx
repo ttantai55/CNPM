@@ -4,17 +4,29 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShoppingBag } from 'lucide-react'
 import {
+  categoryStore,
+  favoriteProductStore,
   formatPrice,
   getUnitPrice,
   menuProductStore,
   normalizeMenuProducts,
-  type CategoryId,
   type Product,
 } from '@/lib/menu'
+import {
+  getDiscountAmount,
+  getEligiblePromotions,
+  promotionStore,
+  recordPromotionUse,
+  recordVoucherUse,
+  usedVouchersStore,
+} from '@/lib/promotions'
 import { AppHeader, type User } from './app-header'
-import { CategoryChips, CategorySidebar } from './category-nav'
+import { CategoryChips, CategorySidebar, type CategoryFilter } from './category-nav'
 import { ProductSection, type SortOption } from './product-section'
 import { CartPanel } from './cart-panel'
+import { BestsellerPanel } from './bestseller-panel'
+import { HomeHeroCarousel } from './home-hero-carousel'
+import { HotDealsSlider } from './hot-deals-slider'
 import { CustomizeDialog } from './customize-dialog'
 import { CheckoutDialog } from './checkout-dialog'
 import { Modal } from './modal'
@@ -22,7 +34,17 @@ import { authStore } from '@/lib/session'
 import { cartStore, dispatchCart } from '@/lib/cart'
 import { useHydrated } from '@/lib/persistent-store'
 import { MockPaymentModal } from '@/components/payment/mock-payment-modal'
-import { inventoryStore, placeOrder, type OrderDraft, type PaymentMethod } from '@/lib/orders'
+import { customerProfileStore, type CustomerProfile } from '@/lib/customer-profile'
+import {
+  confirmOrderPayment,
+  inventoryStore,
+  migrateOrderStatuses,
+  orderStore,
+  placeOrder,
+  type OrderDraft,
+  type PaymentMethod,
+} from '@/lib/orders'
+import { ProfileDialog } from './profile-dialog'
 
 function normalize(text: string) {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase()
@@ -34,20 +56,57 @@ export function BrewLiteApp() {
   const session = authStore.useStore()
   const cart = cartStore.useStore()
   const inventory = inventoryStore.useStore()
+  const orders = orderStore.useStore()
   const products = menuProductStore.useStore()
+  const categories = categoryStore.useStore()
+  const promotions = promotionStore.useStore()
+  const usedVouchersByUser = usedVouchersStore.useStore()
+  const savedProfiles = customerProfileStore.useStore()
   const [query, setQuery] = useState('')
-  const [category, setCategory] = useState<CategoryId>('juice')
+  const [category, setCategory] = useState<CategoryFilter>('juice')
   const [sort, setSort] = useState<SortOption>('popular')
-  const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const favoriteProductIds = favoriteProductStore.useStore()
+  const favorites = useMemo(() => new Set(favoriteProductIds), [favoriteProductIds])
   const [customizing, setCustomizing] = useState<Product | null>(null)
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [selectedPromotionId, setSelectedPromotionId] = useState('')
+  const [profileOpen, setProfileOpen] = useState(false)
   const [paymentOrder, setPaymentOrder] = useState<OrderDraft | null>(null)
   const [toast, setToast] = useState<string | null>(null)
-  const user: User | null = session ? { name: session.name, email: session.email } : null
+  const profile: CustomerProfile | null = session
+    ? savedProfiles[session.email] ?? {
+        name: session.name,
+        phone: '',
+        address: '',
+        gender: false,
+        dateOfBirth: '',
+        avatarUrl: '',
+      }
+    : null
+  const user: User | null = session && profile
+    ? {
+        name: profile.name || session.username || session.name,
+        displayName: profile.name.trim() || session.username || session.name,
+        email: session.email,
+        avatarUrl: profile.avatarUrl,
+      }
+    : null
+  const usedVouchers = session?.id ? usedVouchersByUser[session.id] ?? [] : []
+  const availablePromotions = useMemo(
+    () =>
+      promotions.filter(
+        (promotion) =>
+          !usedVouchers.some(
+            (code) => code.toUpperCase() === promotion.voucherCode.toUpperCase(),
+          ),
+      ),
+    [promotions, usedVouchers],
+  )
 
   useEffect(() => {
     if (!hydrated) return
+    migrateOrderStatuses()
     if (session && session.role !== 'CUSTOMER') {
       router.replace(session.role === 'STAFF' ? '/staff/orders' : '/admin/dashboard')
       return
@@ -58,33 +117,80 @@ export function BrewLiteApp() {
     }
   }, [hydrated, router, session])
 
-  const availableProducts = useMemo(
+  const activeOrders = useMemo(
+    () => orders
+      .filter((order) => order.customerEmail === session?.email && ['PENDING', 'CONFIRMED', 'PREPARING'].includes(order.status))
+      .sort((a, b) => b.createdAt - a.createdAt),
+    [orders, session?.email],
+  )
+  const customerOrders = useMemo(() => {
+    const phone = profile?.phone.replace(/\D/g, '')
+    return orders
+      .filter((order) =>
+        order.customerId === session?.id ||
+        order.customerEmail === session?.email ||
+        (phone && order.phone.replace(/\D/g, '') === phone),
+      )
+      .sort((a, b) => b.createdAt - a.createdAt)
+  }, [orders, profile?.phone, session?.email, session?.id])
+
+  const allMenuProducts = useMemo(
     () =>
       normalizeMenuProducts(products).map((product) => ({
         ...product,
-        inStock: inventory[product.id]?.available ?? product.inStock,
+        inStock:
+          (inventory[product.id]?.available ?? product.inStock) &&
+          (inventory[product.id]?.stock ?? 1) > 0,
       })),
     [inventory, products],
   )
+  const activeCategoryIds = useMemo(
+    () => new Set(categories.filter((item) => item.isActive).map((item) => item.id)),
+    [categories],
+  )
+  const availableProducts = useMemo(
+    () => allMenuProducts.filter((product) => product.inStock && activeCategoryIds.has(product.category)),
+    [activeCategoryIds, allMenuProducts],
+  )
+  useEffect(() => {
+    if (category !== 'all' && category !== 'favorites' && !activeCategoryIds.has(category)) {
+      setCategory('all')
+    }
+  }, [activeCategoryIds, category])
 
   const searched = useMemo(() => {
     const q = normalize(query.trim())
     if (!q) return availableProducts
     return availableProducts.filter((p) => normalize(`${p.name} ${p.description}`).includes(q))
   }, [availableProducts, query])
+  const searchableFavorites = useMemo(() => {
+    const q = normalize(query.trim())
+    return allMenuProducts.filter((product) =>
+      activeCategoryIds.has(product.category) &&
+      favorites.has(product.id) && (!q || normalize(`${product.name} ${product.description}`).includes(q)),
+    )
+  }, [activeCategoryIds, allMenuProducts, favorites, query])
 
   const counts = useMemo(
     () => ({
+      ...Object.fromEntries(
+        categories.map((item) => [
+          item.id,
+          searched.filter((product) => product.category === item.id).length,
+        ]),
+      ),
       all: searched.length,
-      coffee: searched.filter((p) => p.category === 'coffee').length,
-      'milk-tea': searched.filter((p) => p.category === 'milk-tea').length,
-      juice: searched.filter((p) => p.category === 'juice').length,
+      favorites: searchableFavorites.length,
     }),
-    [searched],
+    [categories, searched, searchableFavorites],
   )
 
   const visibleProducts = useMemo(() => {
-    const list = category === 'all' ? searched : searched.filter((p) => p.category === category)
+    const list = category === 'favorites'
+      ? searchableFavorites
+      : category === 'all'
+        ? searched
+        : searched.filter((p) => p.category === category)
     const sorted = [...list]
     switch (sort) {
       case 'popular':
@@ -101,9 +207,12 @@ export function BrewLiteApp() {
         break
     }
     return sorted.sort((a, b) => Number(b.inStock) - Number(a.inStock))
-  }, [searched, category, sort])
+  }, [searched, searchableFavorites, category, sort])
 
-  const cartTotal = cart.reduce((sum, i) => sum + getUnitPrice(i) * i.quantity, 0)
+  const cartSubtotal = cart.reduce((sum, i) => sum + getUnitPrice(i) * i.quantity, 0)
+  const eligiblePromotions = getEligiblePromotions(availablePromotions, cartSubtotal)
+  const selectedPromotion = eligiblePromotions.find((promotion) => promotion.id === selectedPromotionId)
+  const cartTotal = cartSubtotal - getDiscountAmount(selectedPromotion, cartSubtotal)
 
   function showToast(message: string) {
     setToast(message)
@@ -111,12 +220,9 @@ export function BrewLiteApp() {
   }
 
   function toggleFavorite(id: string) {
-    setFavorites((current) => {
-      const next = new Set(current)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+    favoriteProductStore.set((current) =>
+      current.includes(id) ? current.filter((favoriteId) => favoriteId !== id) : [...current, id],
+    )
   }
 
   function handleQueryChange(value: string) {
@@ -133,11 +239,39 @@ export function BrewLiteApp() {
     setCheckoutOpen(true)
   }
 
+  function quickAddProduct(product: Product) {
+    dispatchCart({
+      type: 'add',
+      item: {
+        productId: product.id,
+        size: 'M',
+        sugar: '50%',
+        ice: 'Đá vừa',
+        toppingIds: [],
+        note: '',
+        quantity: 1,
+      },
+    })
+    showToast(`Đã thêm ${product.name} vào giỏ hàng`)
+  }
+
+  function usePromotion(promotion: (typeof promotions)[number]) {
+    setSelectedPromotionId(promotion.id)
+    setCategory('all')
+    requestAnimationFrame(() =>
+      document.getElementById('menu-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+    )
+    showToast(`Đã áp dụng mã ${promotion.voucherCode}`)
+  }
+
   const cartPanelProps = {
     items: cart,
     onQuantityChange: (key: string, quantity: number) => dispatchCart({ type: 'setQuantity', key, quantity }),
     onRemove: (key: string) => dispatchCart({ type: 'remove', key }),
     onCheckout: openCheckout,
+    promotions: availablePromotions,
+    selectedPromotionId,
+    onSelectPromotion: setSelectedPromotionId,
   }
 
   if (hydrated && session && session.role !== 'CUSTOMER') {
@@ -156,15 +290,43 @@ export function BrewLiteApp() {
           router.replace('/login')
           showToast('Bạn đã đăng xuất')
         }}
+        onOpenProfile={() => setProfileOpen(true)}
+        latestOrderCode={activeOrders[0]?.code}
+        activeOrderCount={activeOrders.length}
+        customerOrders={customerOrders}
         cartCount={cart.reduce((count, item) => count + item.quantity, 0)}
         onOpenCart={() => setCartOpen(true)}
       />
 
-      <div className="mx-auto grid max-w-[1600px] gap-6 px-4 pb-28 pt-4 md:px-6 md:pt-5 lg:grid-cols-[180px_minmax(0,1fr)] xl:grid-cols-[180px_minmax(0,1fr)_300px] xl:pb-8">
-        <CategorySidebar active={category} counts={counts} onChange={setCategory} />
+      {session && profile && (
+        <ProfileDialog
+          open={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          user={{
+            id: session.id ?? `usr_${session.email.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+            username: session.username ?? session.email.split('@')[0],
+            email: session.email,
+            createdAt: session.createdAt ?? 0,
+          }}
+          profile={profile}
+          onSave={(nextProfile) => {
+            customerProfileStore.set((current) => ({ ...current, [session.email]: nextProfile }))
+            showToast('Đã lưu hồ sơ của bạn')
+          }}
+        />
+      )}
 
-        <main className="flex min-w-0 flex-col gap-4">
-          <CategoryChips active={category} counts={counts} onChange={setCategory} />
+      <div className="mx-auto max-w-[1600px] px-4 pt-4 md:px-6 md:pt-5">
+        <HomeHeroCarousel />
+      </div>
+
+      <HotDealsSlider promotions={availablePromotions} onUse={usePromotion} />
+
+      <div className="mx-auto grid max-w-[1600px] gap-6 px-4 pb-28 md:px-6 lg:grid-cols-[180px_minmax(0,1fr)] xl:grid-cols-[180px_minmax(0,1fr)_300px] xl:pb-8">
+        <CategorySidebar active={category} counts={counts} onChange={setCategory} categories={categories} />
+
+        <main id="menu-section" className="flex min-w-0 scroll-mt-24 flex-col gap-4">
+          <CategoryChips active={category} counts={counts} onChange={setCategory} categories={categories} />
           <ProductSection
             products={visibleProducts}
             sort={sort}
@@ -173,6 +335,12 @@ export function BrewLiteApp() {
             onToggleFavorite={toggleFavorite}
             onAdd={setCustomizing}
             query={query.trim()}
+            noProductsMessage={
+              category === 'favorites' &&
+              allMenuProducts.every((product) => !favorites.has(product.id))
+                ? 'Bạn chưa lưu món yêu thích nào. Hãy thả tim món bạn thích nhé!'
+                : undefined
+            }
             onResetFilters={() => {
               setQuery('')
               setCategory('all')
@@ -180,11 +348,7 @@ export function BrewLiteApp() {
           />
         </main>
 
-        <aside className="hidden xl:block" aria-label="Giỏ hàng">
-          <div className="sticky top-[84px] flex h-[calc(100dvh-100px)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <CartPanel {...cartPanelProps} className="flex-1" />
-          </div>
-        </aside>
+        <BestsellerPanel products={availableProducts} onAdd={quickAddProduct} />
       </div>
 
       {cart.length > 0 && (
@@ -230,22 +394,36 @@ export function BrewLiteApp() {
       open={checkoutOpen}
       onClose={() => setCheckoutOpen(false)}
       items={cart}
-      defaultName={user?.name}
-      onPlaced={() => dispatchCart({ type: 'clear' })}
+      defaultName={profile?.name}
+      defaultPhone={profile?.phone}
+      customerId={session?.id}
+      customerEmail={session?.email}
+      promotions={availablePromotions}
+      selectedPromotionId={selectedPromotionId}
+      onSelectPromotion={setSelectedPromotionId}
       onProceedToPayment={(orderData) => {
         setCheckoutOpen(false)
-        setPaymentOrder(orderData)
+        const order = placeOrder(orderData)
+        if (selectedPromotion) {
+          recordPromotionUse(selectedPromotion.id)
+          recordVoucherUse(session?.id ?? '', selectedPromotion.voucherCode)
+        }
+        setSelectedPromotionId('')
+        dispatchCart({ type: 'clear' })
+        setPaymentOrder(order)
       }}
     />
     {paymentOrder && (
       <MockPaymentModal
         order={paymentOrder}
-        onClose={() => setPaymentOrder(null)}
-        onSuccess={(method: PaymentMethod) => {
-          const order = placeOrder(paymentOrder, method)
-          dispatchCart({ type: 'clear' })
+        onClose={() => {
+          router.push(`/orders/${encodeURIComponent(paymentOrder.code)}`)
           setPaymentOrder(null)
-          router.push(`/orders/${encodeURIComponent(order.code)}`)
+        }}
+        onSuccess={(method: PaymentMethod) => {
+          const order = confirmOrderPayment(paymentOrder.code, method)
+          setPaymentOrder(null)
+          if (order) router.push(`/orders/${encodeURIComponent(order.code)}`)
         }}
       />
     )}

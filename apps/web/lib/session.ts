@@ -9,6 +9,9 @@ export type AuthSession = {
   role: Role
   name: string
   email: string
+  id: string
+  username: string
+  createdAt: number
 }
 
 export const authStore = createPersistentStore<AuthSession | null>('brewlite.session', null)
@@ -44,6 +47,9 @@ export function createDemoSession(identifier: string, selectedRole?: Role): Auth
   return {
     token: `mock.${payload}.brewlite-demo`,
     role,
+    id: `usr_${user.email.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+    username: user.email.split('@')[0],
+    createdAt: Date.now(),
     ...user,
   }
 }

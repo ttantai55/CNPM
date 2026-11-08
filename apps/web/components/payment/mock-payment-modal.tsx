@@ -109,7 +109,7 @@ export function MockPaymentModal({ order, onClose, onSuccess }: MockPaymentModal
                   <XCircle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
                   <div className="flex-1">
                     <p className="font-semibold">Giao dịch không thành công hoặc đã bị hủy</p>
-                    <p className="mt-0.5 text-destructive/80">Giỏ hàng của bạn vẫn được giữ nguyên.</p>
+                    <p className="mt-0.5 text-destructive/80">Đơn hàng vẫn được giữ để bạn thử thanh toán lại.</p>
                   </div>
                   <button
                     type="button"
@@ -179,6 +179,12 @@ function OrderSummary({ order }: { order: OrderDraft }) {
             {order.lines.reduce((sum, l) => sum + l.quantity, 0)} ly
           </dd>
         </div>
+        {order.promotionCode && (
+          <div className="flex items-center justify-between gap-2">
+            <dt className="text-muted-foreground">Mã ưu đãi · {order.promotionCode}</dt>
+            <dd className="font-semibold text-success">−{formatPrice(order.discountAmount ?? 0)}</dd>
+          </div>
+        )}
       </dl>
       <div className="mt-4 border-t border-dashed border-border pt-4">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tổng thanh toán</p>

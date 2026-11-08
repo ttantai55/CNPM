@@ -1,3 +1,5 @@
+import { createPersistentStore } from './persistent-store'
+
 export type CategoryId = 'all' | 'coffee' | 'milk-tea' | 'juice'
 
 export type Product = {
@@ -34,6 +36,152 @@ export const CATEGORY_LABELS: Record<CategoryId, string> = {
   coffee: 'Cà phê',
   'milk-tea': 'Trà sữa',
   juice: 'Nước ép',
+}
+
+export type StaffPosition = 'PHUC_VU' | 'PHA_CHE'
+
+export type StaffAccount = {
+  id: string
+  username: string
+  passwordSalt: string
+  passwordHash: string
+  fullName: string
+  email: string
+  phone: string
+  position: StaffPosition
+  createdAt: number
+  isActive: boolean
+}
+
+export type CustomerAccount = {
+  id: string
+  username: string
+  contact: string
+  email: string
+  name: string
+  phone: string
+  gender: boolean
+  dateOfBirth: string
+  address: string
+  passwordSalt: string
+  passwordHash: string
+  createdAt: number
+}
+
+export const staffAccountStore = createPersistentStore<StaffAccount[]>(
+  'brewlite.staff-accounts',
+  [],
+)
+export const customerAccountStore = createPersistentStore<CustomerAccount[]>(
+  'brewlite.customer-accounts',
+  [],
+)
+
+function bytesToHex(bytes: Uint8Array) {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+async function hashPassword(password: string, salt: string) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits'])
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: Uint8Array.from(salt.match(/.{2}/g) ?? [], (byte) => parseInt(byte, 16)), iterations: 310_000, hash: 'SHA-256' },
+    key,
+    256,
+  )
+  return bytesToHex(new Uint8Array(bits))
+}
+
+export async function makePasswordCredentials(password: string) {
+  const salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)))
+  return { passwordSalt: salt, passwordHash: await hashPassword(password, salt) }
+}
+
+export async function verifyPassword(password: string, salt: string, expectedHash: string) {
+  return (await hashPassword(password, salt)) === expectedHash
+}
+
+export async function createStaffAccount(
+  account: Omit<StaffAccount, 'id' | 'passwordSalt' | 'passwordHash' | 'createdAt'> & { password: string },
+) {
+  const credentials = await makePasswordCredentials(account.password)
+  const created: StaffAccount = {
+    ...account,
+    id: `staff-${crypto.randomUUID()}`,
+    ...credentials,
+    createdAt: Date.now(),
+  }
+  staffAccountStore.set((current) => [...current, created])
+  return created
+}
+
+export async function updateStaffAccount(
+  id: string,
+  updates: Partial<Omit<StaffAccount, 'id' | 'createdAt' | 'passwordSalt' | 'passwordHash'>> & { password?: string },
+) {
+  const { password, ...details } = updates
+  const credentials = password ? await makePasswordCredentials(password) : undefined
+  staffAccountStore.set((current) =>
+    current.map((account) =>
+      account.id === id ? { ...account, ...details, ...credentials } : account,
+    ),
+  )
+}
+
+export function deleteStaffAccount(id: string) {
+  staffAccountStore.set((current) => current.filter((account) => account.id !== id))
+}
+
+export async function createCustomerAccount(
+  username: string,
+  contact: string,
+  password: string,
+) {
+  const credentials = await makePasswordCredentials(password)
+  const isEmail = contact.includes('@')
+  const created: CustomerAccount = {
+    id: `customer-${crypto.randomUUID()}`,
+    username,
+    contact,
+    email: isEmail ? contact : '',
+    name: username,
+    phone: isEmail ? '' : contact,
+    gender: false,
+    dateOfBirth: '',
+    address: '',
+    ...credentials,
+    createdAt: Date.now(),
+  }
+  customerAccountStore.set((current) => [...current, created])
+  return created
+}
+
+export async function createManagedCustomer(
+  customer: Omit<CustomerAccount, 'id' | 'contact' | 'passwordSalt' | 'passwordHash' | 'createdAt'>,
+) {
+  const credentials = await makePasswordCredentials(crypto.randomUUID())
+  const created: CustomerAccount = {
+    ...customer,
+    id: `customer-${crypto.randomUUID()}`,
+    contact: customer.email || customer.phone,
+    ...credentials,
+    createdAt: Date.now(),
+  }
+  customerAccountStore.set((current) => [...current, created])
+  return created
+}
+
+export function updateCustomerAccount(id: string, updates: Partial<Omit<CustomerAccount, 'id' | 'passwordSalt' | 'passwordHash'>>) {
+  customerAccountStore.set((current) =>
+    current.map((customer) =>
+      customer.id === id
+        ? { ...customer, ...updates, contact: updates.email || updates.phone || customer.contact }
+        : customer,
+    ),
+  )
+}
+
+export function deleteCustomerAccount(id: string) {
+  customerAccountStore.set((current) => current.filter((customer) => customer.id !== id))
 }
 
 export const SIZE_SURCHARGE: Record<SizeOption, number> = { M: 0, L: 6000 }

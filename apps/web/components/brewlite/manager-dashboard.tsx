@@ -7,11 +7,15 @@ import {
   ArrowUpRight,
   BarChart3,
   Boxes,
+  CalendarDays,
   Check,
   ChevronRight,
   CircleDollarSign,
   Coffee,
   LayoutDashboard,
+  ListTree,
+  UsersRound,
+  UserRound,
   PackageCheck,
   Percent,
   Plus,
@@ -19,8 +23,6 @@ import {
   Trash2,
   Search,
   ShoppingBag,
-  SlidersHorizontal,
-  TrendingUp,
   X,
 } from 'lucide-react'
 import {
@@ -34,51 +36,65 @@ import {
 } from 'recharts'
 import {
   addProduct,
-  CATEGORY_LABELS,
+  categoryStore,
   deleteProduct,
   formatPrice,
   menuProductStore,
   normalizeMenuProducts,
   updateProduct,
-  type CategoryId,
   type Product,
 } from '@/lib/menu'
 import { inventoryStore, isLowStock, orderStore, setAvailability } from '@/lib/orders'
 import { RawMaterialInventory } from './raw-material-inventory'
+import { PromotionManagement } from './promotion-management'
+import { CategoryManagement } from './category-management'
+import { StaffManagement } from './staff-management'
+import { CustomerManagement } from './customer-management'
 import { DashboardHeader, RoleGuard } from './role-shell'
+import { publishBatchNotification } from '@/lib/notifications'
 
-const HOURLY_REVENUE = [
-  { hour: '08:00', revenue: 420000 },
-  { hour: '09:00', revenue: 610000 },
-  { hour: '10:00', revenue: 480000 },
-  { hour: '11:00', revenue: 920000 },
-  { hour: '12:00', revenue: 1280000 },
-  { hour: '13:00', revenue: 1040000 },
-  { hour: '14:00', revenue: 790000 },
-  { hour: '15:00', revenue: 1160000 },
-  { hour: '16:00', revenue: 1480000 },
-  { hour: '17:00', revenue: 1310000 },
-  { hour: '18:00', revenue: 1820000 },
-  { hour: '19:00', revenue: 1540000 },
-]
+function dateInputValue(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function getDateRange(preset: 'today' | 'yesterday' | 'last7' | 'custom', customDate: string) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const start = new Date(today)
+  if (preset === 'yesterday') start.setDate(start.getDate() - 1)
+  if (preset === 'last7') start.setDate(start.getDate() - 6)
+  if (preset === 'custom') {
+    const parsed = new Date(`${customDate}T00:00:00`)
+    if (customDate && !Number.isNaN(parsed.getTime())) start.setTime(parsed.getTime())
+  }
+  const end = new Date(start)
+  end.setHours(23, 59, 59, 999)
+  if (preset === 'last7') end.setTime(today.getTime() + 24 * 60 * 60 * 1000 - 1)
+  return { start: start.getTime(), end: end.getTime() }
+}
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Tổng quan', icon: LayoutDashboard },
   { id: 'inventory', label: 'Quản lý Menu', icon: Boxes },
+  { id: 'categories', label: 'Quản lý danh mục', icon: ListTree },
+  { id: 'staff', label: 'Quản lý nhân viên', icon: UsersRound },
+  { id: 'customers', label: 'Quản lý khách hàng', icon: UserRound },
   { id: 'raw-materials', label: 'Quản lý kho nguyên liệu', icon: PackageCheck },
   { id: 'revenue', label: 'Báo cáo Doanh thu', icon: BarChart3 },
   { id: 'promotions', label: 'Cấu hình Khuyến mãi', icon: Percent },
 ] as const
 
-const categoryNames: Record<CategoryId, string> = CATEGORY_LABELS
-
 function ManagerContent() {
   const orders = orderStore.useStore()
   const inventory = inventoryStore.useStore()
+  const categories = categoryStore.useStore()
   const [activeNav, setActiveNav] = useState<(typeof NAV_ITEMS)[number]['id']>('overview')
   const [search, setSearch] = useState('')
-  const [promotionEnabled, setPromotionEnabled] = useState(true)
-  const [promotionNotice, setPromotionNotice] = useState('')
+  const [datePreset, setDatePreset] = useState<'today' | 'yesterday' | 'last7' | 'custom'>('today')
+  const [customDate, setCustomDate] = useState(() => dateInputValue(new Date()))
 
   const productsList = menuProductStore.useStore()
 
@@ -95,29 +111,60 @@ function ManagerContent() {
   const [formData, setFormData] = useState<{
     name: string
     description: string
-    category: Exclude<CategoryId, 'all'>
+    category: string
     price: number
+    image: string
   }>({
     name: '',
     description: '',
     category: 'coffee',
     price: 45000,
+    image: '',
   })
   const [formError, setFormError] = useState('')
+  const [notifyCustomers, setNotifyCustomers] = useState(false)
 
   // State cho Modal Xác nhận xóa
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null)
 
-  const todayStart = new Date()
-  todayStart.setHours(0, 0, 0, 0)
-  const todaysOrders = orders.filter((order) => order.createdAt >= todayStart.getTime())
-  const revenueToday = todaysOrders
-    .filter((order) => order.status !== 'CANCELLED')
+  const dateBounds = getDateRange(datePreset, customDate)
+  const selectedOrders = useMemo(
+    () => orders.filter((order) => order.createdAt >= dateBounds.start && order.createdAt <= dateBounds.end),
+    [dateBounds.end, dateBounds.start, orders],
+  )
+  const revenueSelected = selectedOrders
+    .filter((order) => order.status !== 'CANCELLED' && order.status !== 'PENDING')
     .reduce((sum, order) => sum + order.total, 0)
-  const completedCount = todaysOrders.filter((order) => order.status === 'COMPLETED').length
-  const cancelledCount = todaysOrders.filter((order) => order.status === 'CANCELLED').length
+  const completedCount = selectedOrders.filter((order) => order.status === 'COMPLETED').length
+  const cancelledCount = selectedOrders.filter((order) => order.status === 'CANCELLED').length
+  const hourlyRevenue = useMemo(
+    () =>
+      Array.from({ length: 24 }, (_, hour) => ({
+        hour: `${String(hour).padStart(2, '0')}:00`,
+        revenue: selectedOrders
+          .filter(
+            (order) =>
+              order.createdAt >= dateBounds.start &&
+              order.createdAt <= dateBounds.end &&
+              new Date(order.createdAt).getHours() === hour &&
+              order.status !== 'CANCELLED' &&
+              order.status !== 'PENDING',
+          )
+          .reduce((sum, order) => sum + order.total, 0),
+      })),
+    [dateBounds.end, dateBounds.start, selectedOrders],
+  )
+  const selectedDateLabel =
+    datePreset === 'today' ? 'Hôm nay'
+      : datePreset === 'yesterday' ? 'Hôm qua'
+        : datePreset === 'last7' ? '7 ngày qua'
+          : new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium' }).format(new Date(`${customDate}T00:00:00`))
   const lowStockCount = productsList.filter((product) => isLowStock(inventory[product.id])).length
 
+  const categoryNames = useMemo(
+    () => Object.fromEntries(categories.map((category) => [category.id, category.name])),
+    [categories],
+  )
   const visibleProducts = useMemo(
     () =>
       productsList.filter((product) =>
@@ -125,7 +172,7 @@ function ManagerContent() {
           .toLowerCase()
           .includes(search.toLowerCase()),
       ),
-    [productsList, search],
+    [categories, productsList, search],
   )
 
   function navigateTo(id: (typeof NAV_ITEMS)[number]['id']) {
@@ -136,7 +183,8 @@ function ManagerContent() {
   // Mở form thêm món mới
   const handleOpenAdd = () => {
     setEditingProduct(null)
-    setFormData({ name: '', description: '', category: 'coffee', price: 45000 })
+    setNotifyCustomers(false)
+    setFormData({ name: '', description: '', category: 'coffee', price: 45000, image: '' })
     setFormError('')
     setIsFormOpen(true)
   }
@@ -144,11 +192,13 @@ function ManagerContent() {
   // Mở form chỉnh sửa món
   const handleOpenEdit = (product: Product) => {
     setEditingProduct(product)
+    setNotifyCustomers(false)
     setFormData({
       name: product.name,
       description: product.description ?? '',
       category: product.category,
       price: product.price,
+      image: product.image,
     })
     setFormError('')
     setIsFormOpen(true)
@@ -165,8 +215,16 @@ function ManagerContent() {
       return
     }
 
+    const isNewProduct = !editingProduct
     if (editingProduct) {
-      updateProduct(editingProduct.id, { name, description, category: formData.category, price })
+      const image = formData.image.trim()
+      updateProduct(editingProduct.id, {
+        name,
+        description,
+        category: formData.category,
+        price,
+        ...(image ? { image } : {}),
+      })
     } else {
       const newId = addProduct({
         name,
@@ -176,11 +234,13 @@ function ManagerContent() {
         inStock: true,
         popular: false,
         rating: 5,
-        image: '/images/cold-brew.png',
+        weeklySalesCount: 0,
+        image: formData.image.trim() || '/images/cold-brew.png',
       })
       setAvailability(newId, true)
     }
 
+    if (isNewProduct && notifyCustomers) publishBatchNotification('món', 1)
     setIsFormOpen(false)
     setFormError('')
   }
@@ -234,7 +294,7 @@ function ManagerContent() {
           </aside>
 
           <main className="min-w-0 flex-1 px-6 py-7 xl:px-9">
-            <div id="overview" className="scroll-mt-5 flex items-end justify-between">
+            <div id="overview" className="scroll-mt-5 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="text-xs text-[#99a39c]">
                   {new Intl.DateTimeFormat('vi-VN', {
@@ -249,17 +309,36 @@ function ManagerContent() {
                   Tổng quan cửa hàng
                 </h1>
               </div>
-              <button className="flex h-9 items-center gap-2 rounded-lg border border-[#e5eae5] bg-white px-3 text-[11px] font-medium text-[#68766d]">
-                <SlidersHorizontal className="size-3.5" /> Hôm nay{' '}
-                <ChevronRight className="size-3 rotate-90" />
-              </button>
+              <div className="flex items-center gap-2">
+                <CalendarDays className="size-4 text-[#718078]" />
+                <select
+                  aria-label="Khoảng thời gian tổng quan"
+                  value={datePreset}
+                  onChange={(event) => setDatePreset(event.target.value as typeof datePreset)}
+                  className="h-9 rounded-lg border border-[#e5eae5] bg-white px-3 text-[11px] font-medium text-[#68766d]"
+                >
+                  <option value="today">Hôm nay</option>
+                  <option value="yesterday">Hôm qua</option>
+                  <option value="last7">7 ngày qua</option>
+                  <option value="custom">Ngày tùy chọn</option>
+                </select>
+                {datePreset === 'custom' && (
+                  <input
+                    type="date"
+                    aria-label="Chọn ngày"
+                    value={customDate}
+                    onChange={(event) => setCustomDate(event.target.value)}
+                    className="h-9 rounded-lg border border-[#e5eae5] bg-white px-2 text-[11px] text-[#68766d]"
+                  />
+                )}
+              </div>
             </div>
 
             <section className="mt-6 grid grid-cols-2 gap-3 xl:grid-cols-4">
               <KpiCard
-                label="Doanh thu hôm nay"
-                value={formatPrice(revenueToday)}
-                note="+12,8% so với hôm qua"
+                label={`Doanh thu · ${selectedDateLabel}`}
+                value={formatPrice(revenueSelected)}
+                note="Theo các đơn phát sinh trong khoảng đã chọn"
                 icon={CircleDollarSign}
                 trend="up"
                 tone="green"
@@ -299,21 +378,19 @@ function ManagerContent() {
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-semibold text-[#354a3c]">Doanh thu theo khung giờ</h2>
                     <span className="rounded-full bg-[#edf4ef] px-2 py-0.5 text-[9px] font-semibold text-[#528161]">
-                      HÔM NAY
+                      {selectedDateLabel.toLocaleUpperCase('vi-VN')}
                     </span>
                   </div>
                   <p className="mt-1 text-[11px] text-[#99a39c]">
-                    Doanh thu trong ngày · cập nhật tự động
+                    Doanh thu theo giờ tạo đơn trong khoảng đã chọn
                   </p>
                 </div>
-                <span className="flex items-center gap-1 text-[11px] font-semibold text-[#5b8b68]">
-                  <TrendingUp className="size-3.5" /> +12,8%
-                </span>
+                <span className="text-[11px] font-semibold text-[#5b8b68]">{formatPrice(revenueSelected)}</span>
               </div>
               <div className="mt-5 h-[220px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
-                    data={HOURLY_REVENUE}
+                    data={hourlyRevenue}
                     margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
                   >
                     <defs>
@@ -495,55 +572,13 @@ function ManagerContent() {
 
             <RawMaterialInventory />
 
-            <section
-              id="promotions"
-              className="mt-5 scroll-mt-5 rounded-2xl border border-[#e8ede8] bg-white p-5"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3">
-                  <span className="flex size-10 items-center justify-center rounded-xl bg-[#f7f1e7] text-[#ad7b44]">
-                    <Percent className="size-5" />
-                  </span>
-                  <div>
-                    <h2 className="text-sm font-semibold text-[#354a3c]">Cấu hình Khuyến mãi</h2>
-                    <p className="mt-1 text-[11px] text-[#99a39c]">
-                      Ưu đãi đang áp dụng cho khách hàng BrewLite
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setPromotionEnabled((enabled) => !enabled)}
-                  className={`rounded-lg px-3 py-2 text-[10px] font-semibold ${
-                    promotionEnabled
-                      ? 'bg-[#edf4ef] text-[#4c7b5d]'
-                      : 'bg-[#f3f4f3] text-[#79847c]'
-                  }`}
-                >
-                  {promotionEnabled ? 'Đang bật' : 'Đang tắt'}
-                </button>
-              </div>
-              <div className="mt-4 flex items-center justify-between rounded-xl border border-[#f0eee8] bg-[#fcfbf8] px-4 py-3">
-                <div>
-                  <p className="text-xs font-semibold text-[#5e584d]">
-                    Ưu đãi giờ vàng · Giảm 20%
-                  </p>
-                  <p className="mt-1 text-[10px] text-[#9b9589]">
-                    Áp dụng cho đơn từ 2 thức uống, đến hết hôm nay
-                  </p>
-                </div>
-                <button
-                  onClick={() => setPromotionNotice('Đã lưu cấu hình khuyến mãi demo.')}
-                  className="rounded-lg border border-[#e8e3d8] bg-white px-3 py-2 text-[10px] font-semibold text-[#857352] hover:bg-[#faf8f3]"
-                >
-                  Lưu cấu hình
-                </button>
-              </div>
-              {promotionNotice && (
-                <p role="status" className="mt-2 text-[10px] text-[#578263]">
-                  {promotionNotice}
-                </p>
-              )}
-            </section>
+            <CategoryManagement />
+
+            <StaffManagement />
+
+            <CustomerManagement />
+
+            <PromotionManagement />
 
             <footer className="flex items-center justify-between py-6 text-[10px] text-[#a0aaa3]">
               <span>BrewLite Management · Bản demo</span>
@@ -621,13 +656,13 @@ function ManagerContent() {
                     id="product-category"
                     value={formData.category}
                     onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value as Exclude<CategoryId, 'all'> })
+                      setFormData({ ...formData, category: e.target.value })
                     }
                     className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none transition focus:border-[#548565]"
                   >
-                    <option value="coffee">Cà phê</option>
-                    <option value="milk-tea">Trà sữa</option>
-                    <option value="juice">Nước ép</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>{category.name}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -648,6 +683,31 @@ function ManagerContent() {
                     className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none transition focus:border-[#548565]"
                   />
                 </div>
+
+                <div>
+                  <label htmlFor="product-image" className="mb-1.5 block text-xs font-semibold text-[#46574c]">
+                    Đường dẫn ảnh (URL hoặc đường dẫn nội bộ)
+                  </label>
+                  <input
+                    id="product-image"
+                    type="text"
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    placeholder="/images/ten-mon.png hoặc https://..."
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none transition focus:border-[#548565]"
+                  />
+                </div>
+
+                {!editingProduct && (
+                  <label className="flex items-center gap-2 text-xs font-medium text-[#536257]">
+                    <input
+                      type="checkbox"
+                      checked={notifyCustomers}
+                      onChange={(event) => setNotifyCustomers(event.target.checked)}
+                    />
+                    Gửi thông báo đến khách hàng
+                  </label>
+                )}
 
                 <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
                   <button

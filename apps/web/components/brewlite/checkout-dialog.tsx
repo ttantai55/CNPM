@@ -1,27 +1,24 @@
 'use client'
 
-import { useState } from 'react'
-import { Bike, Loader2, ShieldCheck, Store } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Loader2 } from 'lucide-react'
 import { formatPrice, getUnitPrice, type CartItem } from '@/lib/menu'
-import { cartItemToLine, generateOrderCode, type Fulfillment, type OrderDraft } from '@/lib/orders'
+import { cartItemToLine, generateOrderCode, type OrderDraft } from '@/lib/orders'
+import { getDiscountAmount, getEligiblePromotions, type Promotion } from '@/lib/promotions'
 import { cn } from '@/lib/utils'
 import { Modal } from './modal'
 import { FormField, inputClass } from './form-field'
 
-const DELIVERY_FEE: Record<Fulfillment, number> = { delivery: 15000, pickup: 0 }
-
-type FormValues = { name: string; phone: string; address: string; note: string }
+type FormValues = { name: string; phone: string; note: string }
 type FormErrors = Partial<Record<keyof FormValues, string>>
 
 const PHONE_PATTERN = /^(0|\+84)(3|5|7|8|9)\d{8}$/
 
-function validate(values: FormValues, delivery: Fulfillment): FormErrors {
+function validate(values: FormValues): FormErrors {
   const errors: FormErrors = {}
   if (values.name.trim().length < 2) errors.name = 'Vui lòng nhập họ tên (tối thiểu 2 ký tự).'
   if (!PHONE_PATTERN.test(values.phone.replace(/\s/g, '')))
     errors.phone = 'Số điện thoại không hợp lệ (VD: 0901234567).'
-  if (delivery === 'delivery' && values.address.trim().length < 8)
-    errors.address = 'Vui lòng nhập địa chỉ giao hàng chi tiết.'
   return errors
 }
 
@@ -31,7 +28,11 @@ type CheckoutDialogProps = {
   items: CartItem[]
   defaultName?: string
   defaultPhone?: string
-  onPlaced?: () => void;
+  customerId?: string
+  customerEmail?: string
+  promotions: Promotion[]
+  selectedPromotionId: string
+  onSelectPromotion: (id: string) => void
   onProceedToPayment: (draft: OrderDraft) => void
 }
 
@@ -41,8 +42,12 @@ export function CheckoutDialog({
   items,
   defaultName,
   defaultPhone,
+  customerId,
+  customerEmail,
+  promotions,
+  selectedPromotionId,
+  onSelectPromotion,
   onProceedToPayment,
-  onPlaced,
 }: CheckoutDialogProps) {
   return (
     <Modal
@@ -53,8 +58,14 @@ export function CheckoutDialog({
     >
       <CheckoutForm
         items={items}
+        open={open}
         defaultName={defaultName}
         defaultPhone={defaultPhone}
+        customerId={customerId}
+        customerEmail={customerEmail}
+        promotions={promotions}
+        selectedPromotionId={selectedPromotionId}
+        onSelectPromotion={onSelectPromotion}
         onSubmit={onProceedToPayment}
       />
     </Modal>
@@ -63,29 +74,47 @@ export function CheckoutDialog({
 
 function CheckoutForm({
   items,
+  open,
   defaultName,
   defaultPhone,
+  customerId,
+  customerEmail,
+  promotions,
+  selectedPromotionId,
+  onSelectPromotion,
   onSubmit,
 }: {
   items: CartItem[]
+  open: boolean
   defaultName?: string
   defaultPhone?: string
+  customerId?: string
+  customerEmail?: string
+  promotions: Promotion[]
+  selectedPromotionId: string
+  onSelectPromotion: (id: string) => void
   onSubmit: (draft: OrderDraft) => void
 }) {
   const [values, setValues] = useState<FormValues>({
     name: defaultName ?? '',
     phone: defaultPhone ?? '',
-    address: '',
     note: '',
   })
   const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({})
-  const [delivery, setDelivery] = useState<Fulfillment>('delivery')
   const [submitting, setSubmitting] = useState(false)
 
-  const errors = validate(values, delivery)
+  useEffect(() => {
+    if (!open) return
+    setValues({ name: defaultName ?? '', phone: defaultPhone ?? '', note: '' })
+    setTouched({})
+  }, [open, defaultName, defaultPhone])
+
+  const errors = validate(values)
   const subtotal = items.reduce((sum, item) => sum + getUnitPrice(item) * item.quantity, 0)
-  const fee = DELIVERY_FEE[delivery]
-  const total = subtotal + fee
+  const eligiblePromotions = getEligiblePromotions(promotions, subtotal)
+  const selectedPromotion = eligiblePromotions.find((promotion) => promotion.id === selectedPromotionId)
+  const discountAmount = getDiscountAmount(selectedPromotion, subtotal)
+  const total = subtotal - discountAmount
 
   function update(field: keyof FormValues) {
     return (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -98,7 +127,7 @@ function CheckoutForm({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setTouched({ name: true, phone: true, address: true })
+    setTouched({ name: true, phone: true })
     if (items.length === 0) return
     if (Object.keys(errors).length > 0) {
       const firstInvalid = event.currentTarget.querySelector<HTMLElement>('[aria-invalid="true"]')
@@ -110,14 +139,17 @@ function CheckoutForm({
     setSubmitting(false)
     onSubmit({
       code: generateOrderCode(),
+      customerId,
+      customerEmail,
       customerName: values.name.trim(),
       phone: values.phone.replace(/\s/g, ''),
-      fulfillment: delivery,
-      address: delivery === 'delivery' ? values.address.trim() : undefined,
+      fulfillment: 'pickup',
       note: values.note.trim() || undefined,
       lines: items.map(cartItemToLine),
       subtotal,
-      deliveryFee: fee,
+      discountAmount,
+      promotionCode: selectedPromotion?.voucherCode,
+      deliveryFee: 0,
       total,
     })
   }
@@ -127,39 +159,46 @@ function CheckoutForm({
   return (
     <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-4">
-        <fieldset>
-          <legend className="text-sm font-semibold text-foreground">Hình thức nhận hàng</legend>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            {(
-              [
-                { id: 'delivery', label: 'Giao tận nơi', sub: formatPrice(DELIVERY_FEE.delivery), icon: Bike },
-                { id: 'pickup', label: 'Nhận tại quán', sub: 'Miễn phí', icon: Store },
-              ] as const
-            ).map((opt) => (
-              <label
-                key={opt.id}
-                className={cn(
-                  'flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-caramel/40',
-                  delivery === opt.id ? 'border-primary bg-secondary' : 'border-border hover:bg-muted',
-                )}
-              >
-                <input
-                  type="radio"
-                  name="delivery"
-                  value={opt.id}
-                  checked={delivery === opt.id}
-                  onChange={() => setDelivery(opt.id)}
-                  className="sr-only"
-                />
-                <opt.icon className="size-5 text-primary" aria-hidden="true" />
-                <span className="flex flex-col">
-                  <span className="text-sm font-semibold text-foreground">{opt.label}</span>
-                  <span className="text-xs text-muted-foreground">{opt.sub}</span>
-                </span>
-              </label>
+        <div className="flex items-center justify-between rounded-xl bg-secondary px-3 py-2.5 text-sm">
+          <span className="font-semibold text-foreground">Nhận tại quán</span>
+          <span className="text-xs text-muted-foreground">Miễn phí</span>
+        </div>
+        <section aria-label="Tóm tắt món đặt" className="rounded-xl border border-border px-3 py-2.5">
+          <h3 className="text-xs font-semibold text-foreground">Tóm tắt món đặt</h3>
+          <ul className="mt-2 space-y-2">
+            {items.map((item) => {
+              const line = cartItemToLine(item)
+              return (
+                <li key={item.key} className="flex justify-between gap-3 text-xs">
+                  <span className="min-w-0 text-muted-foreground">
+                    {item.quantity}× {line.name} · Size {item.size}
+                  </span>
+                  <span className="shrink-0 font-semibold text-foreground">
+                    {formatPrice(getUnitPrice(item) * item.quantity)}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+
+        <label className="text-xs font-medium text-foreground" htmlFor="checkout-promotion">
+          Chọn mã khuyến mãi
+          <select
+            id="checkout-promotion"
+            value={selectedPromotion?.id ?? ''}
+            onChange={(event) => onSelectPromotion(event.target.value)}
+            disabled={eligiblePromotions.length === 0}
+            className="mt-1.5 h-10 w-full rounded-lg border border-border bg-card px-3 text-xs disabled:text-muted-foreground"
+          >
+            <option value="">Không áp dụng</option>
+            {eligiblePromotions.map((promotion) => (
+              <option key={promotion.id} value={promotion.id}>
+                {promotion.voucherCode} · {promotion.discountType === 'PERCENTAGE' ? `${promotion.discountValue}%` : formatPrice(promotion.discountValue)}
+              </option>
             ))}
-          </div>
-        </fieldset>
+          </select>
+        </label>
 
         <FormField id="checkout-name" label="Họ và tên" error={errorFor('name')}>
           {(props) => (
@@ -192,40 +231,19 @@ function CheckoutForm({
           )}
         </FormField>
 
-        {delivery === 'delivery' && (
-          <FormField id="checkout-address" label="Địa chỉ giao hàng" error={errorFor('address')}>
-            {(props) => (
-              <input
-                {...props}
-                type="text"
-                autoComplete="street-address"
-                value={values.address}
-                onChange={update('address')}
-                onBlur={markTouched('address')}
-                placeholder="Số nhà, tên đường, phường, quận"
-                className={inputClass(!!props['aria-invalid'])}
-              />
-            )}
-          </FormField>
-        )}
-
-        <FormField id="checkout-note" label="Ghi chú đơn hàng (không bắt buộc)">
+        <FormField id="checkout-note" label="Ghi chú đơn hàng (nếu có)">
           {(props) => (
             <textarea
               {...props}
               rows={2}
               value={values.note}
               onChange={update('note')}
-              placeholder="Ví dụ: gọi trước khi giao"
+              placeholder="Yêu cầu thêm cho món đặt"
               className={cn(inputClass(false), 'h-auto resize-none py-2')}
             />
           )}
         </FormField>
 
-        <p className="flex items-start gap-2 rounded-xl bg-success-soft px-3 py-2.5 text-xs leading-relaxed text-success">
-          <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          Thanh toán trực tuyến an toàn qua Ví MoMo hoặc chuyển khoản VietQR ở bước tiếp theo.
-        </p>
       </div>
 
       <div className="border-t border-border bg-muted/50 px-5 py-4">
@@ -234,10 +252,12 @@ function CheckoutForm({
             <dt className="text-muted-foreground">Tạm tính</dt>
             <dd className="font-semibold text-foreground">{formatPrice(subtotal)}</dd>
           </div>
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">Phí giao hàng</dt>
-            <dd className="font-semibold text-foreground">{fee === 0 ? 'Miễn phí' : formatPrice(fee)}</dd>
-          </div>
+          {selectedPromotion && (
+            <div className="flex justify-between">
+              <dt className="text-success">Ưu đãi · {selectedPromotion.voucherCode}</dt>
+              <dd className="font-semibold text-success">−{formatPrice(discountAmount)}</dd>
+            </div>
+          )}
           <div className="flex justify-between pt-1">
             <dt className="font-semibold text-foreground">Tổng thanh toán</dt>
             <dd className="text-lg font-bold text-foreground">{formatPrice(total)}</dd>
