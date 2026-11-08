@@ -8,19 +8,29 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-
-import vn.doan.repository.UserRepository;
-import vn.doan.repository.CategoryRepository;
+import vn.doan.repository.LoyaltyTransactionRepo;
+import vn.doan.repository.OrderRepository;
 import vn.doan.repository.ProductRepository;
+import vn.doan.repository.PromotionRepository;
+import vn.doan.repository.ToppingRepository;
+import vn.doan.repository.UserRepository;
+import vn.doan.repository.PaymentRepository;
+import vn.doan.repository.CategoryRepository;
+
 
 @SpringBootTest
 @Import(DoAnApplicationTests.TestJdbcConfiguration.class) 
 class DoAnApplicationTests {
 
-    @MockBean private UserRepository userRepository;
-    @MockBean private CategoryRepository categoryRepository;
+    @MockBean private LoyaltyTransactionRepo loyaltyTransactionRepo;
+    @MockBean private OrderRepository orderRepository;
     @MockBean private ProductRepository productRepository;
-
+    @MockBean private PromotionRepository promotionRepository;
+    @MockBean private ToppingRepository toppingRepository;
+    @MockBean private UserRepository userRepository;
+    @MockBean private PaymentRepository paymentRepository;
+    @MockBean private CategoryRepository categoryRepository;
+    
     @Test
     void contextLoads() {
     }

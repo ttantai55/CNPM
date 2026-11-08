@@ -1,18 +1,11 @@
 package vn.doan.domain;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "categories")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Category {
 
     @Id
@@ -26,7 +19,6 @@ public class Category {
     private String description;
     
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private List<Product> products = new ArrayList<>();
 
     @Builder.Default
