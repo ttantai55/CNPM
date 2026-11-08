@@ -1,6 +1,8 @@
 package vn.doan.service;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.doan.domain.Category;
@@ -44,6 +46,7 @@ public class ProductService {
      * Lấy danh sách món nước theo Danh mục (Category)
      */
     public List<ProductResponse> getProductsByCategory(String categoryId) {
+        List<Product> products = productRepository.findByCategoryId(categoryId);
         return productRepository.findByCategoryId(categoryId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -53,6 +56,7 @@ public class ProductService {
      * Tạo mới một món nước (Dùng ProductCreateRequest[cite: 15])
      */
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public ProductResponse createProduct(ProductCreateRequest request) {
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục món"));
@@ -73,6 +77,7 @@ public class ProductService {
      * Cập nhật thông tin món nước (Dùng ProductRequest)
      */
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public ProductResponse updateProduct(String id, ProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy món nước"));

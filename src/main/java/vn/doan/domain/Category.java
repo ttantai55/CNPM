@@ -24,13 +24,12 @@ public class Category {
 
     @Column(columnDefinition = "TEXT")
     private String description;
-
-    // --- QUAN HỆ 1 - NHIỀU (ONE-TO-MANY) ---
-    // 1 Category có nhiều Product -> Kiểu dữ liệu phải là List<Product>
-    // mappedBy = "category" trỏ tới field `private Category category;` trong entity Product
+    
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Product> products = new ArrayList<>();
 
+    @Builder.Default
+    private boolean isActive = true;
     
 }
