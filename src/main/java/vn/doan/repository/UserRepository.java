@@ -8,6 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, String> {
+    boolean existsByUsername(String userName);
 
     // 1. Dùng lúc Đăng ký: Kiểm tra xem Email có ai xài chưa
     boolean existsByEmail(String email);
