@@ -10,7 +10,6 @@ import java.util.List;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @Column(nullable = false, unique = true, length = 50)
@@ -30,7 +29,7 @@ public class User {
     @JoinColumn(name = "customer_id", unique = true)
     private Customer info;
 
-    @Column(name = "avatar_url")
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
     private String avatarUrl;
 
     @Column(name = "created_at", nullable = false)
@@ -52,21 +51,30 @@ public class User {
     @JoinColumn(name = "barista_id", unique = true)
     private Barista barista;
 
+    private String phone;
+
+    @Column(name = "full_name")
+    private String fullName;
+
+    @Column(length = 20)
+    private String position;
+
     // BẮT BUỘC CHO JPA: Constructor không tham số
     public User() {
     }
 
-    public User(String username, String hashPassword, String role, String email, Customer info, String avatarUrl) {
+    public User(String username, String hashPassword, String role, String email, Customer info, String avatarUrl,String phone) {
         this.username = username;
         this.hashPassword = hashPassword;
         this.role = role;
         this.email = email;
         this.info = info;
         this.avatarUrl = avatarUrl;
+        this.phone=phone;
     }
 
     public User(String id, String username, String hashPassword, String role, String email,
-                Customer info, String avatarUrl, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                Customer info, String avatarUrl, LocalDateTime createdAt, LocalDateTime updatedAt, String phone) {
         this.id = id;
         this.username = username;
         this.hashPassword = hashPassword;
@@ -76,11 +84,15 @@ public class User {
         this.avatarUrl = avatarUrl;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.phone=phone;
     }
 
     // Tự động gán thời gian khi tạo hoặc cập nhật bản ghi
     @PrePersist
     protected void onCreate() {
+        if (id == null) {
+            id = Ids.next("USER");
+        }
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();
         }
@@ -188,4 +200,15 @@ public class User {
     public void setBarista(Barista barista) {
         this.barista = barista;
     }
+    public String getPhone() {
+    return phone;
+}
+
+public void setPhone(String phone) {
+    this.phone = phone;
+}
+public String getFullName() { return fullName == null ? username : fullName; }
+public void setFullName(String fullName) { this.fullName = fullName; }
+public String getPosition() { return position; }
+public void setPosition(String position) { this.position = position; }
 }

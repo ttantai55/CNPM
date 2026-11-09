@@ -23,15 +23,18 @@ public class UserCreateRequest {
 
     private String avatarUrl;
 
+    private String phone;
+
     // --- CONSTRUCTOR ---
     public UserCreateRequest() {
     }
 
-    public UserCreateRequest(String username, String password, String email, String role, String avatarUrl) {
+    public UserCreateRequest(String username, String password, String email, String role, String phone,String avatarUrl) {
         this.username = username;
         this.password = password;
         this.email = email;
         this.role = role;
+        this.phone = phone;
         this.avatarUrl = avatarUrl;
     }
 
@@ -42,6 +45,13 @@ public class UserCreateRequest {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
     public String getPassword() {

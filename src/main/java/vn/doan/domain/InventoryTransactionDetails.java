@@ -7,8 +7,10 @@ import jakarta.persistence.*;
 public class InventoryTransactionDetails {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @PrePersist
+    private void assignId() { if (id == null) id = Ids.next("INVD"); }
 
     // QUAN HỆ 1 - 1: Thuộc về một phiếu giao dịch kho cụ thể
     @OneToOne(fetch = FetchType.LAZY)

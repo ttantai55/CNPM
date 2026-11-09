@@ -9,6 +9,7 @@ import vn.doan.dto.response.CategoryResponse;
 import vn.doan.repository.CategoryRepository;
 import vn.doan.exception.ResourceNotFoundException;
 import vn.doan.exception.BusinessValidationException;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,7 +30,8 @@ public class CategoryService {
                 .map(category -> new CategoryResponse(
                         category.getId(), 
                         category.getName(), 
-                        category.getDescription()
+                        category.getDescription(),
+                        category.isActive()
                 )).collect(Collectors.toList());
     }
 
@@ -37,10 +39,11 @@ public class CategoryService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục với ID: " + categoryId));
         
-        return new CategoryResponse(category.getId(), category.getName(), category.getDescription());
+        return new CategoryResponse(category.getId(), category.getName(), category.getDescription(),category.isActive());
     }
 
-    @Transactional // Ghi đè Transactional để cho phép ghi dữ liệu (INSERT)
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')") 
     public CategoryResponse createCategory(CategoryCreateRequest request) {
         // 1. Kiểm tra trùng tên danh mục
         if (categoryRepository.existsByName(request.getName())) {
@@ -56,10 +59,11 @@ public class CategoryService {
         // 3. Lưu xuống DB
         Category savedCategory = categoryRepository.save(category);
 
-        return new CategoryResponse(savedCategory.getId(), savedCategory.getName(), savedCategory.getDescription());
+        return new CategoryResponse(savedCategory.getId(), savedCategory.getName(), savedCategory.getDescription(),savedCategory.isActive());
     }
 
     @Transactional // Cho phép ghi dữ liệu (UPDATE)
+    @PreAuthorize("hasRole('ADMIN')")
     public CategoryResponse updateCategory(String categoryId, CategoryCreateRequest request) { 
         // Lấy dữ liệu lên, nếu không có ném lỗi 404
         Category category = categoryRepository.findById(categoryId)
@@ -77,20 +81,24 @@ public class CategoryService {
         // KHÔNG CẦN GỌI categoryRepository.save(category)
         // JPA Dirty Checking sẽ tự động đối soát và sinh lệnh UPDATE khi kết thúc hàm
 
-        return new CategoryResponse(category.getId(), category.getName(), category.getDescription());
+        return new CategoryResponse(category.getId(), category.getName(), category.getDescription(),category.isActive());
     }
 
-    @Transactional // Cho phép ghi dữ liệu (DELETE/UPDATE)
-    public void deleteCategory(String categoryId) {
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục với ID: " + categoryId));
+   @Transactional
+@PreAuthorize("hasRole('ADMIN')")
+public CategoryResponse toggleCategoryStatus(String categoryId) {
+    Category category = categoryRepository.findById(categoryId)
+            .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục với ID: " + categoryId));
 
-        // Chỗ này xử lý Xóa Mềm (Soft Delete) theo đúng phân công nghiệp vụ
-        // Giả sử ông có trường isActive trong Entity
-        // category.setActive(false); 
-        // Lại tận dụng Dirty Checking, không cần save()
-        
-        // Nếu ông muốn xóa cứng thì xài:
-        categoryRepository.delete(category); 
-    }
+    // Lật ngược trạng thái hiện tại (true thành false, false thành true)
+    category.setActive(!category.isActive()); 
+    
+    // Trả về dữ liệu mới nhất
+    return new CategoryResponse(
+            category.getId(), 
+            category.getName(), 
+            category.getDescription(), 
+            category.isActive() // Truyền thêm trạng thái
+    ); 
+}
 }
