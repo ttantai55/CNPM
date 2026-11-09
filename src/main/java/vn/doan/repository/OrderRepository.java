@@ -1,5 +1,8 @@
 package vn.doan.repository;
 
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import vn.doan.domain.Order;
@@ -22,4 +25,8 @@ public interface OrderRepository extends JpaRepository<Order, String> {
 
     // Tìm các đơn hàng có trạng thái nằm trong danh sách truyền vào
     List<Order> findByStatusIn(List<OrderStatus> statuses);
+
+    @Modifying
+    @Query("UPDATE Order o SET o.discount = null WHERE o.discount.id = :promotionId")
+    void detachPromotion(@Param("promotionId") String promotionId);
 }

@@ -13,19 +13,19 @@ public class ProductCreateRequest {
     @Min(value = 0, message = "Giá sản phẩm không được âm")
     private Long price;
 
-
     private String description;
     private String imageUrl;
 
     @NotBlank(message = "ID Danh mục không được để trống")
     private String categoryId;
+    private Double rating;
+    private Integer weeklySalesCount;
 
     public ProductCreateRequest() {}
 
     public ProductCreateRequest(String name, long price, String description, String imageUrl, String categoryId) {
         this.name = name;
         this.price = price;
-
         this.description = description;
         this.imageUrl = imageUrl;
         this.categoryId = categoryId;
@@ -42,4 +42,8 @@ public class ProductCreateRequest {
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public String getCategoryId() { return categoryId; }
     public void setCategoryId(String categoryId) { this.categoryId = categoryId; }
+    public Double getRating() { return rating; }
+    public void setRating(Double rating) { this.rating = rating; }
+    public Integer getWeeklySalesCount() { return weeklySalesCount; }
+    public void setWeeklySalesCount(Integer weeklySalesCount) { this.weeklySalesCount = weeklySalesCount; }
 }
