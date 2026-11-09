@@ -4,23 +4,20 @@ import java.util.EnumSet;
 
 public enum OrderStatus {
     PENDING,
-    CONFIRM,
+    CONFIRMED,
     PREPARING,
-    READY,
- 
     COMPLETED,
-    CANCELED;
+    CANCELLED;
     public boolean canTransitionTo(OrderStatus next) {
         if (next == null) {
             return false;
         }
 
         return switch (this) {
-            case PENDING -> EnumSet.of(CONFIRM, CANCELED).contains(next);
-            case CONFIRM -> EnumSet.of(PREPARING, CANCELED).contains(next);
-            case PREPARING -> EnumSet.of(READY).contains(next);
-            case READY -> EnumSet.of(COMPLETED).contains(next);
-            case COMPLETED, CANCELED -> false;
+            case PENDING -> EnumSet.of(CONFIRMED, CANCELLED).contains(next);
+            case CONFIRMED -> EnumSet.of(PREPARING, CANCELLED).contains(next);
+            case PREPARING -> next == COMPLETED;
+            case COMPLETED, CANCELLED -> false;
         };
 }
 }

@@ -1,6 +1,7 @@
 package vn.doan.dto.response;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class UserResponse {
 
@@ -17,6 +18,10 @@ public class UserResponse {
     private String baristaId;  // Chỉ trả về ID của Barista (nếu user này là nhân viên)
     private String fullName;
     private String phone;
+    private String position;
+    private Boolean gender;
+    private LocalDate dateOfBirth;
+    private String address;
 
     // --- CONSTRUCTOR ---
     public UserResponse() {
@@ -83,4 +88,12 @@ public class UserResponse {
     public String getPhone() {
         return phone;
     }
+    public String getPosition() { return position; }
+    public void setPosition(String position) { this.position = position; }
+    public Boolean getGender() { return gender; }
+    public void setGender(Boolean gender) { this.gender = gender; }
+    public LocalDate getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 }

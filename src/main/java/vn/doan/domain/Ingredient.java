@@ -8,7 +8,6 @@ import vn.doan.domain.enums.UnitType;
 public class Ingredient {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @Column(nullable = false, length = 100)
@@ -28,6 +27,11 @@ public class Ingredient {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "inventory_id")
     private Inventory inventory;
+
+    @PrePersist
+    private void assignId() {
+        if (id == null) id = Ids.next("ING");
+    }
 
     // BẮT BUỘC CHO JPA: Constructor không tham số
     public Ingredient() {

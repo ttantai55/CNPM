@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 public class Payment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     // QUAN HỆ 1 - 1: Mỗi thanh toán ứng với 1 đơn hàng cụ thể
@@ -32,6 +31,11 @@ public class Payment {
 
     @Column(name = "payment_date", nullable = false)
     private LocalDateTime paymentDate;
+
+    @PrePersist
+    private void assignId() {
+        if (id == null) id = Ids.next("PAY");
+    }
 
     // 1. Constructor không tham số 
     public Payment() {

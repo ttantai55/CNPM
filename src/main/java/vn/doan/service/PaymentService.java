@@ -38,10 +38,6 @@ public class PaymentService {
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng: " + request.getOrderId()));
 
-        if (paymentRepository.findByOrder(order).isPresent()) {
-            throw new IllegalStateException("Đơn hàng này đã có giao dịch thanh toán.");
-        }
-
         if (request.getTotalAmount() != order.getFinalAmount()) {
             throw new IllegalArgumentException("Số tiền thanh toán không khớp với hóa đơn.");
         }
@@ -53,18 +49,26 @@ public class PaymentService {
             throw new IllegalArgumentException("Phương thức thanh toán không hợp lệ.");
         }
 
+        Payment existing = paymentRepository.findByOrder(order).orElse(null);
+        if (existing != null) {
+            if (existing.getPaymentMethod() != method || existing.getTotalAmount() != order.getFinalAmount()) {
+                throw new IllegalStateException("Đơn hàng đã có giao dịch với phương thức thanh toán khác.");
+            }
+            return paymentUrl(order.getId(), method);
+        }
+
         Payment payment = new Payment(order, order.getFinalAmount(), method);
         paymentRepository.save(payment);
 
-        // Hiện tại giả lập tạo đường link thanh toán để map vào DTO
-        String paymentUrl = method == PaymentMethod.MOMO 
-                ? "https://test-payment.momo.vn/v2/gateway/api/create?orderId=" + order.getId()
-                : "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?orderId=" + order.getId();
-        
-        // Tgian hết hạn giao dịch
-        LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(60);
+        return paymentUrl(order.getId(), method);
+    }
 
-        return new PaymentUrlResponse(order.getId(), paymentUrl, expiredAt);
+    private PaymentUrlResponse paymentUrl(String orderId, PaymentMethod method) {
+        String paymentUrl = method == PaymentMethod.MOMO 
+                ? "https://test-payment.momo.vn/v2/gateway/api/create?orderId=" + orderId
+                : "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?orderId=" + orderId;
+        LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(60);
+        return new PaymentUrlResponse(orderId, paymentUrl, expiredAt);
     }
 
     // * 2. Xử lý Callback/Webhook, Tích điểm và trả về Kết quả rõ ràng
@@ -85,7 +89,7 @@ public class PaymentService {
         if (isSuccess) {
             payment.setPaymentStatus(PaymentStatus.SUCCESS);
             payment.setPaymentDate(LocalDateTime.now());
-            order.changeStatus(OrderStatus.CONFIRM);
+            order.changeStatus(OrderStatus.CONFIRMED);
             // tích điểm thưởng
             User user = order.getCustomer().getUser(); 
             if (user != null) {
@@ -108,7 +112,7 @@ public class PaymentService {
         } else {
             payment.setPaymentStatus(PaymentStatus.FAILED);
             payment.setPaymentDate(LocalDateTime.now());
-            order.changeStatus(OrderStatus.CANCELED);
+            order.changeStatus(OrderStatus.CANCELLED);
             
             // Trả về DTO
             return new PaymentResult(PaymentStatus.FAILED, "Thanh toán thất bại hoặc bị hủy", order.getId());

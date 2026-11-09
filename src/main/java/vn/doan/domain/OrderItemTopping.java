@@ -7,8 +7,10 @@ import jakarta.persistence.*;
 public class OrderItemTopping {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @PrePersist
+    private void assignId() { if (id == null) id = Ids.next("OTOP"); }
 
     // Quan hệ Nhiều - 1: Nhiều lựa chọn topping thuộc về 1 dòng chi tiết sản phẩm (OrderItem)
     @ManyToOne(fetch = FetchType.LAZY)

@@ -11,8 +11,10 @@ import vn.doan.domain.enums.LoyalType;
 
 public class LoyaltyTransaction {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @PrePersist
+    private void assignId() { if (id == null) id = Ids.next("LOYAL"); }
 
     // Quan hệ Nhiều - 1: Nhiều giao dịch điểm thuộc về 1 User
     @ManyToOne(fetch = FetchType.LAZY)

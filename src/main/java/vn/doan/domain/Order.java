@@ -12,7 +12,6 @@ import java.util.List;
 public class Order {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -54,6 +53,11 @@ public class Order {
         this.status = OrderStatus.PENDING;
         this.createdAt = LocalDateTime.now();
         recordProcess(OrderStatus.PENDING);
+    }
+
+    @PrePersist
+    private void assignId() {
+        if (id == null) id = Ids.next("ORD");
     }
 
     // 3. Constructor đầy đủ tham số CÓ ID (dùng cho mock test, seed data, map DTO)

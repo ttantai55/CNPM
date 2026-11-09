@@ -1,249 +1,114 @@
--- ==============================================================
--- 1. ĐỊNH NGHĨA CÁC KIỂU ENUM
--- ==============================================================
-CREATE TYPE order_status AS ENUM (
-    'PENDING', 
-    'COMPLETED', 
-    'CANCELED', 
-    'CONFIRM', 
-    'PREPARING', 
-    'READY'
-);
+UPDATE orders SET status = 'COMPLETED' WHERE status = 'READY';
+ALTER TABLE products DROP COLUMN IF EXISTS stock_quantity;
 
-CREATE TYPE payment_method AS ENUM (
-    'MOMO', 
-    'BANK_TRANSFER'
-);
+INSERT INTO customers (id, name, gender, phone)
+VALUES ('CUST_DEMO', 'Khách hàng Demo', FALSE, '0900000001')
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    gender = EXCLUDED.gender,
+    phone = EXCLUDED.phone;
 
-CREATE TYPE payment_status AS ENUM (
-    'PENDING', 
-    'SUCCESS', 
-    'FAILED', 
-    'CANCELLED'
-);
+INSERT INTO users
+    (id, username, hash_password, role, email, phone, full_name, position, customer_id, created_at, updated_at)
+VALUES
+    ('USER_DEMO_CUSTOMER', 'demo-customer', '$2a$10$YkAeIhMYVYxH8slwxnNqYuy8hLtB0g7hPSJVweKZnJc./MIrMkaw6', 'ROLE_CUSTOMER', 'user@brewlite.vn', '0900000001', 'Khách hàng Demo', NULL, 'CUST_DEMO', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('USER_DEMO_STAFF', 'demo-staff', '$2a$10$YkAeIhMYVYxH8slwxnNqYuy8hLtB0g7hPSJVweKZnJc./MIrMkaw6', 'STAFF', 'staff@brewlite.vn', '0900000002', 'Nhân viên Demo', 'PHUC_VU', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('USER_DEMO_MANAGER', 'demo-manager', '$2a$10$YkAeIhMYVYxH8slwxnNqYuy8hLtB0g7hPSJVweKZnJc./MIrMkaw6', 'ROLE_MANAGER', 'manager@brewlite.vn', '0900000003', 'Quản lý Demo', NULL, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET
+    username = EXCLUDED.username,
+    hash_password = EXCLUDED.hash_password,
+    role = EXCLUDED.role,
+    email = EXCLUDED.email,
+    phone = EXCLUDED.phone,
+    full_name = EXCLUDED.full_name,
+    position = EXCLUDED.position,
+    customer_id = EXCLUDED.customer_id;
 
-CREATE TYPE discount_type AS ENUM (
-    'PERCENTAGE', 
-    'FIX_AMOUNT'
-);
+INSERT INTO baristas (id, name)
+SELECT 'STAFF_MIG_' || u.id, COALESCE(NULLIF(u.full_name, ''), u.username)
+FROM users u
+WHERE upper(COALESCE(u.role, '')) LIKE '%STAFF%'
+  AND u.barista_id IS NULL
+ON CONFLICT (id) DO NOTHING;
 
-CREATE TYPE inventory_transaction_type AS ENUM (
-    'IMPORT', 
-    'EXPORT', 
-    'ADJUSTMENT'
-);
+UPDATE users
+SET barista_id = 'STAFF_MIG_' || id
+WHERE upper(COALESCE(role, '')) LIKE '%STAFF%'
+  AND barista_id IS NULL
+  AND EXISTS (SELECT 1 FROM baristas b WHERE b.id = 'STAFF_MIG_' || users.id);
 
-CREATE TYPE unit_type AS ENUM (
-    'PACK', 
-    'CAN', 
-    'BOX', 
-    'PIECE'
-);
+INSERT INTO categories (id, name, slug, description, is_active)
+VALUES
+    ('CAT_0001', 'Cà phê', 'coffee', 'Cà phê pha mới mỗi ngày', TRUE),
+    ('CAT_0002', 'Trà sữa', 'milk-tea', 'Trà sữa và trà trái cây', TRUE),
+    ('CAT_0003', 'Nước ép', 'juice', 'Nước ép trái cây tươi', TRUE)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    slug = EXCLUDED.slug,
+    description = EXCLUDED.description,
+    is_active = EXCLUDED.is_active;
 
+INSERT INTO products
+    (id, name, price, description, image_url, status, category_id, rating, weekly_sales_count)
+VALUES
+    ('PROD_0001', 'Latte Kem Sữa Tây Ban Nha', 56000, 'Espresso đậm vị, sữa đặc và lớp kem sữa béo mịn', '/images/latte-kem-sua.png', TRUE, 'CAT_0001', 4.9, 128),
+    ('PROD_0002', 'Cold Brew Đường Nâu', 58000, 'Ủ lạnh 18 giờ, ngọt dịu đường nâu và hậu vị caramel', '/images/cold-brew.png', TRUE, 'CAT_0001', 4.8, 112),
+    ('PROD_0003', 'Mocha Caramel Nướng', 62000, 'Cacao đậm, caramel nướng thơm và espresso rang vừa', '/images/mocha-caramel.png', TRUE, 'CAT_0001', 4.7, 96),
+    ('PROD_0004', 'Trà Sữa Trân Châu Đường Đen', 45000, 'Hồng trà đậm, sữa tươi và trân châu đường đen dẻo', '/images/tra-sua-tran-chau.png', TRUE, 'CAT_0002', 4.9, 184),
+    ('PROD_0005', 'Matcha Latte Kem Muối', 49000, 'Matcha Uji thanh mát, sữa tươi và kem muối mằn mặn', '/images/tra-sua-matcha.png', TRUE, 'CAT_0002', 4.6, 103),
+    ('PROD_0006', 'Trà Sữa Khoai Môn', 47000, 'Khoai môn nghiền bùi béo cùng lớp kem phô mai', '/images/tra-sua-khoai-mon.png', FALSE, 'CAT_0002', 4.5, 72),
+    ('PROD_0007', 'Thanh Long Xoài Lấp Lánh', 56000, 'Thanh long ép lạnh, xoài chín và nước khoáng có ga', '/images/thanh-long-xoai.png', TRUE, 'CAT_0003', 4.9, 156),
+    ('PROD_0008', 'Bưởi Hồng Ép Lạnh', 52000, 'Bưởi hồng, mật ong hoa tự nhiên và hạt chia', '/images/buoi-hong.png', TRUE, 'CAT_0003', 4.7, 91),
+    ('PROD_0009', 'Dưa Hấu Chanh Bạc Hà', 50000, 'Dưa hấu tươi, chanh xanh và bạc hà nghiền mát lạnh', '/images/dua-hau.png', TRUE, 'CAT_0003', 4.9, 142),
+    ('PROD_0010', 'Chanh Dây Gừng Nghệ', 48000, 'Chanh dây, gừng tươi, chanh vàng và nghệ nguyên chất', '/images/chanh-day.png', TRUE, 'CAT_0003', 4.8, 87),
+    ('PROD_0011', 'Nước Ép Xanh Thanh Lọc', 54000, 'Táo xanh, dưa leo, cải bó xôi, cần tây và táo xoắn', '/images/xanh-thanh-loc.png', TRUE, 'CAT_0003', 4.6, 65)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    price = EXCLUDED.price,
+    description = EXCLUDED.description,
+    image_url = EXCLUDED.image_url,
+    status = EXCLUDED.status,
+    category_id = EXCLUDED.category_id,
+    rating = EXCLUDED.rating,
+    weekly_sales_count = EXCLUDED.weekly_sales_count;
 
--- ==============================================================
--- 1. TÀI KHOẢN, KHÁCH HÀNG & PHÂN QUYỀN
--- ==============================================================
-CREATE TABLE users (
-    id VARCHAR(36) PRIMARY KEY,
-    username VARCHAR(100) NOT NULL UNIQUE,
-    hash_password VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL,
-    email VARCHAR(150),
-    avatar_url TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    customer_id VARCHAR(36) UNIQUE REFERENCES customers(id) ON DELETE CASCADE
-);
+INSERT INTO toppings (id, name, price, is_available)
+VALUES
+    ('TOP_0001', 'Trân châu đường đen', 10000, TRUE),
+    ('TOP_0002', 'Sương sáo', 6000, TRUE),
+    ('TOP_0003', 'Kem phô mai biển', 12000, TRUE),
+    ('TOP_0004', 'Thạch cà phê', 8000, TRUE),
+    ('TOP_0005', 'Nha đam', 6000, TRUE)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    price = EXCLUDED.price,
+    is_available = EXCLUDED.is_available;
 
-CREATE TABLE customers (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    date_of_birth DATE,
-    gender BOOLEAN,
-    address TEXT,
-    phone VARCHAR(20),
-);
+INSERT INTO ingredients (id, name, unit, current_stock, min_alert_threshold)
+VALUES
+    ('ING_0001', 'Hạt cà phê Arabica', 'PACK', 20, 5),
+    ('ING_0002', 'Sữa tươi', 'BOX', 30, 8),
+    ('ING_0003', 'Trà đen', 'PACK', 18, 5),
+    ('ING_0004', 'Đường nâu', 'PACK', 15, 4)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    unit = EXCLUDED.unit,
+    current_stock = EXCLUDED.current_stock,
+    min_alert_threshold = EXCLUDED.min_alert_threshold;
 
-CREATE TABLE baristas (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    user_id VARCHAR(36) UNIQUE REFERENCES users(id) ON DELETE CASCADE
-);
-
--- ==============================================================
--- 2. THỰC ĐƠN, SẢN PHẨM & TOPPING (CATALOG)
--- ==============================================================
-CREATE TABLE categories (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    description TEXT
-);
-
-CREATE TABLE products (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(150) NOT NULL,
-    description TEXT,
-    price BIGINT NOT NULL DEFAULT 0,
-    category_id VARCHAR(36) NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
-    image_url TEXT,
-    is_available BOOLEAN DEFAULT TRUE
-);
-
-CREATE TABLE toppings (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    price BIGINT NOT NULL DEFAULT 0,
-    is_available BOOLEAN DEFAULT TRUE
-);
-
-CREATE TABLE product_toppings (
-    product_id VARCHAR(36) NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-    topping_id VARCHAR(36) NOT NULL REFERENCES toppings(id) ON DELETE CASCADE,
-    PRIMARY KEY (product_id, topping_id)
-);
-
--- ==============================================================
--- 3. KHUYẾN MÃI (PROMOTION)
--- ==============================================================
-CREATE TABLE promotions (
-    id VARCHAR(36) PRIMARY KEY,
-    voucher_code VARCHAR(50) NOT NULL UNIQUE,
-    description TEXT,
-    discount_type VARCHAR(20) NOT NULL CHECK (discount_type IN ('PERCENTAGE', 'FIX_AMOUNT')),
-    discount_value BIGINT NOT NULL,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    usage_limit BIGINT DEFAULT 0,
-    used_count BIGINT DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE
-);
-
--- ==============================================================
--- 4. GIỎ HÀNG (CART)
--- ==============================================================
-CREATE TABLE carts (
-    id VARCHAR(36) PRIMARY KEY,
-    user_id VARCHAR(36) UNIQUE REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE cart_items (
-    id VARCHAR(36) PRIMARY KEY,
-    cart_id VARCHAR(36) NOT NULL REFERENCES carts(id) ON DELETE CASCADE,
-    product_id VARCHAR(36) NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-    quantity INT NOT NULL DEFAULT 1
-);
-
--- ==============================================================
--- 5. ĐƠN HÀNG, TIẾN TRÌNH & HÓA ĐƠN
--- ==============================================================
-CREATE TABLE orders (
-    id VARCHAR(36) PRIMARY KEY,
-    customer_id VARCHAR(36) REFERENCES customers(id) ON DELETE SET NULL,
-    barista_id VARCHAR(36) REFERENCES baristas(id) ON DELETE SET NULL,
-    promotion_id VARCHAR(36) REFERENCES promotions(id) ON DELETE SET NULL,
-    total_amount BIGINT NOT NULL DEFAULT 0,
-    discount_amount BIGINT DEFAULT 0,
-    final_amount BIGINT NOT NULL DEFAULT 0,
-    status VARCHAR(20) NOT NULL DEFAULT 'PENDING' 
-        CHECK (status IN ('PENDING', 'COMPLETED', 'CANCELED', 'CONFIRM', 'PREPARING', 'READY')),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE order_items (
-    id VARCHAR(36) PRIMARY KEY,
-    order_id VARCHAR(36) NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    product_id VARCHAR(36) NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
-    quantity BIGINT NOT NULL DEFAULT 1,
-    unit_price BIGINT NOT NULL DEFAULT 0,
-    note TEXT
-);
-
-CREATE TABLE order_item_toppings (
-    id VARCHAR(36) PRIMARY KEY,
-    order_item_id VARCHAR(36) NOT NULL REFERENCES order_items(id) ON DELETE CASCADE,
-    topping_id VARCHAR(36) REFERENCES toppings(id) ON DELETE RESTRICT,
-    quantity INT NOT NULL DEFAULT 1,
-    price BIGINT NOT NULL DEFAULT 0
-);
-
-CREATE TABLE order_processes (
-    id VARCHAR(36) PRIMARY KEY,
-    order_id VARCHAR(36) NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    status VARCHAR(20) NOT NULL 
-        CHECK (status IN ('PENDING', 'COMPLETED', 'CANCELED', 'CONFIRM', 'PREPARING', 'READY')),
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE invoices (
-    id VARCHAR(36) PRIMARY KEY,
-    order_id VARCHAR(36) UNIQUE NOT NULL REFERENCES orders(id) ON DELETE RESTRICT,
-    invoice_number VARCHAR(100) NOT NULL UNIQUE,
-    total_paid BIGINT NOT NULL DEFAULT 0,
-    issued_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE payments (
-    id VARCHAR(36) PRIMARY KEY,
-    order_id VARCHAR(36) NOT NULL REFERENCES orders(id) ON DELETE RESTRICT,
-    total_amount BIGINT NOT NULL DEFAULT 0,
-    payment_method VARCHAR(20) NOT NULL CHECK (payment_method IN ('MOMO', 'BANK_TRANSFER')),
-    payment_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' 
-        CHECK (payment_status IN ('PENDING', 'SUCCESS', 'FAILED', 'CANCELLED')),
-    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE loyalty_transactions (
-    id VARCHAR(36) PRIMARY KEY,
-    user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    order_id VARCHAR(36) REFERENCES orders(id) ON DELETE SET NULL,
-    points INT NOT NULL DEFAULT 0,
-    balance_after INT NOT NULL DEFAULT 0,
-    description TEXT,
-    created_date DATE DEFAULT CURRENT_DATE
-);
-
--- ==============================================================
--- 6. NGUYÊN LIỆU VÀ KHO HÀNG (INVENTORY)
--- ==============================================================
-CREATE TABLE ingredients (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(150) NOT NULL,
-    unit VARCHAR(20) NOT NULL CHECK (unit IN ('PACK', 'CAN', 'BOX', 'PIECE')),
-    current_stock DOUBLE PRECISION NOT NULL DEFAULT 0,
-    min_alert_threshold DOUBLE PRECISION NOT NULL DEFAULT 0
-);
-
-CREATE TABLE inventory_transactions (
-    id VARCHAR(36) PRIMARY KEY,
-    type VARCHAR(20) NOT NULL CHECK (type IN ('IMPORT', 'EXPORT', 'ADJUSTMENT')),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    note TEXT,
-    user_id VARCHAR(36) REFERENCES users(id) ON DELETE SET NULL
-);
-
-CREATE TABLE inventory_transaction_details (
-    id VARCHAR(36) PRIMARY KEY,
-    transaction_id VARCHAR(36) NOT NULL REFERENCES inventory_transactions(id) ON DELETE CASCADE,
-    ingredient_id VARCHAR(36) NOT NULL REFERENCES ingredients(id) ON DELETE RESTRICT,
-    quantity DOUBLE PRECISION NOT NULL,
-    price BIGINT NOT NULL DEFAULT 0
-);
-
--- ==============================================================
--- 7. DỮ LIỆU SEED MẪU (DÙNG ID TỰ CUNG CẤP)
--- ==============================================================
-INSERT INTO categories (id, name, description) VALUES
-('cat-01', 'Trà Sữa Truyền Thống', 'Đậm vị trà, béo ngậy vị sữa'),
-('cat-02', 'Trà Trái Cây Tươi', 'Thanh mát, giải nhiệt');
-
-INSERT INTO products (id, name, description, price, category_id, is_available) VALUES
-('prod-01', 'Trà Sữa Ô Long Nướng', 'Vị khói đặc trưng từ lá trà nướng', 35000, 'cat-01', true),
-('prod-02', 'Trà Đào Cam Sả', 'Trà thanh mát với đào tươi giòn', 40000, 'cat-02', true);
-
-INSERT INTO toppings (id, name, price, is_available) VALUES
-('top-01', 'Trân Châu Đen', 5000, true),
-('top-02', 'Trân Châu Trắng', 7000, true);
-
-INSERT INTO ingredients (id, name, unit, current_stock, min_alert_threshold) VALUES
-('ing-01', 'Hạt Trân Châu', 'PACK', 20, 5),
-('ing-02', 'Sữa Tươi', 'CAN', 50, 10);
+INSERT INTO promotions
+    (id, voucher_code, description, discount_type, discount_value, start_date, end_date, usage_limit, used_count, is_active)
+VALUES
+    ('PROMO_DEMO_001', 'TAIDEPTRAI', 'Nhóm trưởng quá đẹp trai đi', 'PERCENTAGE', 50, CURRENT_DATE, CURRENT_DATE + 30, 100, 2, TRUE),
+    ('PROMO_DEMO_002', 'HUNGGAY', 'thghunghgay', 'PERCENTAGE', 10, CURRENT_DATE, CURRENT_DATE + 30, 100, 0, TRUE),
+    ('PROMO_DEMO_003', 'CONCHOBAO', '7gao', 'PERCENTAGE', 10, CURRENT_DATE, CURRENT_DATE + 30, 100, 1, TRUE)
+ON CONFLICT (id) DO UPDATE SET
+    voucher_code = EXCLUDED.voucher_code,
+    description = EXCLUDED.description,
+    discount_type = EXCLUDED.discount_type,
+    discount_value = EXCLUDED.discount_value,
+    start_date = EXCLUDED.start_date,
+    end_date = EXCLUDED.end_date,
+    usage_limit = EXCLUDED.usage_limit,
+    used_count = EXCLUDED.used_count,
+    is_active = EXCLUDED.is_active;

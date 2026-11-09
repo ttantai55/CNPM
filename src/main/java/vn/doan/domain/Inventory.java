@@ -7,8 +7,10 @@ import java.util.List;
 public class Inventory {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @PrePersist
+    private void assignId() { if (id == null) id = Ids.next("INV"); }
 
     // Quan hệ 1 - Nhiều: 1 Kho chứa nhiều nguyên liệu (Ingredient)
     // Nếu trong bảng Ingredient có cột foreign key `inventory_id` thì dùng mappedBy = "inventory"

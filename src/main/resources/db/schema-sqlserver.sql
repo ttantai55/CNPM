@@ -47,14 +47,12 @@ BEGIN
         id NVARCHAR(50) NOT NULL,
         name NVARCHAR(150) NOT NULL,
         price BIGINT NOT NULL,
-        stockQuantity BIGINT NOT NULL,
         description NVARCHAR(1000) NULL,
         imageUrl NVARCHAR(500) NULL,
         status BIT NOT NULL CONSTRAINT df_product_status DEFAULT 1,
 
         CONSTRAINT pk_product PRIMARY KEY (id),
-        CONSTRAINT ck_product_price CHECK (price >= 0),
-        CONSTRAINT ck_product_stockQuantity CHECK (stockQuantity >= 0)
+        CONSTRAINT ck_product_price CHECK (price >= 0)
     );
 END;
 GO

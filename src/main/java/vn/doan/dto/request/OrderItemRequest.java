@@ -15,7 +15,10 @@ public class OrderItemRequest {
     private String note; // Ghi chú (ví dụ: "Ít đá", "Nhiều đường")
 
     // Danh sách ID các Topping đi kèm (nếu có)
-    private List<String> toppingIds;
+    private List<String> toppings;
+    private String size;
+    private Integer sugarPercent;
+    private Integer icePercent;
 
     public OrderItemRequest() {
     }
@@ -24,7 +27,7 @@ public class OrderItemRequest {
         this.productId = productId;
         this.quantity = quantity;
         this.note = note;
-        this.toppingIds = toppingIds;
+        this.toppings = toppingIds;
     }
 
     // --- GETTERS & SETTERS ---
@@ -53,10 +56,18 @@ public class OrderItemRequest {
     }
 
     public List<String> getToppingIds() {
-        return toppingIds;
+        return toppings;
     }
 
     public void setToppingIds(List<String> toppingIds) {
-        this.toppingIds = toppingIds;
+        this.toppings = toppingIds;
     }
+    public List<String> getToppings() { return toppings; }
+    public void setToppings(List<String> toppings) { this.toppings = toppings; }
+    public String getSize() { return size; }
+    public void setSize(String size) { this.size = size; }
+    public Integer getSugarPercent() { return sugarPercent; }
+    public void setSugarPercent(Integer sugarPercent) { this.sugarPercent = sugarPercent; }
+    public Integer getIcePercent() { return icePercent; }
+    public void setIcePercent(Integer icePercent) { this.icePercent = icePercent; }
 }
