@@ -9,8 +9,10 @@ public class CartItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @PrePersist
+    private void assignId() { if (id == null) id = Ids.next("CITEM"); }
 
     // QUAN HỆ NHIỀU - 1: Nhiều CartItem nằm trong 1 Cart
     @ManyToOne(fetch = FetchType.LAZY)

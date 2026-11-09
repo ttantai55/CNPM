@@ -9,8 +9,12 @@ import java.util.List;
 public class Barista {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @PrePersist
+    private void assignId() {
+        if (id == null) id = Ids.next("STAFF");
+    }
 
     @Column(nullable = false, length = 100)
     private String name;

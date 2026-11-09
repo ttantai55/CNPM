@@ -8,8 +8,10 @@ import java.time.LocalDateTime;
 public class Invoices {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @PrePersist
+    private void assignId() { if (id == null) id = Ids.next("INVOICE"); }
 
     @Column(name = "invoice_number", nullable = false, unique = true, length = 50)
     private String invoiceNumber;
