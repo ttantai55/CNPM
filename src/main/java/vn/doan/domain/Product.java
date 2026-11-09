@@ -9,7 +9,6 @@ public class Product implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @Column(nullable = false, length = 100)
@@ -17,9 +16,6 @@ public class Product implements Serializable {
 
     @Column(nullable = false)
     private long price;
-
-    @Column(name = "stock_quantity", nullable = false)
-    private long stockQuantity;
 
     private String description;
 
@@ -29,22 +25,33 @@ public class Product implements Serializable {
     @Column(nullable = false)
     private boolean status;
 
+    private Double rating = 5.0;
+
+    @Column(name = "weekly_sales_count", nullable = false)
+    private Integer weeklySalesCount = 0;
+
+    // QUAN HỆ NHIỀU - 1: Nhiều sản phẩm thuộc về 1 danh mục
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @PrePersist
+    private void assignId() {
+        if (id == null) id = Ids.next("PROD");
+        if (rating == null) rating = 5.0;
+        if (weeklySalesCount == null) weeklySalesCount = 0;
+    }
 
     // 1. Constructor không tham số cho JPA
     public Product() {
     }
 
     // 2. Constructor đầy đủ tham số 
-    public Product(String id, String name, long price, long stockQuantity,
+    public Product(String id, String name, long price,
                    String description, String imageUrl, boolean status, Category category) {
         this.id = id;
         this.name = name;
         this.price = price;
-        this.stockQuantity = stockQuantity;
         this.description = description;
         this.imageUrl = imageUrl;
         this.status = status;
@@ -59,31 +66,6 @@ public class Product implements Serializable {
 
     public void deactivate() {
         status = false;
-    }
-
-    public boolean hasEnoughStock(long quantity) {
-        return quantity > 0 && stockQuantity >= quantity;
-    }
-
-    public boolean isOutOfStock() {
-        return stockQuantity == 0;
-    }
-
-    public void decreaseStock(long quantity) {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
-        }
-        if (!hasEnoughStock(quantity)) {
-            throw new IllegalStateException("Không đủ hàng trong kho");
-        }
-        stockQuantity -= quantity;
-    }
-
-    public void increaseStock(long quantity) {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
-        }
-        stockQuantity += quantity;
     }
 
     public void changePrice(long newPrice) {
@@ -122,9 +104,6 @@ public class Product implements Serializable {
         this.price = price;
     }
 
-
-    
-
     public String getDescription() {
         return description;
     }
@@ -157,5 +136,8 @@ public class Product implements Serializable {
         this.category = category;
     }
 
-
+    public Double getRating() { return rating; }
+    public void setRating(Double rating) { this.rating = rating; }
+    public Integer getWeeklySalesCount() { return weeklySalesCount; }
+    public void setWeeklySalesCount(Integer weeklySalesCount) { this.weeklySalesCount = weeklySalesCount; }
 }

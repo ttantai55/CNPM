@@ -7,7 +7,6 @@ import vn.doan.domain.Category;
 import vn.doan.dto.request.CategoryCreateRequest;
 import vn.doan.dto.response.CategoryResponse;
 import vn.doan.repository.CategoryRepository;
-// Giả định ông đã tạo các Exception này trong package vn.doan.exception
 import vn.doan.exception.ResourceNotFoundException;
 import vn.doan.exception.BusinessValidationException;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -29,4 +29,10 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
             LocalDateTime startDate,
             LocalDateTime endDate
     );
+
+    // 5. Lọc giao dịch theo cả trạng thái và phương thức thanh toán
+    List<Payment> findByPaymentStatusAndPaymentMethod(
+        PaymentStatus paymentStatus,
+        PaymentMethod paymentMethod
+    );
 }

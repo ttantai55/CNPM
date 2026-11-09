@@ -9,8 +9,10 @@ import java.util.List;
 public class Topping {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @PrePersist
+    private void assignId() { if (id == null) id = Ids.next("TOP"); }
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -20,10 +22,6 @@ public class Topping {
 
     @Column(name = "is_available", nullable = false)
     private boolean isAvailable = true;
-
-    // QUAN HỆ NHIỀU - NHIỀU: Một Topping có thể thuộc nhiều Product
-    @ManyToMany(mappedBy = "toppings")
-    private List<Product> products = new ArrayList<>();
 
     // QUAN HỆ 1 - NHIỀU: Một Topping xuất hiện trong nhiều OrderItemTopping
     @OneToMany(mappedBy = "topping")
@@ -78,14 +76,6 @@ public class Topping {
 
     public void setAvailable(boolean available) {
         isAvailable = available;
-    }
-
-    public List<Product> getProducts() {
-        return products;
-    }
-
-    public void setProducts(List<Product> products) {
-        this.products = products;
     }
 
     public List<OrderItemTopping> getOrderItemToppings() {

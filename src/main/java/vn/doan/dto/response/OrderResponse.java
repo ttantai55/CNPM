@@ -23,11 +23,12 @@ public class OrderResponse {
     // Chi tiết các món hàng
     private List<OrderItemResponse> items;
 
-    //Dòng thời gian lịch sử trạng thái đơn hàng
+    // Dòng thời gian lịch sử trạng thái đơn hàng
     private List<OrderProcessResponse> processes;
 
     // Mã giảm giá đã dùng (nếu có)
     private String voucherCode;
+    private String paymentMethod;
 
     public OrderResponse() {
     }
@@ -35,7 +36,7 @@ public class OrderResponse {
     public OrderResponse(String id, String customerId, String customerName, String customerPhone, 
                          long totalAmount, long discountAmount, long finalAmount, String status, 
                          LocalDateTime createdAt, List<OrderItemResponse> items, 
-                         List<OrderProcessResponse> processes, String voucherCode) {
+                         List<OrderProcessResponse> processes, String voucherCode, String paymentMethod) {
         this.id = id;
         this.customerId = customerId;
         this.customerName = customerName;
@@ -48,6 +49,7 @@ public class OrderResponse {
         this.items = items;
         this.processes = processes;
         this.voucherCode = voucherCode;
+        this.paymentMethod = paymentMethod;
     }
 
     // --- GETTERS & SETTERS ---
@@ -74,4 +76,6 @@ public class OrderResponse {
     public List<OrderProcessResponse> getProcesses() { return processes; }
     
     public String getVoucherCode() { return voucherCode; }
+
+    public String getPaymentMethod() { return paymentMethod; }
 }

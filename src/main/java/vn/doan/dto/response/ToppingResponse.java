@@ -1,5 +1,7 @@
 package vn.doan.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ToppingResponse {
     private String id;
     private String name;
@@ -17,11 +19,10 @@ public class ToppingResponse {
 
     public String getId() { return id; }
 
-
     public String getName() { return name; }
 
     public long getPrice() { return price; }
 
+    @JsonProperty("isAvailable")
     public boolean isAvailable() { return isAvailable; }
-
 }

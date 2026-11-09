@@ -11,8 +11,10 @@ public class Cart implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @PrePersist
+    private void assignId() { if (id == null) id = Ids.next("CART"); }
 
     // QUAN HỆ 1 - 1: Mỗi Cart gắn liền với một User sở hữu
     @OneToOne(fetch = FetchType.LAZY)
