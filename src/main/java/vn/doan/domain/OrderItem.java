@@ -9,7 +9,6 @@ import java.util.List;
 public class OrderItem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     // QUAN HỆ NHIỀU - 1: Nhiều OrderItem thuộc về 1 Order
@@ -30,9 +29,23 @@ public class OrderItem {
 
     private String note;
 
+    private String size;
+    private Integer sugarPercent;
+    private Integer icePercent;
+
+    @ElementCollection
+    @CollectionTable(name = "order_item_custom_toppings", joinColumns = @JoinColumn(name = "order_item_id"))
+    @Column(name = "topping")
+    private List<String> toppings = new ArrayList<>();
+
     // QUAN HỆ 1 - NHIỀU: 1 OrderItem có nhiều OrderItemTopping đi kèm
     @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItemTopping> orderItemToppings = new ArrayList<>();
+
+    @PrePersist
+    private void assignId() {
+        if (id == null) id = Ids.next("ITEM");
+    }
 
     // 1. Constructor không tham số 
     public OrderItem() {
@@ -110,6 +123,15 @@ public class OrderItem {
     public void setNote(String note) {
         this.note = note;
     }
+
+    public String getSize() { return size; }
+    public void setSize(String size) { this.size = size; }
+    public Integer getSugarPercent() { return sugarPercent; }
+    public void setSugarPercent(Integer sugarPercent) { this.sugarPercent = sugarPercent; }
+    public Integer getIcePercent() { return icePercent; }
+    public void setIcePercent(Integer icePercent) { this.icePercent = icePercent; }
+    public List<String> getToppings() { return toppings; }
+    public void setToppings(List<String> toppings) { this.toppings = toppings == null ? new ArrayList<>() : toppings; }
 
     public List<OrderItemTopping> getOrderItemToppings() {
         return orderItemToppings;

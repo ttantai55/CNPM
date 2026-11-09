@@ -10,8 +10,12 @@ import java.util.List;
 public class Customer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @PrePersist
+    private void assignId() {
+        if (id == null) id = Ids.next("CUST");
+    }
 
     // QUAN HỆ 1 - 1: Ánh xạ 2 chiều ngược về User thông qua trường info ở class User
     @OneToOne(mappedBy = "info", fetch = FetchType.LAZY)

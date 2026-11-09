@@ -12,7 +12,6 @@ import java.util.List;
 public class Promotion {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @Column(name = "voucher_code", nullable = false, unique = true, length = 50)
@@ -45,6 +44,11 @@ public class Promotion {
     // QUAN HỆ 1 - NHIỀU: 1 Voucher khuyến mãi có thể được áp dụng ở nhiều Order
     @OneToMany(mappedBy = "discount")
     private List<Order> orders = new ArrayList<>();
+
+    @PrePersist
+    private void assignId() {
+        if (id == null) id = Ids.next("PROMO");
+    }
 
     // 1. Constructor không tham số 
     public Promotion() {

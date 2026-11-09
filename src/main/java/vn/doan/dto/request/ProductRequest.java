@@ -1,11 +1,26 @@
 package vn.doan.dto.request;
 
+<<<<<<< HEAD
+
+import lombok.Builder;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@Builder 
+public class ProductRequest {
+    
+   
+=======
 public class ProductRequest {
     
     private String name;
     private long price;
     private String description;
     private String imageUrl;
+>>>>>>> b032aed05faa130471684c4c6f24b56b49053905
 
     public ProductRequest() {
     }

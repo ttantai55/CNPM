@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 public class InventoryTransaction {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @Enumerated(EnumType.STRING)
@@ -30,6 +29,11 @@ public class InventoryTransaction {
     // QUAN HỆ 1 - 1: Mỗi giao dịch kho gắn với 1 chi tiết giao dịch
     @OneToOne(mappedBy = "inventoryTransaction", cascade = CascadeType.ALL, orphanRemoval = true)
     private InventoryTransactionDetails details;
+
+    @PrePersist
+    private void assignId() {
+        if (id == null) id = Ids.next("INV");
+    }
 
     // BẮT BUỘC CHO JPA: Constructor không tham số
     public InventoryTransaction() {
