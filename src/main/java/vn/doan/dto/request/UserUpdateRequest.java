@@ -2,11 +2,13 @@ package vn.doan.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
+import java.time.LocalDate;
 
 public class UserUpdateRequest {
 
     @Email(message = "Email không đúng định dạng")
     private String email;
+    private String username;
 
     private String avatarUrl;
 
@@ -15,6 +17,9 @@ public class UserUpdateRequest {
 
     @Pattern(regexp = "^(0[3|5|7|8|9])+([0-9]{8})$", message = "Số điện thoại không hợp lệ")
     private String phone;
+    private Boolean gender;
+    private LocalDate dateOfBirth;
+    private String address;
 
     public UserUpdateRequest() {
     }
@@ -30,6 +35,8 @@ public class UserUpdateRequest {
     public String getEmail() {
         return email;
     }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
     public void setEmail(String email) {
         this.email = email;
@@ -58,4 +65,10 @@ public class UserUpdateRequest {
     public void setPhone(String phone) {
         this.phone = phone;
     }
+    public Boolean getGender() { return gender; }
+    public void setGender(Boolean gender) { this.gender = gender; }
+    public LocalDate getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 }
