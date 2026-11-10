@@ -19,6 +19,8 @@ public class OrderCreateRequest {
 
     // Thông tin thanh toán cơ bản
     private String paymentMethod;
+    private String customerName;
+    private String phone;
 
     public OrderCreateRequest() {
     }
@@ -62,4 +64,8 @@ public class OrderCreateRequest {
     public void setPaymentMethod(String paymentMethod) {
         this.paymentMethod = paymentMethod;
     }
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 }

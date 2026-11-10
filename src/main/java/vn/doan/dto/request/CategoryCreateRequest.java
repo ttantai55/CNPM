@@ -8,6 +8,7 @@ public class CategoryCreateRequest {
     private String name;
 
     private String description;
+    private String slug;
 
     public CategoryCreateRequest() {
     }
@@ -15,6 +16,11 @@ public class CategoryCreateRequest {
     public CategoryCreateRequest(String name, String description) {
         this.name = name;
         this.description = description;
+    }
+
+    public CategoryCreateRequest(String name, String description, String slug) {
+        this(name, description);
+        this.slug = slug;
     }
 
     public String getName() {
@@ -32,4 +38,6 @@ public class CategoryCreateRequest {
     public void setDescription(String description) {
         this.description = description;
     }
+    public String getSlug() { return slug; }
+    public void setSlug(String slug) { this.slug = slug; }
 }

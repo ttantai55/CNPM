@@ -19,6 +19,8 @@ public class ProductCreateRequest {
 
     @NotBlank(message = "ID Danh mục không được để trống")
     private String categoryId;
+    private Double rating;
+    private Integer weeklySalesCount;
 
     public ProductCreateRequest() {}
 
@@ -42,4 +44,8 @@ public class ProductCreateRequest {
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public String getCategoryId() { return categoryId; }
     public void setCategoryId(String categoryId) { this.categoryId = categoryId; }
+    public Double getRating() { return rating; }
+    public void setRating(Double rating) { this.rating = rating; }
+    public Integer getWeeklySalesCount() { return weeklySalesCount; }
+    public void setWeeklySalesCount(Integer weeklySalesCount) { this.weeklySalesCount = weeklySalesCount; }
 }

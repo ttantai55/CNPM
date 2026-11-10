@@ -18,4 +18,7 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     // 3. Dùng lúc Đăng nhập: Tìm kiếm thông tin User bằng Email
     Optional<User> findByEmail(String email);
+    Optional<User> findByEmailIgnoreCase(String email);
+    Optional<User> findByUsernameIgnoreCase(String username);
+    Optional<User> findByPhone(String phone);
 }
