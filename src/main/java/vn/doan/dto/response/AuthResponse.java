@@ -1,47 +1,14 @@
 package vn.doan.dto.response;
 
 public class AuthResponse {
+    private final String token;
+    private final UserResponse user;
 
-
-    
-    // Các thông tin cơ bản để Frontend lưu trữ phiên đăng nhập
-    private String id;
-    private String username;
-    private String role;
-    private String fullName;
-    private String avatarUrl;
-
-    // --- CONSTRUCTOR ---
-    public AuthResponse() {
+    public AuthResponse(String token, UserResponse user) {
+        this.token = token;
+        this.user = user;
     }
 
-    public AuthResponse( String id, String username, String role, String fullName, String avatarUrl) {
-
-        this.id = id;
-        this.username = username;
-        this.role = role;
-        this.fullName = fullName;
-        this.avatarUrl = avatarUrl;
-    }
-
-    // --- GETTERS & SETTERS ---
-
-    public String getId() {
-        return id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getRole() {
-        return role;
-    }
-    public String getFullName() {
-        return fullName;
-    }
-
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
+    public String getToken() { return token; }
+    public UserResponse getUser() { return user; }
 }
