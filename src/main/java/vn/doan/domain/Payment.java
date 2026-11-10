@@ -41,37 +41,27 @@ public class Payment {
     public Payment() {
         this.paymentStatus = PaymentStatus.PENDING;
         this.paymentDate = LocalDateTime.now();
-        this.createdAt = LocalDateTime.now();
     }
 
     // 2. Constructor tạo mới nhanh
     public Payment(Order order, long totalAmount, PaymentMethod paymentMethod) {
-    this.order = order;
-    this.totalAmount = totalAmount;
-    this.paymentMethod = paymentMethod;
-    this.paymentStatus = PaymentStatus.PENDING;
-
-    LocalDateTime now = LocalDateTime.now();
-    this.paymentDate = now;
-    this.createdAt = now;
-}
+        this.order = order;
+        this.totalAmount = totalAmount;
+        this.paymentMethod = paymentMethod;
+        this.paymentStatus = PaymentStatus.PENDING;
+        this.paymentDate = LocalDateTime.now();
+    }
 
     // 3. Constructor đầy đủ tham số 
-    public Payment(String id, Order order, long totalAmount, PaymentMethod paymentMethod, PaymentStatus paymentStatus, LocalDateTime paymentDate) {
-    this.id = id;
-    this.order = order;
-    this.totalAmount = totalAmount;
-    this.paymentMethod = paymentMethod;
-    this.paymentStatus = paymentStatus != null
-            ? paymentStatus
-            : PaymentStatus.PENDING;
-
-    this.paymentDate = paymentDate != null
-            ? paymentDate
-            : LocalDateTime.now();
-
-    this.createdAt = this.paymentDate;
-}
+    public Payment(String id, Order order, long totalAmount, PaymentMethod paymentMethod,
+                   PaymentStatus paymentStatus, LocalDateTime paymentDate) {
+        this.id = id;
+        this.order = order;
+        this.totalAmount = totalAmount;
+        this.paymentMethod = paymentMethod;
+        this.paymentStatus = paymentStatus != null ? paymentStatus : PaymentStatus.PENDING;
+        this.paymentDate = paymentDate != null ? paymentDate : LocalDateTime.now();
+    }
 
     // --- GETTERS & SETTERS ---
 
@@ -124,10 +114,10 @@ public class Payment {
     }
 
     public LocalDateTime getCreatedAt() {
-    return createdAt;
+        return paymentDate;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
-    this.createdAt = createdAt;
+        this.paymentDate = createdAt;
     }
 }

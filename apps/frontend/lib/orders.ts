@@ -148,7 +148,7 @@ export function fromApiOrder(remote: ApiOrder): Order {
       productId: item.productId,
       name: item.productName,
       category: getProduct(item.productId)?.category ?? 'coffee',
-      size: (item.size === 'L' ? 'L' : 'M'),
+      size: item.size === 'L' ? 'L' : item.size === 'S' ? 'S' : 'M',
       sugar: `${item.sugarPercent ?? 50}%` as SugarOption,
       ice: ({ 0: 'Không đá', 25: 'Ít đá', 50: 'Đá vừa', 100: 'Nhiều đá' }[item.icePercent ?? 50] ?? 'Đá vừa') as IceOption,
       toppings: item.toppings ?? [],
@@ -230,6 +230,16 @@ export async function advanceOrder(code: string) {
 export async function refreshOrders(query = '') {
   const remoteOrders = await ordersApi.list(query)
   orderStore.set(remoteOrders.map(fromApiOrder))
+}
+
+export function archiveCompletedOrder(code: string) {
+  orderStore.set((orders) =>
+    orders.map((order) =>
+      order.code === code && order.status === 'COMPLETED'
+        ? { ...order, isArchived: true }
+        : order,
+    ),
+  )
 }
 
 export function archiveCompletedOrders(now = Date.now()) {
