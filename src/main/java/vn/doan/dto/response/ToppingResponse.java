@@ -19,12 +19,10 @@ public class ToppingResponse {
 
     public String getId() { return id; }
 
-
     public String getName() { return name; }
 
     public long getPrice() { return price; }
 
     @JsonProperty("isAvailable")
     public boolean isAvailable() { return isAvailable; }
-
 }

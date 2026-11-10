@@ -13,7 +13,6 @@ public class ProductCreateRequest {
     @Min(value = 0, message = "Giá sản phẩm không được âm")
     private Long price;
 
-
     private String description;
     private String imageUrl;
 
@@ -27,7 +26,6 @@ public class ProductCreateRequest {
     public ProductCreateRequest(String name, long price, String description, String imageUrl, String categoryId) {
         this.name = name;
         this.price = price;
-
         this.description = description;
         this.imageUrl = imageUrl;
         this.categoryId = categoryId;

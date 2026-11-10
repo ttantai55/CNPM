@@ -12,14 +12,13 @@ public class ProductResponse {
     private String categoryName; 
     private String categoryId;
 
-
     public ProductResponse() {}
 
     public ProductResponse(String id, String name, long price, String description, String imageUrl, boolean status,String categoryId, String categoryName, Double rating, Integer weeklySalesCount) {
         this.id = id;
         this.name = name;
         this.price = price;
-        this.categoryId =categoryId;
+        this.categoryId = categoryId;
         this.description = description;
         this.imageUrl = imageUrl;
         this.status = status;
@@ -33,7 +32,6 @@ public class ProductResponse {
     public String getName() { return name; }
 
     public long getPrice() { return price; }
-
 
     public String getDescription() { return description; }
 

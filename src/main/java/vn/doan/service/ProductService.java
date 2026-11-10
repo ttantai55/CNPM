@@ -43,7 +43,7 @@ public class ProductService {
     }
 
     /**
-     * Lấy danh sách món nước theo Danh mục (Category)
+     * Lấy danh sách món nước theo Danh mục
      */
     public List<ProductResponse> getProductsByCategory(String categoryId) {
         return productRepository.findByCategoryId(categoryId).stream()
@@ -52,7 +52,7 @@ public class ProductService {
     }
 
     /**
-     * Tạo mới một món nước (Dùng ProductCreateRequest[cite: 15])
+     * Tạo mới một món nước
      */
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
@@ -75,7 +75,7 @@ public class ProductService {
     }
 
     /**
-     * Cập nhật thông tin món nước (Dùng ProductRequest)
+     * Cập nhật thông tin món nước
      */
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
@@ -119,7 +119,7 @@ public class ProductService {
         return mapToResponse(productRepository.save(product));
     }
 
-    // Helper map từ Entity sang DTO[cite: 17]
+    // Helper map từ Entity sang DTO
     private ProductResponse mapToResponse(Product product) {
         return new ProductResponse(
                 product.getId(),

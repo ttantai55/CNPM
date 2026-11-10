@@ -23,7 +23,7 @@ public class OrderResponse {
     // Chi tiết các món hàng
     private List<OrderItemResponse> items;
 
-    //Dòng thời gian lịch sử trạng thái đơn hàng
+    // Dòng thời gian lịch sử trạng thái đơn hàng
     private List<OrderProcessResponse> processes;
 
     // Mã giảm giá đã dùng (nếu có)

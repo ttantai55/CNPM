@@ -47,31 +47,31 @@ public class OrderItemResponse {
     // --- GETTERS & SETTERS ---
     public String getId() { 
         return id; 
-        }
+    }
 
     public String getProductId() { 
         return productId; 
-        }
+    }
 
     public String getProductName() { 
         return productName; 
-        }
+    }
 
     public long getQuantity() { 
         return quantity; 
-        }
+    }
 
     public long getUnitPrice() { 
         return unitPrice; 
-        }
+    }
 
     public long getSubtotal() { 
         return subtotal; 
-        }
+    }
 
     public String getNote() { 
         return note; 
-        }
+    }
 
     public List<String> getToppingNames() { 
         return toppingNames; 
