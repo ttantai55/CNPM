@@ -11,10 +11,12 @@ import vn.doan.dto.response.OrderItemResponse;
 import vn.doan.dto.response.OrderProcessResponse;
 import vn.doan.dto.response.OrderResponse;
 import vn.doan.repository.OrderRepository;
+import vn.doan.repository.PaymentRepository;
 import vn.doan.repository.ProductRepository;
 import vn.doan.repository.PromotionRepository;
 import vn.doan.repository.ToppingRepository;
 import vn.doan.repository.UserRepository;
+import vn.doan.repository.CustomerRepository;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,10 +30,12 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository; 
     private final PromotionRepository promotionRepository;
     private final ToppingRepository toppingRepository;
+    private final CustomerRepository customerRepository;
 
     // * 1. Lấy thông tin chi tiết một đơn hàng
     public OrderResponse getOrderDetails(String orderId) {
@@ -40,12 +44,15 @@ public class OrderService {
         return mapToResponse(order);
     }
 
+    public List<OrderResponse> getAllOrders() {
+        return orderRepository.findAll().stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
     // * 2. Lấy danh sách các đơn hàng đang chờ pha chế (Dành cho Barista)
     public List<OrderResponse> getActiveOrdersForBarista() {
         List<OrderStatus> activeStatuses = Arrays.asList(
-                OrderStatus.CONFIRM, 
-                OrderStatus.PREPARING, 
-                OrderStatus.READY
+                OrderStatus.CONFIRMED,
+                OrderStatus.PREPARING
         );
         List<Order> activeOrders = orderRepository.findByStatusIn(activeStatuses);
 
@@ -58,11 +65,18 @@ public class OrderService {
     @Transactional
     public OrderResponse checkout(OrderCreateRequest request) {
         // Lấy tt khách hàng thông qua UserRepository
-        User user = userRepository.findById(request.getCustomerId())
-                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại."));
-        Customer customer = user.getInfo();
+        User user = request.getCustomerId() == null || request.getCustomerId().isBlank()
+                ? null
+                : userRepository.findById(request.getCustomerId())
+                        .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại."));
+        Customer customer = user == null ? null : user.getInfo();
         if (customer == null) {
-            throw new RuntimeException("Tài khoản này chưa có hồ sơ khách hàng.");
+            customer = new Customer();
+            customer.setUser(user);
+            customer.setName(request.getCustomerName() == null ? (user == null ? "Khách" : user.getFullName()) : request.getCustomerName());
+            customer.setPhone(request.getPhone() == null ? (user == null ? null : user.getPhone()) : request.getPhone());
+            if (user == null) customer = customerRepository.save(customer);
+            else user.setInfo(customer);
         }
 
         // Tạo đơn hàng
@@ -79,8 +93,8 @@ public class OrderService {
             if (!product.isStatus()) {
                 throw new IllegalStateException("Sản phẩm " + product.getName() + " hiện đang ngừng bán.");
             }
-            if (!product.hasEnoughStock(itemReq.getQuantity())) {
-                throw new IllegalStateException("Sản phẩm " + product.getName() + " không đủ hàng.");
+            if (itemReq.getQuantity() < 1) {
+                throw new IllegalArgumentException("Số lượng sản phẩm phải lớn hơn 0.");
             }
 
             long totalToppingPrice = 0;
@@ -89,24 +103,25 @@ public class OrderService {
             if (itemReq.getToppingIds() != null && !itemReq.getToppingIds().isEmpty()) {
                 for (String toppingId : itemReq.getToppingIds()) {
                     Topping topping = toppingRepository.findById(toppingId)
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy Topping."));
-                    
+                            .or(() -> toppingRepository.findByNameIgnoreCase(toppingId))
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy Topping: " + toppingId));
                     if (!topping.isAvailable()) {
                         throw new IllegalStateException("Topping " + topping.getName() + " hiện đang hết hàng.");
                     }
-                    totalToppingPrice += topping.getPrice();
                     selectedToppings.add(topping);
                 }
             }
+            totalToppingPrice = selectedToppings.stream().mapToLong(Topping::getPrice).sum();
             
             // Giá gốc = giá sản phẩm + giá các loại topping
-            long unitPrice = product.getPrice() + totalToppingPrice;
+            long unitPrice = product.getPrice() + ("L".equalsIgnoreCase(itemReq.getSize()) ? 6000 : 0) + totalToppingPrice;
             
-            // Trừ tồn kho tạm thời
-            product.decreaseStock(itemReq.getQuantity());
-
             // Tạo OrderItem
             OrderItem orderItem = new OrderItem(order, product, itemReq.getQuantity(), unitPrice, itemReq.getNote());
+            orderItem.setSize(itemReq.getSize());
+            orderItem.setSugarPercent(itemReq.getSugarPercent());
+            orderItem.setIcePercent(itemReq.getIcePercent());
+            orderItem.setToppings(selectedToppings.stream().map(Topping::getName).toList());
             
             // Gắn topping vào orderItem
             for (Topping topping : selectedToppings) {
@@ -168,10 +183,7 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng."));
 
-        order.changeStatus(OrderStatus.CANCELED);
-        for (OrderItem item : order.getItems()) {
-            item.getProduct().increaseStock(item.getQuantity());
-        }
+        order.changeStatus(OrderStatus.CANCELLED);
     }
 
     // * 6. Lịch sử đơn hàng cho khách hàng (ĐÃ SỬA LỖI Ở ĐÂY)
@@ -229,7 +241,11 @@ public class OrderService {
                     item.getUnitPrice(),
                     item.calculateSubtotal(),
                     item.getNote(),
-                    toppingNames // Đã thêm danh sách Topping
+                    toppingNames,
+                    item.getSize(),
+                    item.getSugarPercent(),
+                    item.getIcePercent(),
+                    item.getToppings()
             );
         }).collect(Collectors.toList());
 
@@ -252,9 +268,9 @@ public class OrderService {
 
         return new OrderResponse(
                 order.getId(),
-                order.getCustomer().getId(),
-                order.getCustomer().getName(),
-                order.getCustomer().getPhone(),
+                order.getCustomer() == null ? null : order.getCustomer().getId(),
+                order.getCustomer() == null ? null : order.getCustomer().getName(),
+                order.getCustomer() == null ? null : order.getCustomer().getPhone(),
                 order.getTotalAmount(),
                 discountAmount, // Đã cập nhật tiền giảm giá
                 order.getFinalAmount(),
@@ -262,7 +278,10 @@ public class OrderService {
                 order.getCreatedAt(),
                 itemResponses,
                 processResponses,
-                voucherCode // Đã cập nhật mã voucher
+                voucherCode,
+                paymentRepository.findByOrder(order)
+                        .map(payment -> payment.getPaymentMethod().name())
+                        .orElse(null)
         );
     }
 }

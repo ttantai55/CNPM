@@ -43,17 +43,16 @@ public class ProductService {
     }
 
     /**
-     * Lấy danh sách món nước theo Danh mục (Category)
+     * Lấy danh sách món nước theo Danh mục
      */
     public List<ProductResponse> getProductsByCategory(String categoryId) {
-        List<Product> products = productRepository.findByCategoryId(categoryId);
         return productRepository.findByCategoryId(categoryId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Tạo mới một món nước (Dùng ProductCreateRequest[cite: 15])
+     * Tạo mới một món nước
      */
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
@@ -68,13 +67,15 @@ public class ProductService {
         product.setImageUrl(request.getImageUrl());
         product.setCategory(category);
         product.setStatus(true); // Mặc định khi tạo mới là true (có bán)
+        product.setRating(request.getRating() == null ? 5.0 : request.getRating());
+        product.setWeeklySalesCount(request.getWeeklySalesCount() == null ? 0 : request.getWeeklySalesCount());
 
         Product savedProduct = productRepository.save(product);
         return mapToResponse(savedProduct);
     }
 
     /**
-     * Cập nhật thông tin món nước (Dùng ProductRequest)
+     * Cập nhật thông tin món nước
      */
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
@@ -86,11 +87,24 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setDescription(request.getDescription());
         product.setImageUrl(request.getImageUrl());
-        
-        // Không cập nhật category ở đây vì ProductRequest không có categoryId
+        if (request.getCategoryId() != null) {
+            Category category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục món"));
+            product.setCategory(category);
+        }
+        if (request.getRating() != null) product.setRating(request.getRating());
+        if (request.getWeeklySalesCount() != null) product.setWeeklySalesCount(request.getWeeklySalesCount());
+        if (request.getStatus() != null) product.setStatus(request.getStatus());
 
         Product updatedProduct = productRepository.save(product);
         return mapToResponse(updatedProduct);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void deleteProduct(String id) {
+        if (!productRepository.existsById(id)) throw new ResourceNotFoundException("Không tìm thấy món nước");
+        productRepository.deleteById(id);
     }
 
     /**
@@ -105,7 +119,7 @@ public class ProductService {
         return mapToResponse(productRepository.save(product));
     }
 
-    // Helper map từ Entity sang DTO[cite: 17]
+    // Helper map từ Entity sang DTO
     private ProductResponse mapToResponse(Product product) {
         return new ProductResponse(
                 product.getId(),
@@ -115,7 +129,9 @@ public class ProductService {
                 product.getImageUrl(),
                 product.isStatus(), // Nếu Entity của ông khai báo là isStatus() hoặc getStatus()
                 product.getCategory() != null ? product.getCategory().getId() : null,
-                product.getCategory() != null ? product.getCategory().getName() : null
+                product.getCategory() != null ? product.getCategory().getName() : null,
+                product.getRating(),
+                product.getWeeklySalesCount()
         );
     }
 }

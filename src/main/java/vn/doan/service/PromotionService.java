@@ -7,11 +7,14 @@ import vn.doan.domain.Promotion;
 import vn.doan.domain.enums.DiscountType;
 import vn.doan.dto.request.VoucherApplyRequest;
 import vn.doan.dto.request.VoucherCreateRequest;
+import vn.doan.dto.request.PromotionAdminRequest;
+import vn.doan.dto.response.PromotionAdminResponse;
 import vn.doan.dto.response.VoucherApplyResponse;
 import vn.doan.dto.response.VoucherResponse;
 import vn.doan.exception.BusinessValidationException;
 import vn.doan.exception.ResourceNotFoundException;
 import vn.doan.repository.PromotionRepository;
+import vn.doan.repository.OrderRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,6 +29,55 @@ import java.util.stream.Collectors;
 public class PromotionService {
 
     private final PromotionRepository promotionRepository;
+    private final OrderRepository orderRepository;
+
+    public List<PromotionAdminResponse> getAdminPromotions() {
+        return promotionRepository.findAll().stream().map(PromotionAdminResponse::new).toList();
+    }
+
+    @Transactional
+    public PromotionAdminResponse createAdminPromotion(PromotionAdminRequest request) {
+        validateAdminRequest(request);
+        Promotion promotion = new Promotion(request.getVoucherCode().trim().toUpperCase(),
+                request.getDescription(), request.getDiscountType(), request.getDiscountValue(),
+                request.getStartDate(), request.getEndDate(), request.getUsageLimit());
+        promotion.setUsedCount(request.getUsedCount() == null ? 0 : request.getUsedCount());
+        promotion.setActive(request.getIsActive() == null || request.getIsActive());
+        return new PromotionAdminResponse(promotionRepository.save(promotion));
+    }
+
+    @Transactional
+    public PromotionAdminResponse updateAdminPromotion(String id, PromotionAdminRequest request) {
+        Promotion promotion = promotionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khuyến mãi."));
+        validateAdminRequest(request);
+        promotionRepository.findByVoucherCode(request.getVoucherCode().trim().toUpperCase())
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> { throw new BusinessValidationException("Mã khuyến mãi đã tồn tại."); });
+        promotion.setVoucherCode(request.getVoucherCode().trim().toUpperCase());
+        promotion.setDescription(request.getDescription());
+        promotion.setDiscountType(request.getDiscountType());
+        promotion.setDiscountValue(request.getDiscountValue());
+        promotion.setStartDate(request.getStartDate());
+        promotion.setEndDate(request.getEndDate());
+        promotion.setUsageLimit(request.getUsageLimit());
+        if (request.getUsedCount() != null) promotion.setUsedCount(request.getUsedCount());
+        if (request.getIsActive() != null) promotion.setActive(request.getIsActive());
+        return new PromotionAdminResponse(promotion);
+    }
+
+    private void validateAdminRequest(PromotionAdminRequest request) {
+        if (request == null || request.getVoucherCode() == null || request.getVoucherCode().isBlank()
+                || request.getDiscountType() == null || request.getDiscountValue() == null || request.getDiscountValue() <= 0
+                || request.getStartDate() == null || request.getEndDate() == null
+                || request.getEndDate().isBefore(request.getStartDate())
+                || request.getUsageLimit() == null || request.getUsageLimit() < 1) {
+            throw new BusinessValidationException("Thông tin khuyến mãi không hợp lệ.");
+        }
+        if (request.getDiscountType() == DiscountType.PERCENTAGE && request.getDiscountValue() > 100) {
+            throw new BusinessValidationException("Mức giảm phần trăm tối đa là 100.");
+        }
+    }
 
     /** Lấy toàn bộ voucher trong hệ thống. */
     public List<VoucherResponse> getAllPromotions() {
@@ -168,6 +220,30 @@ public class PromotionService {
         return mapToVoucherResponse(promotion);
     }
 
+    @Transactional
+    public VoucherResponse updatePromotion(String promotionId, VoucherCreateRequest request) {
+        Promotion promotion = promotionRepository.findById(promotionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chương trình khuyến mãi."));
+        validateCreateRequest(request);
+        String code = normalizeVoucherCode(request.getCode());
+        promotionRepository.findByVoucherCode(code).filter(existing -> !existing.getId().equals(promotionId))
+                .ifPresent(existing -> { throw new BusinessValidationException("Mã voucher đã tồn tại."); });
+        promotion.setVoucherCode(code);
+        promotion.setDiscountValue(request.getDiscountAmount());
+        promotion.setUsageLimit(request.getQuantity());
+        promotion.setEndDate(request.getExpiredAt().toLocalDate());
+        return mapToVoucherResponse(promotion);
+    }
+
+    @Transactional
+    public void deletePromotion(String promotionId) {
+        if (!promotionRepository.existsById(promotionId)) {
+            throw new ResourceNotFoundException("Không tìm thấy chương trình khuyến mãi.");
+        }
+        orderRepository.detachPromotion(promotionId);
+        promotionRepository.deleteById(promotionId);
+    }
+
     private Promotion findPromotionByCode(String voucherCode) {
         if (voucherCode == null || voucherCode.trim().isEmpty()) {
             throw new BusinessValidationException("Mã voucher không được để trống.");
@@ -235,20 +311,4 @@ public class PromotionService {
         return (int) value;
     }
 
-    private VoucherResponse mapToResponse(Promotion promotion) {
-    LocalDateTime expiredAt = promotion.getEndDate() == null
-            ? null
-            : promotion.getEndDate().atTime(LocalTime.MAX);
-
-    return new VoucherResponse(
-            promotion.getId(),
-            promotion.getVoucherCode(),
-            promotion.getDiscountValue(),
-            0L,
-            toSafeInt(promotion.getUsageLimit()),
-            toSafeInt(promotion.getUsedCount()),
-            expiredAt,
-            promotion.isValid()
-    );
-}
 }
