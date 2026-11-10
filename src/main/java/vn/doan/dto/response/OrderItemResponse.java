@@ -75,8 +75,7 @@ public class OrderItemResponse {
 
     public List<String> getToppingNames() { 
         return toppingNames; 
-    }
-
+        }
     public String getSize() { return size; }
     public Integer getSugarPercent() { return sugarPercent; }
     public Integer getIcePercent() { return icePercent; }

@@ -25,7 +25,7 @@ export type Product = {
   categoryName?: string
 }
 
-export type SizeOption = 'M' | 'L'
+export type SizeOption = 'S' | 'M' | 'L'
 export type SugarOption = '0%' | '25%' | '50%' | '75%' | '100%'
 export type IceOption = 'Không đá' | 'Ít đá' | 'Đá vừa' | 'Nhiều đá'
 
@@ -51,7 +51,7 @@ export const CATEGORY_LABELS: Record<BuiltInCategoryId, string> = {
 
 export const categoryStore = createStore<MenuCategory[]>([])
 
-export const SIZE_SURCHARGE: Record<SizeOption, number> = { M: 0, L: 6000 }
+export const SIZE_SURCHARGE: Record<SizeOption, number> = { S: 0, M: 0, L: 6000 }
 export const SUGAR_OPTIONS: SugarOption[] = ['0%', '25%', '50%', '75%', '100%']
 export const ICE_OPTIONS: IceOption[] = ['Không đá', 'Ít đá', 'Đá vừa', 'Nhiều đá']
 

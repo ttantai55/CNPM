@@ -6,10 +6,10 @@ import { formatPrice, type Product } from '@/lib/menu'
 
 type BestsellerPanelProps = {
   products: Product[]
-  onAdd: (product: Product) => void
+  onCustomize: (product: Product) => void
 }
 
-export function BestsellerPanel({ products, onAdd }: BestsellerPanelProps) {
+export function BestsellerPanel({ products, onCustomize }: BestsellerPanelProps) {
   const bestsellers = [...products]
     .sort((a, b) => b.weeklySalesCount - a.weeklySalesCount)
     .slice(0, 4)
@@ -27,11 +27,24 @@ export function BestsellerPanel({ products, onAdd }: BestsellerPanelProps) {
         <ul className="mt-3 divide-y divide-border">
           {bestsellers.map((product) => (
             <li key={product.id} className="flex items-center gap-3 py-3">
-              <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
+              <button
+                type="button"
+                onClick={() => onCustomize(product)}
+                disabled={!product.status}
+                aria-label={`Tùy chỉnh ${product.name}`}
+                className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted disabled:cursor-not-allowed"
+              >
                 <Image src={product.imageUrl || '/placeholder.svg'} alt="" fill sizes="56px" className="object-cover" />
-              </div>
+              </button>
               <div className="min-w-0 flex-1">
-                <p className="line-clamp-2 text-xs font-semibold text-foreground">{product.name}</p>
+                <button
+                  type="button"
+                  onClick={() => onCustomize(product)}
+                  disabled={!product.status}
+                  className="line-clamp-2 text-left text-xs font-semibold text-foreground disabled:cursor-not-allowed"
+                >
+                  {product.name}
+                </button>
                 <p className="mt-1 text-[10px] font-semibold text-caramel">
                   🔥 {product.weeklySalesCount.toLocaleString('vi-VN')} lượt/tuần
                 </p>
@@ -39,10 +52,10 @@ export function BestsellerPanel({ products, onAdd }: BestsellerPanelProps) {
               </div>
               <button
                 type="button"
-                onClick={() => onAdd(product)}
+                onClick={() => onCustomize(product)}
                 disabled={!product.status}
-                aria-label={`Thêm nhanh ${product.name} vào giỏ`}
-                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-primary transition hover:bg-primary hover:text-primary-foreground"
+                aria-label={`Tùy chỉnh ${product.name}`}
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-primary transition hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus className="size-4" aria-hidden="true" />
               </button>

@@ -64,7 +64,6 @@ public class OrderCreateRequest {
     public void setPaymentMethod(String paymentMethod) {
         this.paymentMethod = paymentMethod;
     }
-
     public String getCustomerName() { return customerName; }
     public void setCustomerName(String customerName) { this.customerName = customerName; }
     public String getPhone() { return phone; }

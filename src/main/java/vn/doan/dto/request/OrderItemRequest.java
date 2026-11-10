@@ -62,7 +62,6 @@ public class OrderItemRequest {
     public void setToppingIds(List<String> toppingIds) {
         this.toppings = toppingIds;
     }
-
     public List<String> getToppings() { return toppings; }
     public void setToppings(List<String> toppings) { this.toppings = toppings; }
     public String getSize() { return size; }

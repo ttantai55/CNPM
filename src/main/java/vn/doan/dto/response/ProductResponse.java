@@ -14,7 +14,7 @@ public class ProductResponse {
 
     public ProductResponse() {}
 
-    public ProductResponse(String id, String name, long price, String description, String imageUrl, boolean status, String categoryId, String categoryName, Double rating, Integer weeklySalesCount) {
+    public ProductResponse(String id, String name, long price, String description, String imageUrl, boolean status,String categoryId, String categoryName, Double rating, Integer weeklySalesCount) {
         this.id = id;
         this.name = name;
         this.price = price;
@@ -42,8 +42,7 @@ public class ProductResponse {
     public String getCategoryName() { return categoryName; }
 
     public String getCategoryId() { return categoryId; }
-    
     public Double getRating() { return rating; }
-    
     public Integer getWeeklySalesCount() { return weeklySalesCount; }
+
 }

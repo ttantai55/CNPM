@@ -250,22 +250,6 @@ export function BrewLiteApp() {
     setCheckoutOpen(true)
   }
 
-  function quickAddProduct(product: Product) {
-    dispatchCart({
-      type: 'add',
-      item: {
-        productId: product.id,
-        size: 'M',
-        sugar: '50%',
-        ice: 'Đá vừa',
-        toppingIds: [],
-        note: '',
-        quantity: 1,
-      },
-    })
-    showToast(`Đã thêm ${product.name} vào giỏ hàng`)
-  }
-
   function usePromotion(promotion: (typeof promotions)[number]) {
     setSelectedPromotionId(promotion.id)
     setCategory('all')
@@ -374,7 +358,7 @@ export function BrewLiteApp() {
           />
         </main>
 
-        <BestsellerPanel products={availableProducts} onAdd={quickAddProduct} />
+        <BestsellerPanel products={availableProducts} onCustomize={setCustomizing} />
       </div>
 
       {cart.length > 0 && (

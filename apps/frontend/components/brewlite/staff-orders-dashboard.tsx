@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, Archive, ArrowRight, Clock3, Coffee, MapPin, Search, ShoppingBag } from 'lucide-react'
+import { Activity, Archive, ArrowRight, Check, Clock3, Coffee, MapPin, Search, ShoppingBag } from 'lucide-react'
 import { CATEGORY_LABELS, type CategoryId } from '@/lib/menu'
-import { advanceOrder, archiveCompletedOrders, migrateOrderStatuses, orderStore, PAYMENT_LABEL, refreshOrders, type Order, type OrderStatus } from '@/lib/orders'
+import { advanceOrder, archiveCompletedOrder, archiveCompletedOrders, migrateOrderStatuses, orderStore, PAYMENT_LABEL, refreshOrders, type Order, type OrderStatus } from '@/lib/orders'
 import { DashboardHeader, RoleGuard } from './role-shell'
 import { Modal } from './modal'
 
@@ -68,9 +68,17 @@ function OrderCard({ order, action }: { order: Order; action?: string }) {
         >
           {action} <ArrowRight className="size-3.5" />
         </button>
+      ) : order.status === 'COMPLETED' ? (
+        <button
+          type="button"
+          onClick={() => archiveCompletedOrder(order.code)}
+          className="mt-4 flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[#285b4b] text-[11px] font-semibold text-white transition hover:bg-[#204d3f]"
+        >
+          Hoàn tất <Check className="size-3.5" />
+        </button>
       ) : (
         <p className="mt-4 rounded-lg bg-[#f3f7f3] px-3 py-2 text-center text-[11px] font-semibold text-[#53785d]">
-          {order.status === 'PENDING' ? 'Chờ thanh toán' : 'Mời khách nhận món tại quầy'}
+          Chờ thanh toán
         </p>
       )}
     </article>
