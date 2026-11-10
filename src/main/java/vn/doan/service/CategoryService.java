@@ -31,6 +31,7 @@ public class CategoryService {
                         category.getId(), 
                         category.getName(), 
                         category.getDescription(),
+                        category.getSlug(),
                         category.isActive()
                 )).collect(Collectors.toList());
     }
@@ -39,7 +40,7 @@ public class CategoryService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục với ID: " + categoryId));
         
-        return new CategoryResponse(category.getId(), category.getName(), category.getDescription(),category.isActive());
+        return new CategoryResponse(category.getId(), category.getName(), category.getDescription(), category.getSlug(), category.isActive());
     }
 
     @Transactional
@@ -54,12 +55,13 @@ public class CategoryService {
         Category category = new Category();
         category.setName(request.getName());
         category.setDescription(request.getDescription());
+        category.setSlug(request.getSlug() == null || request.getSlug().isBlank() ? slugify(request.getName()) : slugify(request.getSlug()));
         // Nếu DB có cột trạng thái, set mặc định: category.setActive(true);
 
         // 3. Lưu xuống DB
         Category savedCategory = categoryRepository.save(category);
 
-        return new CategoryResponse(savedCategory.getId(), savedCategory.getName(), savedCategory.getDescription(),savedCategory.isActive());
+        return new CategoryResponse(savedCategory.getId(), savedCategory.getName(), savedCategory.getDescription(), savedCategory.getSlug(), savedCategory.isActive());
     }
 
     @Transactional // Cho phép ghi dữ liệu (UPDATE)
@@ -77,11 +79,12 @@ public class CategoryService {
         // Đổ dữ liệu mới vào Entity đang bị quản lý (Managed State)
         category.setName(request.getName());
         category.setDescription(request.getDescription());
+        if (request.getSlug() != null) category.setSlug(slugify(request.getSlug()));
         
         // KHÔNG CẦN GỌI categoryRepository.save(category)
         // JPA Dirty Checking sẽ tự động đối soát và sinh lệnh UPDATE khi kết thúc hàm
 
-        return new CategoryResponse(category.getId(), category.getName(), category.getDescription(),category.isActive());
+        return new CategoryResponse(category.getId(), category.getName(), category.getDescription(), category.getSlug(), category.isActive());
     }
 
    @Transactional
@@ -98,7 +101,16 @@ public CategoryResponse toggleCategoryStatus(String categoryId) {
             category.getId(), 
             category.getName(), 
             category.getDescription(), 
+            category.getSlug(),
             category.isActive() // Truyền thêm trạng thái
     ); 
 }
+
+    private String slugify(String value) {
+        return java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replace("đ", "d").replace("Đ", "d")
+                .toLowerCase(java.util.Locale.ROOT).trim()
+                .replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
+    }
 }
