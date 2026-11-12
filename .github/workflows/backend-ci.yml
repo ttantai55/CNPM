@@ -1,0 +1,71 @@
+name: Backend Pipeline
+
+on:
+  push:
+    branches:  "main"
+  pull_request:
+    branches:  "main"
+jobs:
+  backend-ci:
+    name: Backend Test & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/backend
+
+    steps:
+      - name: Lấy mã nguồn về máy ảo
+        uses: actions/checkout@v4
+
+      - name: Cài đặt môi trường Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+          cache-dependency-path: apps/backend/pom.xml
+
+      - name: Cấp quyền thực thi cho Maven Wrapper
+        run: |
+          if [ -f "./mvnw" ]; then
+            chmod +x ./mvnw
+          fi
+
+      - name: Bước 1 - Install (Tải thư viện)
+        run: |
+          if [ -f "./mvnw" ]; then
+            ./mvnw dependency:resolve
+          else
+            mvn dependency:resolve
+          fi
+
+      - name: Bước 2 - Lint (Kiểm tra định dạng code)
+        run: |
+          if [ -f "./mvnw" ]; then
+            ./mvnw checkstyle:check
+          else
+            mvn checkstyle:check
+          fi
+
+      - name: Bước 3 - Unit Test (Kiểm tra biên dịch test)
+        run: |
+          if [ -f "./mvnw" ]; then
+            ./mvnw test -DskipTests
+          else
+            mvn test -DskipTests
+          fi
+
+      - name: Bước 4 - Build (Đóng gói ứng dụng)
+        run: |
+          if [ -f "./mvnw" ]; then
+            ./mvnw clean package -DskipTests
+          else
+            mvn clean package -DskipTests
+          fi
+
+      - name: Lưu trữ Artifact Jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: apps/backend/target/*.jar
+          retention-days: 1
