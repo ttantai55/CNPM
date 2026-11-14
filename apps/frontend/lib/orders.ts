@@ -4,11 +4,13 @@ import {
   getProduct,
   getTopping,
   getUnitPrice,
+  toppingStore,
   type CartItem,
   type IceOption,
   type Product,
   type SizeOption,
   type SugarOption,
+  buildCartKey,
 } from './menu'
 import { createStore } from './persistent-store'
 import { ordersApi, paymentsApi, type ApiOrder } from './api'
@@ -49,6 +51,7 @@ export type Order = {
   status: OrderStatus
   createdAt: number
   updatedAt: number
+  paymentCompletedAt: number
   preparationTime: number
   completedAt: number
   isArchived: boolean
@@ -57,7 +60,7 @@ export type Order = {
 /** Order details collected at checkout, before the payment is confirmed. */
 export type OrderDraft = Omit<
   Order,
-  'code' | 'paymentMethod' | 'status' | 'createdAt' | 'updatedAt' | 'preparationTime' | 'completedAt' | 'isArchived'
+  'code' | 'paymentMethod' | 'status' | 'createdAt' | 'updatedAt' | 'preparationTime' | 'completedAt' | 'isArchived' | 'paymentCompletedAt'
 >
 
 export const PAYMENT_LABEL: Record<PaymentMethod, string> = { MOMO: 'Ví MoMo', VIETQR: 'VietQR' }
@@ -103,6 +106,7 @@ export function migrateOrderStatuses() {
     Boolean(order.address) ||
     typeof order.preparationTime !== 'number' ||
     typeof order.completedAt !== 'number' ||
+    typeof order.paymentCompletedAt !== 'number' ||
     (order.status === 'COMPLETED' && order.completedAt <= 0) ||
     typeof order.isArchived !== 'boolean',
   )
@@ -128,6 +132,7 @@ export function migrateOrderStatuses() {
       total: order.subtotal - (order.discountAmount ?? 0),
       preparationTime: order.preparationTime ?? 0,
       completedAt,
+      paymentCompletedAt: order.paymentCompletedAt ?? 0,
       isArchived:
         order.isArchived ??
         (status === 'COMPLETED' &&
@@ -138,6 +143,8 @@ export function migrateOrderStatuses() {
 
 export function fromApiOrder(remote: ApiOrder): Order {
   const now = new Date(remote.createdAt).getTime()
+  const confirmedAt = remote.processes?.find((process) => process.status === 'CONFIRMED')?.updateAt
+  const paymentCompletedAt = confirmedAt ? new Date(confirmedAt).getTime() : 0
   return {
     code: remote.id,
     customerId: remote.customerId,
@@ -165,6 +172,7 @@ export function fromApiOrder(remote: ApiOrder): Order {
     status: remote.status as OrderStatus,
     createdAt: now,
     updatedAt: now,
+    paymentCompletedAt: Number.isFinite(paymentCompletedAt) ? paymentCompletedAt : 0,
     preparationTime: 0,
     completedAt: 0,
     isArchived: false,
@@ -204,6 +212,63 @@ export async function confirmOrderPayment(code: string, paymentMethod: PaymentMe
     orderStore.set((orders) => [updatedOrder!, ...orders.filter((order) => order.code !== code)])
   })
   return updatedOrder
+}
+
+export async function cancelOrderPayment(order: Order) {
+  const remote = await ordersApi.status(order.code, 'CANCELLED')
+  const mapped = {
+    ...fromApiOrder(remote),
+    customerEmail: order.customerEmail,
+    note: order.note,
+    paymentCompletedAt: 0,
+  }
+  orderStore.set((orders) => [mapped, ...orders.filter((entry) => entry.code !== order.code)])
+  return mapped
+}
+
+export async function resumeOrderPayment(
+  order: Order,
+  customerEmail = order.customerEmail,
+  customerId = order.customerId,
+) {
+  if (order.status === 'PENDING') return order
+  if (order.status !== 'CANCELLED') {
+    throw new Error('Chỉ có thể tiếp tục thanh toán đơn đang chờ hoặc đã hủy.')
+  }
+
+  return placeOrder({
+    customerId,
+    customerEmail,
+    customerName: order.customerName,
+    phone: order.phone,
+    fulfillment: 'pickup',
+    address: undefined,
+    note: order.note,
+    lines: order.lines,
+    subtotal: order.subtotal,
+    discountAmount: order.discountAmount,
+    promotionCode: order.promotionCode,
+    deliveryFee: 0,
+    total: order.total,
+  })
+}
+
+export function orderToCartItems(order: Order): CartItem[] {
+  const toppings = toppingStore.get()
+  return order.lines.map((line) => {
+    const item = {
+      productId: line.productId,
+      size: line.size,
+      sugar: line.sugar,
+      ice: line.ice,
+      toppingIds: line.toppings.map(
+        (name) => toppings.find((topping) => topping.id === name || topping.name === name)?.id ?? name,
+      ),
+      note: line.note,
+      quantity: line.quantity,
+    }
+    return { ...item, key: buildCartKey(item) }
+  })
 }
 
 export async function advanceOrder(code: string) {

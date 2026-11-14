@@ -10,9 +10,21 @@ export function inputClass(invalid: boolean) {
   return cn(
     'h-11 w-full rounded-xl border bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2',
     invalid
-      ? 'border-destructive focus:ring-destructive/25'
+      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/25'
       : 'border-input focus:border-caramel focus:ring-caramel/30',
   )
+}
+
+export function fieldErrorClass(className: string, error?: string) {
+  return cn(
+    className,
+    error && 'border-red-500 focus:border-red-500 focus:ring-red-500/25',
+  )
+}
+
+export function FieldError({ error }: { error?: string }) {
+  if (!error) return null
+  return <span className="mt-1 block text-xs text-red-600">{error}</span>
 }
 
 export function FormField({
@@ -40,7 +52,7 @@ export function FormField({
         })}
       </div>
       {error && (
-        <p id={errorId} className="mt-1 text-xs text-destructive">
+        <p id={errorId} className="mt-1 text-xs text-red-600">
           {error}
         </p>
       )}

@@ -8,17 +8,15 @@ import { getDiscountAmount, getEligiblePromotions, type Promotion } from '@/lib/
 import { cn } from '@/lib/utils'
 import { Modal } from './modal'
 import { FormField, inputClass } from './form-field'
+import { isValidPersonName, isValidVietnamesePhone } from '@/lib/validation'
 
 type FormValues = { name: string; phone: string; note: string }
 type FormErrors = Partial<Record<keyof FormValues, string>>
 
-const PHONE_PATTERN = /^(0|\+84)(3|5|7|8|9)\d{8}$/
-
 function validate(values: FormValues): FormErrors {
   const errors: FormErrors = {}
-  if (values.name.trim().length < 2) errors.name = 'Vui lòng nhập họ tên (tối thiểu 2 ký tự).'
-  if (!PHONE_PATTERN.test(values.phone.replace(/\s/g, '')))
-    errors.phone = 'Số điện thoại không hợp lệ (VD: 0901234567).'
+  if (!isValidPersonName(values.name)) errors.name = 'Họ tên phải có ít nhất 2 chữ cái hợp lệ.'
+  if (!isValidVietnamesePhone(values.phone)) errors.phone = 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0.'
   return errors
 }
 
@@ -139,7 +137,7 @@ function CheckoutForm({
       customerId,
       customerEmail,
       customerName: values.name.trim(),
-      phone: values.phone.replace(/\s/g, ''),
+      phone: values.phone.trim(),
       fulfillment: 'pickup',
       note: values.note.trim() || undefined,
       lines: items.map(cartItemToLine),
@@ -223,7 +221,7 @@ function CheckoutForm({
               value={values.phone}
               onChange={update('phone')}
               onBlur={markTouched('phone')}
-              placeholder="0901 234 567"
+              placeholder="0901234567"
               className={inputClass(!!props['aria-invalid'])}
             />
           )}

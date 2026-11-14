@@ -21,6 +21,7 @@ type AppHeaderProps = {
   latestOrderCode?: string
   activeOrderCount: number
   customerOrders: Order[]
+  onResumePayment: (order: Order) => void
   onLogout: () => void
   cartCount: number
   onOpenCart: () => void
@@ -35,6 +36,7 @@ export function AppHeader({
   latestOrderCode,
   activeOrderCount,
   customerOrders,
+  onResumePayment,
   onLogout,
   cartCount,
   onOpenCart,
@@ -320,16 +322,30 @@ export function AppHeader({
                 </p>
                 <div className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-3">
                   <span className="text-sm font-bold text-foreground">{formatPrice(order.total)}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOrderHistoryOpen(false)
-                      router.push(`/orders/${encodeURIComponent(order.code)}`)
-                    }}
-                    className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
-                  >
-                    Xem chi tiết
-                  </button>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    {(order.status === 'PENDING' || order.status === 'CANCELLED') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOrderHistoryOpen(false)
+                          onResumePayment(order)
+                        }}
+                        className="rounded-lg bg-[#c0793d] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#a96834]"
+                      >
+                        Tiếp tục thanh toán
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOrderHistoryOpen(false)
+                        router.push(`/orders/${encodeURIComponent(order.code)}`)
+                      }}
+                      className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
+                    >
+                      Xem chi tiết
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}

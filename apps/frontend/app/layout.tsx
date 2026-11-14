@@ -1,13 +1,18 @@
 
 import type { Metadata, Viewport } from 'next'
-import { Be_Vietnam_Pro } from 'next/font/google'
+import localFont from 'next/font/local'
 import './globals.css'
 import { ClearLocalStorage } from '@/components/brewlite/clear-local-storage'
 
-const beVietnam = Be_Vietnam_Pro({
-  subsets: ['latin', 'vietnamese'],
-  weight: ['400', '500', '600', '700'],
+const beVietnam = localFont({
+  src: [
+    { path: './fonts/be-vietnam-pro-400.ttf', weight: '400' },
+    { path: './fonts/be-vietnam-pro-500.ttf', weight: '500' },
+    { path: './fonts/be-vietnam-pro-600.ttf', weight: '600' },
+    { path: './fonts/be-vietnam-pro-700.ttf', weight: '700' },
+  ],
   variable: '--font-be-vietnam',
+  display: 'swap',
 })
 
 export const metadata: Metadata = {

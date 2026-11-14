@@ -20,9 +20,11 @@ const categoryOptions: { value: CategoryId; label: string }[] = [
   { value: 'juice', label: CATEGORY_LABELS.juice },
 ]
 
-function OrderCard({ order, action }: { order: Order; action?: string }) {
-  const age = Math.max(0, Math.floor((Date.now() - order.createdAt) / 60_000))
-  const isUrgent = age >= 15 && order.status !== 'COMPLETED'
+function OrderCard({ order, action, now }: { order: Order; action?: string; now: number }) {
+  const age = order.paymentCompletedAt > 0 && !['PENDING', 'CANCELLED'].includes(order.status)
+    ? Math.max(0, Math.floor((now - order.paymentCompletedAt) / 60_000))
+    : null
+  const isUrgent = age !== null && age >= 15 && order.status !== 'COMPLETED'
 
   return (
     <article className="rounded-xl border border-[#e9ede9] bg-white p-4 shadow-[0_2px_8px_rgba(27,52,39,0.03)]">
@@ -31,9 +33,11 @@ function OrderCard({ order, action }: { order: Order; action?: string }) {
           <p className="text-[13px] font-bold tracking-wide text-[#2c4639]">#{order.code}</p>
           <p className="mt-1 text-[11px] text-[#8b978f]">{order.customerName}</p>
         </div>
-        <span className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${isUrgent ? 'bg-[#fff0ed] text-[#bd5c4c]' : 'bg-[#f3f5f3] text-[#718078]'}`}>
-          <Clock3 className="size-3" /> {age} phút
-        </span>
+        {age !== null && (
+          <span className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${isUrgent ? 'bg-[#fff0ed] text-[#bd5c4c]' : 'bg-[#f3f5f3] text-[#718078]'}`}>
+            <Clock3 className="size-3" /> {age} phút
+          </span>
+        )}
       </div>
 
       <div className="mt-3 flex items-center justify-between border-y border-dashed border-[#edf0ed] py-2.5">
@@ -85,8 +89,9 @@ function OrderCard({ order, action }: { order: Order; action?: string }) {
   )
 }
 
-function OrdersBoard() {
+export function OrdersBoardContent({ embedded = false }: { embedded?: boolean }) {
   const orders = orderStore.useStore()
+  const [now, setNow] = useState(() => Date.now())
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<CategoryId>('all')
   const [historyOpen, setHistoryOpen] = useState(false)
@@ -97,6 +102,10 @@ function OrdersBoard() {
     migrateOrderStatuses()
     archiveCompletedOrders()
     const timer = window.setInterval(archiveCompletedOrders, 15_000)
+    return () => window.clearInterval(timer)
+  }, [])
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000)
     return () => window.clearInterval(timer)
   }, [])
   const filteredOrders = useMemo(() => {
@@ -122,10 +131,8 @@ function OrdersBoard() {
   const activeOrders = orders.filter((order) => ['PENDING', 'CONFIRMED', 'PREPARING'].includes(order.status)).length
 
   return (
-    <RoleGuard role="STAFF">
-      <div className="min-h-dvh bg-[#f7f8f6]">
-        <DashboardHeader role="STAFF" title="Order management" />
-        <main className="mx-auto max-w-[1580px] px-8 py-7">
+    <>
+      <div className={`mx-auto max-w-[1580px] ${embedded ? 'px-0 py-4' : 'px-8 py-7'}`}>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-medium text-[#96a198]">
@@ -190,6 +197,7 @@ function OrdersBoard() {
                       <OrderCard
                         key={order.code}
                         order={order}
+                        now={now}
                         action={order.status === 'PENDING' || order.status === 'COMPLETED' ? undefined : column.action}
                       />
                     ))}
@@ -202,7 +210,6 @@ function OrdersBoard() {
             })}
           </div>
           <p className="mt-5 text-center text-[10px] text-[#a0aaa3]">Đơn hàng được đồng bộ tức thì trên trình duyệt này và các tab đang mở.</p>
-        </main>
       </div>
       <Modal
         open={historyOpen}
@@ -254,10 +261,17 @@ function OrdersBoard() {
           )}
         </div>
       </Modal>
-    </RoleGuard>
+    </>
   )
 }
 
 export default function StaffOrdersDashboard() {
-  return <OrdersBoard />
+  return (
+    <RoleGuard role="STAFF">
+      <div className="min-h-dvh bg-[#f7f8f6]">
+        <DashboardHeader role="STAFF" title="Order management" />
+        <OrdersBoardContent />
+      </div>
+    </RoleGuard>
+  )
 }

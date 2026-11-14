@@ -9,8 +9,11 @@ import {
 } from '@/lib/auth'
 import { Modal } from './modal'
 import { adminApi } from '@/lib/api'
+import { isValidEmail, isValidPersonName, isValidVietnamesePhone } from '@/lib/validation'
+import { FieldError, fieldErrorClass } from './form-field'
 
 type CustomerForm = Pick<CustomerAccount, 'username' | 'email' | 'name' | 'phone' | 'gender' | 'dateOfBirth' | 'address'>
+type CustomerFieldErrors = Partial<Record<'username' | 'email' | 'name' | 'phone', string>>
 
 const EMPTY_FORM: CustomerForm = {
   username: '',
@@ -28,6 +31,7 @@ export function CustomerManagement() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<CustomerAccount | null>(null)
   const [form, setForm] = useState<CustomerForm>(EMPTY_FORM)
+  const [fieldErrors, setFieldErrors] = useState<CustomerFieldErrors>({})
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -68,6 +72,7 @@ export function CustomerManagement() {
       address: customer.address,
     })
     setError('')
+    setFieldErrors({})
     setFormOpen(true)
   }
 
@@ -81,8 +86,18 @@ export function CustomerManagement() {
       phone: form.phone.trim(),
       address: form.address.trim(),
     }
-    if (!value.username || !value.name || (!value.email && !value.phone)) {
-      setError('Vui lòng nhập username, họ tên và email hoặc số điện thoại.')
+    const errors: CustomerFieldErrors = {
+      username: value.username ? undefined : 'Vui lòng nhập tên đăng nhập.',
+      name: isValidPersonName(value.name) ? undefined : 'Họ tên phải có ít nhất 2 chữ cái hợp lệ.',
+      email: value.email
+        ? isValidEmail(value.email) ? undefined : 'Vui lòng nhập địa chỉ email hợp lệ.'
+        : value.phone ? undefined : 'Vui lòng nhập email hoặc số điện thoại.',
+      phone: value.phone
+        ? isValidVietnamesePhone(value.phone) ? undefined : 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0.'
+        : undefined,
+    }
+    setFieldErrors(errors)
+    if (Object.values(errors).some(Boolean)) {
       return
     }
     const duplicate = customers.some(
@@ -160,13 +175,13 @@ export function CustomerManagement() {
       </section>
 
       <Modal open={formOpen} onClose={() => setFormOpen(false)} title={editing ? 'Sửa thông tin khách hàng' : 'Thêm khách hàng'} description="Nhập thông tin hồ sơ khách hàng">
-        <form onSubmit={save} className="flex min-h-0 flex-1 flex-col">
+        <form onSubmit={save} noValidate className="flex min-h-0 flex-1 flex-col">
           <div className="grid gap-3 overflow-y-auto px-5 py-4 sm:grid-cols-2">
             {error && <p role="alert" className="rounded-lg bg-red-50 p-2 text-xs text-red-700 sm:col-span-2">{error}</p>}
-            <label className="text-xs font-medium">Username<input required value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="mt-1.5 w-full rounded-lg border px-3 py-2" /></label>
-            <label className="text-xs font-medium">Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1.5 w-full rounded-lg border px-3 py-2" /></label>
-            <label className="text-xs font-medium">Họ tên<input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1.5 w-full rounded-lg border px-3 py-2" /></label>
-            <label className="text-xs font-medium">Số điện thoại<input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1.5 w-full rounded-lg border px-3 py-2" /></label>
+            <label className="text-xs font-medium">Username<input required value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} aria-invalid={Boolean(fieldErrors.username)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border px-3 py-2', fieldErrors.username)} /><FieldError error={fieldErrors.username} /></label>
+            <label className="text-xs font-medium">Email<input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} aria-invalid={Boolean(fieldErrors.email)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border px-3 py-2', fieldErrors.email)} /><FieldError error={fieldErrors.email} /></label>
+            <label className="text-xs font-medium">Họ tên<input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} aria-invalid={Boolean(fieldErrors.name)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border px-3 py-2', fieldErrors.name)} /><FieldError error={fieldErrors.name} /></label>
+            <label className="text-xs font-medium">Số điện thoại<input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} aria-invalid={Boolean(fieldErrors.phone)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border px-3 py-2', fieldErrors.phone)} /><FieldError error={fieldErrors.phone} /></label>
             <label className="text-xs font-medium">Giới tính<select value={form.gender ? 'male' : 'female'} onChange={(e) => setForm({ ...form, gender: e.target.value === 'male' })} className="mt-1.5 w-full rounded-lg border px-3 py-2"><option value="male">Nam</option><option value="female">Nữ</option></select></label>
             <label className="text-xs font-medium">Ngày sinh<input type="date" value={form.dateOfBirth} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} className="mt-1.5 w-full rounded-lg border px-3 py-2" /></label>
             <label className="text-xs font-medium sm:col-span-2">Địa chỉ<textarea rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mt-1.5 w-full rounded-lg border px-3 py-2" /></label>
