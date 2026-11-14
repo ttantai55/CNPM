@@ -37,6 +37,7 @@ type MockPaymentModalProps = {
 
 export function MockPaymentModal({ order, onClose, onFailure, onRetry, onSuccess }: MockPaymentModalProps) {
   const [activeOrder, setActiveOrder] = useState(order)
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false)
   const [method, setMethod] = useState<PaymentMethod | null>(null)
   const [phase, setPhase] = useState<Phase>('waiting')
   const [remaining, setRemaining] = useState(HOLD_SECONDS)
@@ -129,27 +130,28 @@ export function MockPaymentModal({ order, onClose, onFailure, onRetry, onSuccess
   const busy = phase === 'processing' || phase === 'success'
 
   return (
-    <Modal
-      open
-      onClose={busy ? () => {} : onClose}
-      title="Thanh toán đơn hàng"
-      description="Chọn phương thức và quét mã QR để hoàn tất"
-      className="sm:max-w-4xl"
-    >
-      {phase === 'success' ? (
-        <SuccessView total={activeOrder.total} code={activeOrder.code} />
-      ) : (
-        <>
-          <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto p-5 md:grid-cols-[300px_minmax(0,1fr)]">
-            <div className="flex flex-col gap-4">
-              <OrderSummary order={activeOrder} />
-              <MethodPicker value={method} onChange={(value) => void selectMethod(value)} disabled={busy || creatingPayment} />
-            </div>
+    <>
+      <Modal
+        open
+        onClose={busy ? () => {} : () => setCloseConfirmOpen(true)}
+        title="Thanh toán đơn hàng"
+        description="Chọn phương thức và quét mã QR để hoàn tất"
+        className="sm:max-w-4xl"
+      >
+        {phase === 'success' ? (
+          <SuccessView total={activeOrder.total} code={activeOrder.code} />
+        ) : (
+          <>
+            <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto p-5 md:grid-cols-[300px_minmax(0,1fr)]">
+              <div className="flex flex-col gap-4">
+                <OrderSummary order={activeOrder} />
+                <MethodPicker value={method} onChange={(value) => void selectMethod(value)} disabled={busy || creatingPayment} />
+              </div>
 
-            <section
-              aria-label="Chi tiết thanh toán"
-              className="flex min-h-[420px] flex-col rounded-2xl border border-border bg-muted/40 p-5"
-            >
+              <section
+                aria-label="Chi tiết thanh toán"
+                className="flex min-h-[420px] flex-col rounded-2xl border border-border bg-muted/40 p-5"
+              >
               {phase === 'failed' && (
                 <div
                   role="alert"
@@ -203,18 +205,46 @@ export function MockPaymentModal({ order, onClose, onFailure, onRetry, onSuccess
               ) : (
                 <VietQrPanel order={activeOrder} phase={phase} remaining={remaining} paymentUrl={paymentUrl} />
               )}
-            </section>
-          </div>
+              </section>
+            </div>
 
-          <SandboxControls
-            disabled={!method || !paymentUrl || phase !== 'waiting'}
-            processing={phase === 'processing'}
-            onSuccess={simulateSuccess}
-            onFailure={simulateFailure}
-          />
-        </>
-      )}
-    </Modal>
+            <SandboxControls
+              disabled={!method || !paymentUrl || phase !== 'waiting'}
+              processing={phase === 'processing'}
+              onSuccess={simulateSuccess}
+              onFailure={simulateFailure}
+            />
+          </>
+        )}
+      </Modal>
+      <Modal
+        open={closeConfirmOpen}
+        onClose={() => setCloseConfirmOpen(false)}
+        title="Xác nhận thanh toán"
+        description="Bạn muốn tiếp tục thanh toán đơn hàng này hay thanh toán sau?"
+        className="p-5"
+      >
+        <div className="flex flex-col gap-2 px-5 pb-5 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={() => setCloseConfirmOpen(false)}
+            className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+          >
+            Tiếp tục thanh toán
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setCloseConfirmOpen(false)
+              onClose()
+            }}
+            className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+          >
+            Thanh toán sau
+          </button>
+        </div>
+      </Modal>
+    </>
   )
 }
 
