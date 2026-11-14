@@ -294,14 +294,22 @@ export function AppHeader({
       open={logoutConfirmOpen}
       onClose={() => setLogoutConfirmOpen(false)}
       title="Xác nhận đăng xuất"
-      description="Bạn có chắc muốn đăng xuất không ?"
-      className="p-5"
+      description="Bạn có chắc chắn muốn đăng xuất khỏi tài khoản BrewLite?"
+      className="sm:max-w-md"
     >
-      <div className="flex justify-end gap-2 px-5 pb-5">
+      <div className="flex items-center gap-3 px-5 py-5">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-secondary text-primary">
+          <LogOut className="size-5" aria-hidden="true" />
+        </span>
+        <p className="text-sm leading-6 text-muted-foreground">
+          Phiên làm việc hiện tại sẽ kết thúc. Bạn có thể đăng nhập lại bất cứ lúc nào.
+        </p>
+      </div>
+      <div className="flex flex-col gap-2.5 border-t border-border bg-muted/40 px-5 py-4 sm:flex-row sm:justify-end">
         <button
           type="button"
           onClick={() => setLogoutConfirmOpen(false)}
-          className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+          className="h-11 w-full rounded-xl border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:bg-muted sm:w-auto"
         >
           Hủy
         </button>
@@ -311,7 +319,7 @@ export function AppHeader({
             setLogoutConfirmOpen(false)
             onLogout()
           }}
-          className="rounded-xl bg-destructive px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-destructive/90"
+          className="h-11 w-full rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 sm:w-auto"
         >
           Xác nhận đăng xuất
         </button>

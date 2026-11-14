@@ -48,10 +48,16 @@ CREATE TABLE IF NOT EXISTS products (
     status boolean NOT NULL DEFAULT true,
     rating double precision,
     weekly_sales_count integer NOT NULL DEFAULT 0,
+    sold_count integer NOT NULL DEFAULT 0,
+    created_at timestamp without time zone NOT NULL DEFAULT current_timestamp,
     category_id varchar(255),
     CONSTRAINT fk_products_category
         FOREIGN KEY (category_id) REFERENCES categories (id)
 );
+
+ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS sold_count integer NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS created_at timestamp without time zone NOT NULL DEFAULT current_timestamp;
 
 CREATE TABLE IF NOT EXISTS toppings (
     id varchar(255) PRIMARY KEY,
