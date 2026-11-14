@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, Archive, ArrowRight, Check, Clock3, Coffee, MapPin, Search, ShoppingBag } from 'lucide-react'
+import { Activity, Archive, ArrowRight, Check, Clock3, Coffee, MapPin, Search, ShoppingBag, Trash2 } from 'lucide-react'
 import { CATEGORY_LABELS, type CategoryId } from '@/lib/menu'
-import { advanceOrder, archiveCompletedOrder, archiveCompletedOrders, migrateOrderStatuses, orderStore, PAYMENT_LABEL, refreshOrders, type Order, type OrderStatus } from '@/lib/orders'
+import { advanceOrder, archiveCompletedOrder, archiveCompletedOrders, migrateOrderStatuses, orderStore, PAYMENT_LABEL, refreshOrders, removeCancelledOrder, type Order, type OrderStatus } from '@/lib/orders'
 import { DashboardHeader, RoleGuard } from './role-shell'
 import { Modal } from './modal'
 
@@ -11,6 +11,7 @@ const COLUMNS: { statuses: OrderStatus[]; title: string; tone: string; action?: 
   { statuses: ['PENDING', 'CONFIRMED'], title: 'Đơn mới', tone: 'bg-[#eef3fb] text-[#52709e]', action: 'Bắt đầu chuẩn bị' },
   { statuses: ['PREPARING'], title: 'Đang chuẩn bị', tone: 'bg-[#fbf2e7] text-[#a97b40]', action: 'Hoàn tất đơn' },
   { statuses: ['COMPLETED'], title: 'Hoàn tất', tone: 'bg-[#edf5ef] text-[#4f805e]' },
+  { statuses: ['CANCELLED'], title: 'Đã hủy', tone: 'bg-[#f8efec] text-[#8d4c3b]' },
 ]
 
 const categoryOptions: { value: CategoryId; label: string }[] = [
@@ -72,6 +73,20 @@ function OrderCard({ order, action, now }: { order: Order; action?: string; now:
         >
           {action} <ArrowRight className="size-3.5" />
         </button>
+      ) : order.status === 'CANCELLED' ? (
+        <button
+          type="button"
+          onClick={() => {
+            try {
+              removeCancelledOrder(order.code)
+            } catch (error) {
+              window.alert(error instanceof Error ? error.message : 'Không thể xóa đơn hàng.')
+            }
+          }}
+          className="mt-4 flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[#8d4c3b] text-[11px] font-semibold text-white transition hover:bg-[#743b2d]"
+        >
+          Xóa đơn <Trash2 className="size-3.5" />
+        </button>
       ) : order.status === 'COMPLETED' ? (
         <button
           type="button"
@@ -102,7 +117,15 @@ export function OrdersBoardContent({ embedded = false }: { embedded?: boolean })
     migrateOrderStatuses()
     archiveCompletedOrders()
     const timer = window.setInterval(archiveCompletedOrders, 15_000)
-    return () => window.clearInterval(timer)
+    const syncTimer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void refreshOrders().catch((error: unknown) => console.error('Unable to sync orders', error))
+      }
+    }, 5_000)
+    return () => {
+      window.clearInterval(timer)
+      window.clearInterval(syncTimer)
+    }
   }, [])
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30_000)
@@ -178,7 +201,7 @@ export function OrdersBoardContent({ embedded = false }: { embedded?: boolean })
             </div>
           </div>
 
-          <div className="mt-5 grid items-start gap-4 xl:grid-cols-3">
+          <div className="mt-5 grid items-start gap-4 xl:grid-cols-4">
             {COLUMNS.map((column) => {
               const columnOrders = filteredOrders
                 .filter((order) => column.statuses.includes(order.status))

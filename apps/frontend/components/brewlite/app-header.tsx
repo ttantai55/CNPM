@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation'
 import { Bell, ChevronDown, Clock3, Coffee, History, LogOut, Search, ShoppingBag, UserRound, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatPrice } from '@/lib/menu'
-import { STATUS_LABEL, type Order } from '@/lib/orders'
+import { fromApiOrder, orderStore, STATUS_LABEL, type Order } from '@/lib/orders'
 import { notificationStore } from '@/lib/notifications'
+import { ordersApi } from '@/lib/api'
 import { Modal } from './modal'
 
 export type User = { name: string; displayName?: string; email: string; avatarUrl?: string }
@@ -48,7 +49,28 @@ export function AppHeader({
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [orderHistoryOpen, setOrderHistoryOpen] = useState(false)
+  const [detailOrder, setDetailOrder] = useState<Order | null>(null)
+  const [detailError, setDetailError] = useState('')
   const displayName = user?.displayName?.trim() || user?.name || 'Khách hàng'
+
+  async function openNotificationOrder(orderCode?: string) {
+    if (!orderCode) return
+    setNotificationsOpen(false)
+    setDetailError('')
+    const storedOrder = customerOrders.find((order) => order.code === orderCode)
+      ?? orderStore.get().find((order) => order.code === orderCode)
+    if (storedOrder) {
+      setDetailOrder(storedOrder)
+      return
+    }
+    try {
+      const order = fromApiOrder(await ordersApi.get(orderCode))
+      orderStore.set((orders) => [order, ...orders.filter((entry) => entry.code !== order.code)])
+      setDetailOrder(order)
+    } catch (error) {
+      setDetailError(error instanceof Error ? error.message : 'Không thể tải chi tiết đơn hàng.')
+    }
+  }
 
   function toggleNotifications() {
     const opening = !notificationsOpen
@@ -140,16 +162,23 @@ export function AppHeader({
             {notificationsOpen && (
               <div className="absolute right-0 top-12 w-72 rounded-2xl border border-border bg-popover p-2 shadow-lg animate-in fade-in slide-in-from-top-2">
                 <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Thông báo
+                  THÔNG BÁO
                 </p>
                 <ul className="flex flex-col">
                   {notifications.slice(0, 5).map((notification) => (
-                    <li key={notification.id} className="rounded-xl px-3 py-2.5 hover:bg-muted">
-                      <p className="text-sm font-semibold text-foreground">{notification.title}</p>
-                      <p className="text-xs leading-relaxed text-muted-foreground">{notification.body}</p>
-                      <time className="mt-1 block text-[10px] text-muted-foreground">
-                        {new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(notification.createdAt)}
-                      </time>
+                    <li key={notification.id}>
+                      <button
+                        type="button"
+                        onClick={() => void openNotificationOrder(notification.orderCode)}
+                        disabled={!notification.orderCode}
+                        className="w-full rounded-xl px-3 py-2.5 text-left transition hover:bg-muted disabled:cursor-default"
+                      >
+                        <p className="text-sm font-semibold text-foreground">{notification.title}</p>
+                        <p className="text-xs leading-relaxed text-muted-foreground">{notification.body}</p>
+                        <time className="mt-1 block text-[10px] text-muted-foreground">
+                          {new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(notification.createdAt)}
+                        </time>
+                      </button>
                     </li>
                   ))}
                   {notifications.length === 0 && (
@@ -289,6 +318,44 @@ export function AppHeader({
       </div>
     </Modal>
     <Modal
+      open={detailOrder !== null}
+      onClose={() => setDetailOrder(null)}
+      title={`Chi tiết đơn hàng #${detailOrder?.code ?? ''}`}
+      description="Thông tin món đã đặt và thanh toán"
+      className="max-h-[85dvh]"
+    >
+      {detailOrder && (
+        <div className="overflow-y-auto px-5 py-4">
+          <ul className="divide-y divide-border">
+            {detailOrder.lines.map((line, index) => (
+              <li key={`${line.productId}-${index}`} className="py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-semibold text-foreground">{line.quantity}× {line.name}</p>
+                  <span className="shrink-0 text-sm font-semibold text-primary">
+                    {formatPrice(line.unitPrice * line.quantity)}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Đơn giá {formatPrice(line.unitPrice)} · Size {line.size} · {line.sugar} đường · {line.ice}
+                  {line.toppings.length > 0 ? ` · ${line.toppings.join(', ')}` : ''}
+                </p>
+                {line.note && <p className="mt-1 text-xs text-muted-foreground">Ghi chú: {line.note}</p>}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-2 flex justify-between border-t border-border pt-4 text-sm">
+            <span className="font-semibold text-foreground">Tổng thanh toán</span>
+            <span className="text-lg font-bold text-primary">{formatPrice(detailOrder.total)}</span>
+          </div>
+        </div>
+      )}
+    </Modal>
+    {detailError && (
+      <p role="alert" className="fixed bottom-5 left-1/2 z-[70] -translate-x-1/2 rounded-xl bg-destructive px-4 py-3 text-sm text-white shadow-lg">
+        {detailError}
+      </p>
+    )}
+    <Modal
       open={orderHistoryOpen}
       onClose={() => setOrderHistoryOpen(false)}
       title="Lịch sử đơn hàng"
@@ -323,7 +390,7 @@ export function AppHeader({
                 <div className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-3">
                   <span className="text-sm font-bold text-foreground">{formatPrice(order.total)}</span>
                   <div className="flex flex-wrap justify-end gap-2">
-                    {(order.status === 'PENDING' || order.status === 'CANCELLED') && (
+                    {order.status === 'PENDING' && (
                       <button
                         type="button"
                         onClick={() => {
