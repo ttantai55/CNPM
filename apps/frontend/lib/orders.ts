@@ -12,8 +12,9 @@ import {
   type SugarOption,
   buildCartKey,
 } from './menu'
-import { createStore } from './persistent-store'
+import { createPersistentStore, createStore } from './persistent-store'
 import { ordersApi, paymentsApi, type ApiOrder } from './api'
+import { publishPaymentNotification } from './notifications'
 
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'COMPLETED' | 'CANCELLED'
 export type PaymentMethod = 'MOMO' | 'VIETQR'
@@ -95,6 +96,20 @@ export function cartItemToLine(item: CartItem): OrderLine {
 }
 
 export const orderStore = createStore<Order[]>([])
+const locallyDeletedOrderCodes = createPersistentStore<string[]>('brewlite.locally-deleted-cancelled-orders', [])
+
+export function isOrderLocallyDeleted(code: string) {
+  return locallyDeletedOrderCodes.get().includes(code)
+}
+
+export function removeCancelledOrder(code: string) {
+  const order = orderStore.get().find((entry) => entry.code === code)
+  if (!order || order.status !== 'CANCELLED') {
+    throw new Error('Chỉ có thể xóa đơn hàng đã hủy.')
+  }
+  locallyDeletedOrderCodes.set((codes) => codes.includes(code) ? codes : [...codes, code])
+  orderStore.set((orders) => orders.filter((entry) => entry.code !== code))
+}
 
 export function migrateOrderStatuses() {
   const existingOrders = orderStore.get()
@@ -211,6 +226,7 @@ export async function confirmOrderPayment(code: string, paymentMethod: PaymentMe
     updatedOrder = { ...fromApiOrder(remote), paymentMethod }
     orderStore.set((orders) => [updatedOrder!, ...orders.filter((order) => order.code !== code)])
   })
+  if (updatedOrder) publishPaymentNotification(updatedOrder.code)
   return updatedOrder
 }
 
@@ -294,7 +310,8 @@ export async function advanceOrder(code: string) {
 
 export async function refreshOrders(query = '') {
   const remoteOrders = await ordersApi.list(query)
-  orderStore.set(remoteOrders.map(fromApiOrder))
+  const deletedCodes = new Set(locallyDeletedOrderCodes.get())
+  orderStore.set(remoteOrders.map(fromApiOrder).filter((order) => !deletedCodes.has(order.code)))
 }
 
 export function archiveCompletedOrder(code: string) {

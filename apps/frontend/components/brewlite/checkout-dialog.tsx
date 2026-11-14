@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2 } from 'lucide-react'
 import { formatPrice, getUnitPrice, type CartItem } from '@/lib/menu'
 import { cartItemToLine, type OrderDraft } from '@/lib/orders'
 import { getDiscountAmount, getEligiblePromotions, type Promotion } from '@/lib/promotions'
@@ -32,6 +31,7 @@ type CheckoutDialogProps = {
   selectedPromotionId: string
   onSelectPromotion: (id: string) => void
   onProceedToPayment: (draft: OrderDraft) => void
+  onEditCart: () => void
 }
 
 export function CheckoutDialog({
@@ -46,27 +46,70 @@ export function CheckoutDialog({
   selectedPromotionId,
   onSelectPromotion,
   onProceedToPayment,
+  onEditCart,
 }: CheckoutDialogProps) {
+  const [pendingDraft, setPendingDraft] = useState<OrderDraft | null>(null)
+
+  function closeCheckout() {
+    setPendingDraft(null)
+    onClose()
+  }
+
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title="Thông tin đặt hàng"
-      description="Hoàn tất thông tin để BrewLite chuẩn bị đơn cho bạn"
-    >
-      <CheckoutForm
-        items={items}
+    <>
+      <Modal
         open={open}
-        defaultName={defaultName}
-        defaultPhone={defaultPhone}
-        customerId={customerId}
-        customerEmail={customerEmail}
-        promotions={promotions}
-        selectedPromotionId={selectedPromotionId}
-        onSelectPromotion={onSelectPromotion}
-        onSubmit={onProceedToPayment}
-      />
-    </Modal>
+        onClose={closeCheckout}
+        title="Thông tin đặt hàng"
+        description="Hoàn tất thông tin để BrewLite chuẩn bị đơn cho bạn"
+      >
+        <CheckoutForm
+          items={items}
+          open={open}
+          defaultName={defaultName}
+          defaultPhone={defaultPhone}
+          customerId={customerId}
+          customerEmail={customerEmail}
+          promotions={promotions}
+          selectedPromotionId={selectedPromotionId}
+          onSelectPromotion={onSelectPromotion}
+          onSubmit={setPendingDraft}
+        />
+      </Modal>
+      <Modal
+        open={open && pendingDraft !== null}
+        onClose={() => setPendingDraft(null)}
+        title="Xác nhận đơn hàng"
+        description="Khách iu đã chắc chắn với đơn hàng này chưa? Khách iu có muốn upsize hay thay đổi món nước hoặc topping không?"
+        className="p-5"
+      >
+        <div className="flex justify-end gap-2 px-5 pb-5">
+          <button
+            type="button"
+            onClick={() => {
+              setPendingDraft(null)
+              onClose()
+              onEditCart()
+            }}
+            className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+          >
+            Chỉnh sửa
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!pendingDraft) return
+              const draft = pendingDraft
+              setPendingDraft(null)
+              onProceedToPayment(draft)
+            }}
+            className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+          >
+            Xác nhận
+          </button>
+        </div>
+      </Modal>
+    </>
   )
 }
 
@@ -99,7 +142,6 @@ function CheckoutForm({
     note: '',
   })
   const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({})
-  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -132,7 +174,6 @@ function CheckoutForm({
       firstInvalid?.focus()
       return
     }
-    setSubmitting(true)
     onSubmit({
       customerId,
       customerEmail,
@@ -147,7 +188,6 @@ function CheckoutForm({
       deliveryFee: 0,
       total,
     })
-    setSubmitting(false)
   }
 
   const errorFor = (field: keyof FormValues) => (touched[field] ? errors[field] : undefined)
@@ -261,11 +301,10 @@ function CheckoutForm({
         </dl>
         <button
           type="submit"
-          disabled={submitting || items.length === 0}
+          disabled={items.length === 0}
           className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-70"
         >
-          {submitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-          {submitting ? 'Đang tạo đơn...' : `Xác nhận đặt hàng · ${formatPrice(total)}`}
+          Xác nhận đặt hàng · {formatPrice(total)}
         </button>
       </div>
     </form>

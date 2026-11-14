@@ -449,6 +449,7 @@ export function BrewLiteApp() {
       promotions={availablePromotions}
       selectedPromotionId={selectedPromotionId}
       onSelectPromotion={setSelectedPromotionId}
+      onEditCart={() => setCartOpen(true)}
       onProceedToPayment={async (orderData) => {
         setCheckoutOpen(false)
         try {
