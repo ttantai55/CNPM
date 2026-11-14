@@ -1,6 +1,3 @@
-UPDATE orders SET status = 'COMPLETED' WHERE status = 'READY';
-ALTER TABLE products DROP COLUMN IF EXISTS stock_quantity;
-
 INSERT INTO customers (id, name, gender, phone)
 VALUES ('CUST_DEMO', 'Khách hàng Demo', FALSE, '0900000001')
 ON CONFLICT (id) DO UPDATE SET
@@ -41,39 +38,8 @@ INSERT INTO categories (id, name, slug, description, is_active)
 VALUES
     ('CAT_0001', 'Cà phê', 'coffee', 'Cà phê pha mới mỗi ngày', TRUE),
     ('CAT_0002', 'Trà sữa', 'milk-tea', 'Trà sữa và trà trái cây', TRUE),
-    ('CAT_0003', 'Nước ép', 'juice', 'Nước ép trái cây tươi', TRUE)
-ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    slug = EXCLUDED.slug,
-    description = EXCLUDED.description,
-    is_active = EXCLUDED.is_active;
-
-INSERT INTO products
-    (id, name, price, description, image_url, status, category_id, rating, weekly_sales_count)
-VALUES
-    ('PROD_0001', 'Latte Kem Sữa Tây Ban Nha', 56000, 'Espresso đậm vị, sữa đặc và lớp kem sữa béo mịn', '/images/latte-kem-sua.png', TRUE, 'CAT_0001', 4.9, 128),
-    ('PROD_0002', 'Cold Brew Đường Nâu', 58000, 'Ủ lạnh 18 giờ, ngọt dịu đường nâu và hậu vị caramel', '/images/cold-brew.png', TRUE, 'CAT_0001', 4.8, 112),
-    ('PROD_0003', 'Mocha Caramel Nướng', 62000, 'Cacao đậm, caramel nướng thơm và espresso rang vừa', '/images/mocha-caramel.png', TRUE, 'CAT_0001', 4.7, 96),
-    ('PROD_0004', 'Trà Sữa Trân Châu Đường Đen', 45000, 'Hồng trà đậm, sữa tươi và trân châu đường đen dẻo', '/images/tra-sua-tran-chau.png', TRUE, 'CAT_0002', 4.9, 184),
-    ('PROD_0005', 'Matcha Latte Kem Muối', 49000, 'Matcha Uji thanh mát, sữa tươi và kem muối mằn mặn', '/images/tra-sua-matcha.png', TRUE, 'CAT_0002', 4.6, 103),
-    ('PROD_0006', 'Trà Sữa Khoai Môn', 47000, 'Khoai môn nghiền bùi béo cùng lớp kem phô mai', '/images/tra-sua-khoai-mon.png', FALSE, 'CAT_0002', 4.5, 72),
-    ('PROD_0007', 'Thanh Long Xoài Lấp Lánh', 56000, 'Thanh long ép lạnh, xoài chín và nước khoáng có ga', '/images/thanh-long-xoai.png', TRUE, 'CAT_0003', 4.9, 156),
-    ('PROD_0008', 'Bưởi Hồng Ép Lạnh', 52000, 'Bưởi hồng, mật ong hoa tự nhiên và hạt chia', '/images/buoi-hong.png', TRUE, 'CAT_0003', 4.7, 91),
-    ('PROD_0009', 'Dưa Hấu Chanh Bạc Hà', 50000, 'Dưa hấu tươi, chanh xanh và bạc hà nghiền mát lạnh', '/images/dua-hau.png', TRUE, 'CAT_0003', 4.9, 142),
-    ('PROD_0010', 'Chanh Dây Gừng Nghệ', 48000, 'Chanh dây, gừng tươi, chanh vàng và nghệ nguyên chất', '/images/chanh-day.png', TRUE, 'CAT_0003', 4.8, 87),
-    ('PROD_0011', 'Nước Ép Xanh Thanh Lọc', 54000, 'Táo xanh, dưa leo, cải bó xôi, cần tây và táo xoắn', '/images/xanh-thanh-loc.png', TRUE, 'CAT_0003', 4.6, 65)
-ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    price = EXCLUDED.price,
-    description = EXCLUDED.description,
-    image_url = EXCLUDED.image_url,
-    status = EXCLUDED.status,
-    category_id = EXCLUDED.category_id,
-    rating = EXCLUDED.rating,
-    weekly_sales_count = EXCLUDED.weekly_sales_count;
-
-INSERT INTO categories (id, name, slug, description, is_active)
-VALUES ('CAT_0004', 'Bánh ngọt', 'banh-ngot', 'Bánh ngọt và bánh nướng dùng kèm thức uống', TRUE)
+    ('CAT_0003', 'Nước ép', 'juice', 'Nước ép trái cây tươi', TRUE),
+    ('CAT_0004', 'Bánh ngọt', 'banh-ngot', 'Bánh ngọt và bánh nướng dùng kèm thức uống', TRUE)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     slug = EXCLUDED.slug,
@@ -83,6 +49,17 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO products
     (id, name, price, description, image_url, status, category_id, rating, weekly_sales_count, sold_count, created_at)
 VALUES
+    ('PROD_0001', 'Latte Kem Sữa Tây Ban Nha', 56000, 'Espresso đậm vị, sữa đặc và lớp kem sữa béo mịn', '/images/latte-kem-sua.png', TRUE, 'CAT_0001', 4.9, 128, 0, CURRENT_TIMESTAMP),
+    ('PROD_0002', 'Cold Brew Đường Nâu', 58000, 'Ủ lạnh 18 giờ, ngọt dịu đường nâu và hậu vị caramel', '/images/cold-brew.png', TRUE, 'CAT_0001', 4.8, 112, 0, CURRENT_TIMESTAMP),
+    ('PROD_0003', 'Mocha Caramel Nướng', 62000, 'Cacao đậm, caramel nướng thơm và espresso rang vừa', '/images/mocha-caramel.png', TRUE, 'CAT_0001', 4.7, 96, 0, CURRENT_TIMESTAMP),
+    ('PROD_0004', 'Trà Sữa Trân Châu Đường Đen', 45000, 'Hồng trà đậm, sữa tươi và trân châu đường đen dẻo', '/images/tra-sua-tran-chau.png', TRUE, 'CAT_0002', 4.9, 184, 0, CURRENT_TIMESTAMP),
+    ('PROD_0005', 'Matcha Latte Kem Muối', 49000, 'Matcha Uji thanh mát, sữa tươi và kem muối mằn mặn', '/images/tra-sua-matcha.png', TRUE, 'CAT_0002', 4.6, 103, 0, CURRENT_TIMESTAMP),
+    ('PROD_0006', 'Trà Sữa Khoai Môn', 47000, 'Khoai môn nghiền bùi béo cùng lớp kem phô mai', '/images/tra-sua-khoai-mon.png', FALSE, 'CAT_0002', 4.5, 72, 0, CURRENT_TIMESTAMP),
+    ('PROD_0007', 'Thanh Long Xoài Lấp Lánh', 56000, 'Thanh long ép lạnh, xoài chín và nước khoáng có ga', '/images/thanh-long-xoai.png', TRUE, 'CAT_0003', 4.9, 156, 0, CURRENT_TIMESTAMP),
+    ('PROD_0008', 'Bưởi Hồng Ép Lạnh', 52000, 'Bưởi hồng, mật ong hoa tự nhiên và hạt chia', '/images/buoi-hong.png', TRUE, 'CAT_0003', 4.7, 91, 0, CURRENT_TIMESTAMP),
+    ('PROD_0009', 'Dưa Hấu Chanh Bạc Hà', 50000, 'Dưa hấu tươi, chanh xanh và bạc hà nghiền mát lạnh', '/images/dua-hau.png', TRUE, 'CAT_0003', 4.9, 142, 0, CURRENT_TIMESTAMP),
+    ('PROD_0010', 'Chanh Dây Gừng Nghệ', 48000, 'Chanh dây, gừng tươi, chanh vàng và nghệ nguyên chất', '/images/chanh-day.png', TRUE, 'CAT_0003', 4.8, 87, 0, CURRENT_TIMESTAMP),
+    ('PROD_0011', 'Nước Ép Xanh Thanh Lọc', 54000, 'Táo xanh, dưa leo, cải bó xôi, cần tây và táo xoắn', '/images/xanh-thanh-loc.png', TRUE, 'CAT_0003', 4.6, 65, 0, CURRENT_TIMESTAMP),
     ('PROD_0012', 'Espresso Sữa Đá', 42000, 'Espresso rang vừa pha cùng sữa đặc, đậm đà và cân bằng vị ngọt', '/images/latte-kem-sua.png', TRUE, 'CAT_0001', 4.8, 0, 0, CURRENT_TIMESTAMP),
     ('PROD_0013', 'Bạc Xỉu Cốt Dừa', 49000, 'Cà phê nhẹ hòa quyện sữa tươi và cốt dừa thơm béo', '/images/tra-sua-khoai-mon.png', TRUE, 'CAT_0001', 4.8, 0, 0, CURRENT_TIMESTAMP),
     ('PROD_0014', 'Americano Cam', 52000, 'Americano mát lạnh với nước cam tươi và hương vỏ cam dịu nhẹ', '/images/chanh-day.png', TRUE, 'CAT_0001', 4.7, 0, 0, CURRENT_TIMESTAMP),
