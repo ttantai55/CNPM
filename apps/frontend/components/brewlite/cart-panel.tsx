@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { ShoppingBag, Trash2 } from 'lucide-react'
+import { Pencil, ShoppingBag, Trash2 } from 'lucide-react'
 import { formatPrice, getProduct, getTopping, getUnitPrice, toppingStore, type CartItem } from '@/lib/menu'
 import { getDiscountAmount, getEligiblePromotions, type Promotion } from '@/lib/promotions'
 import { cn } from '@/lib/utils'
@@ -10,6 +10,7 @@ import { QuantityStepper } from './customize-dialog'
 type CartPanelProps = {
   items: CartItem[]
   onQuantityChange: (key: string, quantity: number) => void
+  onEdit: (item: CartItem) => void
   onRemove: (key: string) => void
   onCheckout: () => void
   promotions: Promotion[]
@@ -22,6 +23,7 @@ type CartPanelProps = {
 export function CartPanel({
   items,
   onQuantityChange,
+  onEdit,
   onRemove,
   onCheckout,
   promotions,
@@ -94,6 +96,14 @@ export function CartPanel({
                       </p>
                     )}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => onEdit(item)}
+                    aria-label={`Chỉnh sửa ${product.name}`}
+                    className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  >
+                    <Pencil className="size-4" aria-hidden="true" />
+                  </button>
                   <button
                     type="button"
                     onClick={() => onRemove(item.key)}

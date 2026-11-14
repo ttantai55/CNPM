@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShoppingBag } from 'lucide-react'
 import {
@@ -11,6 +11,7 @@ import {
   menuProductStore,
   normalizeMenuProducts,
   toppingStore,
+  type CartItem,
   type Product,
 } from '@/lib/menu'
 import {
@@ -29,15 +30,18 @@ import { CustomizeDialog } from './customize-dialog'
 import { CheckoutDialog } from './checkout-dialog'
 import { Modal } from './modal'
 import { authStore } from '@/lib/session'
-import { cartStore, dispatchCart } from '@/lib/cart'
+import { cartContainsItems, cartStore, dispatchCart, removeCartItems, restoreCartItems } from '@/lib/cart'
 import { useHydrated } from '@/lib/persistent-store'
 import { MockPaymentModal } from '@/components/payment/mock-payment-modal'
 import type { CustomerProfile } from '@/lib/customer-profile'
 import {
   confirmOrderPayment,
+  cancelOrderPayment,
   migrateOrderStatuses,
   orderStore,
+  orderToCartItems,
   placeOrder,
+  resumeOrderPayment,
   type Order,
   type PaymentMethod,
 } from '@/lib/orders'
@@ -69,6 +73,10 @@ export function BrewLiteApp() {
   const [selectedPromotionId, setSelectedPromotionId] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
   const [paymentOrder, setPaymentOrder] = useState<Order | null>(null)
+  const [editingCartItem, setEditingCartItem] = useState<CartItem | null>(null)
+  const paymentCartItems = useRef<CartItem[]>([])
+  const preserveCartOnPayment = useRef(false)
+  const paymentItemsRestored = useRef(false)
   const [toast, setToast] = useState<string | null>(null)
   const [profile, setProfile] = useState<CustomerProfile | null>(null)
   const user: User | null = session && profile
@@ -262,6 +270,15 @@ export function BrewLiteApp() {
   const cartPanelProps = {
     items: cart,
     onQuantityChange: (key: string, quantity: number) => dispatchCart({ type: 'setQuantity', key, quantity }),
+    onEdit: (item: CartItem) => {
+      const product = products.find((entry) => entry.id === item.productId)
+      if (!product) {
+        showToast('Không tìm thấy sản phẩm để chỉnh sửa.')
+        return
+      }
+      setEditingCartItem(item)
+      setCustomizing(product)
+    },
     onRemove: (key: string) => dispatchCart({ type: 'remove', key }),
     onCheckout: openCheckout,
     promotions: availablePromotions,
@@ -289,6 +306,18 @@ export function BrewLiteApp() {
         latestOrderCode={activeOrders[0]?.code}
         activeOrderCount={activeOrders.length}
         customerOrders={customerOrders}
+        onResumePayment={(order) => {
+          void resumeOrderPayment(order, session?.email, session?.id)
+            .then((resumed) => {
+              const items = orderToCartItems(order)
+              paymentCartItems.current = items
+              preserveCartOnPayment.current = true
+              paymentItemsRestored.current =
+                order.status === 'CANCELLED' && cartContainsItems(items)
+              setPaymentOrder(resumed)
+            })
+            .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Không thể tiếp tục thanh toán.'))
+        }}
         cartCount={cart.reduce((count, item) => count + item.quantity, 0)}
         onOpenCart={() => setCartOpen(true)}
       />
@@ -392,10 +421,19 @@ export function BrewLiteApp() {
 
       <CustomizeDialog
         product={customizing}
-        onClose={() => setCustomizing(null)}
-        onConfirm={(item) => {
-          dispatchCart({ type: 'add', item })
+        item={editingCartItem}
+        onClose={() => {
           setCustomizing(null)
+          setEditingCartItem(null)
+        }}
+        onConfirm={(item) => {
+          if (editingCartItem) {
+            dispatchCart({ type: 'edit', key: editingCartItem.key, item })
+          } else {
+            dispatchCart({ type: 'add', item })
+          }
+          setCustomizing(null)
+          setEditingCartItem(null)
           showToast('Đã thêm vào giỏ hàng')
         }}
       />
@@ -415,6 +453,9 @@ export function BrewLiteApp() {
         setCheckoutOpen(false)
         try {
         const order = await placeOrder(orderData)
+        paymentCartItems.current = cart
+        preserveCartOnPayment.current = false
+        paymentItemsRestored.current = false
         if (selectedPromotion) {
           void adminApi.promotions()
             .then((remotePromotions) => promotionStore.set(remotePromotions))
@@ -435,9 +476,38 @@ export function BrewLiteApp() {
           router.push(`/orders/${encodeURIComponent(paymentOrder.code)}`)
           setPaymentOrder(null)
         }}
+        onFailure={async (order) => {
+          const items = paymentCartItems.current.length > 0
+            ? paymentCartItems.current
+            : orderToCartItems(order)
+          if (preserveCartOnPayment.current) {
+            if (!paymentItemsRestored.current) restoreCartItems(items)
+          } else {
+            dispatchCart({ type: 'replace', items })
+          }
+          paymentItemsRestored.current = true
+          paymentCartItems.current = items
+          const cancelled = await cancelOrderPayment(order)
+          setPaymentOrder(cancelled)
+          showToast('Thanh toán thất bại. Món đã được giữ lại trong giỏ hàng.')
+          return cancelled
+        }}
+        onRetry={async (order) => {
+          const items = paymentCartItems.current.length > 0
+            ? paymentCartItems.current
+            : orderToCartItems(order)
+          const resumed = await resumeOrderPayment(order, session?.email, session?.id)
+          paymentCartItems.current = items
+          setPaymentOrder(resumed)
+          return resumed
+        }}
         onSuccess={async (method: PaymentMethod) => {
           try {
             const order = await confirmOrderPayment(paymentOrder.code, method, paymentOrder.total)
+            if (paymentItemsRestored.current) removeCartItems(paymentCartItems.current)
+            paymentCartItems.current = []
+            preserveCartOnPayment.current = false
+            paymentItemsRestored.current = false
             setPaymentOrder(null)
             if (order) router.push(`/orders/${encodeURIComponent(order.code)}`)
           } catch (error) {

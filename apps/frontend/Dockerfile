@@ -2,8 +2,13 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN corepack enable && pnpm install --frozen-lockfile
+# Dùng .npmrc* để không báo lỗi nếu dự án không có file .npmrc
+COPY .npmrc* package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Giới hạn luồng tải và lưu cache để tránh lỗi timeout khi tải gói nặng
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    corepack enable && \
+    pnpm install --frozen-lockfile --fetch-timeout=600000 --network-concurrency=4
 
 COPY . .
 
@@ -23,7 +28,5 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 
-RUN corepack enable
-
 EXPOSE 3000
-CMD ["pnpm", "start"]
+CMD ["npm", "start"]

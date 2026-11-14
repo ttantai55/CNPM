@@ -5,18 +5,17 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Modal } from './modal'
 import { FormField, inputClass } from './form-field'
+import { isValidEmail, isValidPersonName } from '@/lib/validation'
 import type { User } from './app-header'
 
 type Mode = 'login' | 'register'
 type Values = { name: string; email: string; password: string; confirm: string }
 type Errors = Partial<Record<keyof Values, string>>
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
 function validate(values: Values, mode: Mode): Errors {
   const errors: Errors = {}
-  if (mode === 'register' && values.name.trim().length < 2) errors.name = 'Vui lòng nhập họ tên.'
-  if (!EMAIL_PATTERN.test(values.email.trim())) errors.email = 'Email không hợp lệ.'
+  if (mode === 'register' && !isValidPersonName(values.name)) errors.name = 'Họ tên phải có ít nhất 2 chữ cái hợp lệ.'
+  if (!isValidEmail(values.email)) errors.email = 'Vui lòng nhập địa chỉ email hợp lệ.'
   if (values.password.length < 8) errors.password = 'Mật khẩu tối thiểu 8 ký tự.'
   if (mode === 'register' && values.confirm !== values.password)
     errors.confirm = 'Mật khẩu xác nhận không khớp.'

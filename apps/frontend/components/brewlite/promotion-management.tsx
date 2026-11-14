@@ -7,6 +7,7 @@ import { promotionStore, type Promotion } from '@/lib/promotions'
 import { publishBatchNotification } from '@/lib/notifications'
 import { Modal } from './modal'
 import { adminApi } from '@/lib/api'
+import { FieldError, fieldErrorClass } from './form-field'
 
 function emptyPromotion(): Promotion {
   const today = new Date()
@@ -35,6 +36,7 @@ export function PromotionManagement() {
   const [editing, setEditing] = useState<Promotion | null>(null)
   const [form, setForm] = useState<Promotion>(emptyPromotion)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<'voucherCode' | 'description' | 'discountValue' | 'startDate' | 'endDate', string>>>({})
   const [notifyCustomers, setNotifyCustomers] = useState(false)
   const [deleting, setDeleting] = useState<Promotion | null>(null)
   useEffect(() => {
@@ -52,6 +54,7 @@ export function PromotionManagement() {
     setEditing(null)
     setForm(emptyPromotion())
     setError('')
+    setFieldErrors({})
     setIsFormOpen(true)
     setNotifyCustomers(false)
   }
@@ -60,6 +63,7 @@ export function PromotionManagement() {
     setEditing(promotion)
     setForm({ ...promotion })
     setError('')
+    setFieldErrors({})
     setIsFormOpen(true)
     setNotifyCustomers(false)
   }
@@ -71,28 +75,24 @@ export function PromotionManagement() {
       (promotion) =>
         promotion.id !== editing?.id && promotion.voucherCode.toUpperCase() === voucherCode,
     )
-    if (!voucherCode || !form.description.trim()) {
-      setError('Vui lòng nhập mã và mô tả khuyến mãi.')
-      return
+    const errors = {
+      voucherCode: !voucherCode ? 'Vui lòng nhập mã khuyến mãi.' : duplicate ? 'Mã khuyến mãi đã tồn tại.' : '',
+      description: form.description.trim() ? '' : 'Vui lòng nhập mô tả khuyến mãi.',
+      discountValue: Number.isFinite(form.discountValue) && form.discountValue > 0 &&
+        (form.discountType !== 'PERCENTAGE' || form.discountValue <= 100)
+        ? ''
+        : form.discountType === 'PERCENTAGE'
+          ? 'Mức giảm phải lớn hơn 0 và không vượt quá 100%.'
+          : 'Số tiền giảm phải lớn hơn 0.',
+      startDate: form.startDate ? '' : 'Vui lòng chọn ngày bắt đầu.',
+      endDate: !form.endDate
+        ? 'Vui lòng chọn ngày kết thúc.'
+        : form.startDate && form.startDate > form.endDate
+          ? 'Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.'
+          : '',
     }
-    if (duplicate) {
-      setError('Mã khuyến mãi đã tồn tại.')
-      return
-    }
-    if (
-      !form.startDate ||
-      !form.endDate ||
-      form.startDate > form.endDate ||
-      !Number.isFinite(form.discountValue) ||
-      form.discountValue <= 0 ||
-      (form.discountType === 'PERCENTAGE' && form.discountValue > 100) ||
-      !Number.isInteger(form.usageLimit) ||
-      form.usageLimit < 1 ||
-      !Number.isInteger(form.usedCount) ||
-      form.usedCount < 0 ||
-      form.usedCount > form.usageLimit
-    ) {
-      setError('Vui lòng kiểm tra mức giảm, thời hạn và giới hạn lượt dùng.')
+    setFieldErrors(errors)
+    if (Object.values(errors).some(Boolean)) {
       return
     }
     const value = { ...form, voucherCode, description: form.description.trim() }
@@ -250,11 +250,12 @@ export function PromotionManagement() {
         title={editing ? 'Sửa khuyến mãi' : 'Thêm khuyến mãi mới'}
         description="Nhập đầy đủ thông tin chương trình ưu đãi"
       >
-        <form onSubmit={save} className="flex min-h-0 flex-1 flex-col">
+        <form onSubmit={save} noValidate className="flex min-h-0 flex-1 flex-col">
           <div className="grid gap-3 overflow-y-auto px-5 py-4 sm:grid-cols-2">
             {error && <p role="alert" className="rounded-lg bg-red-50 p-2 text-xs text-red-700 sm:col-span-2">{error}</p>}
             <label className="text-xs font-medium text-[#536257]">Mã khuyến mãi
-              <input required value={form.voucherCode} onChange={(event) => setForm({ ...form, voucherCode: event.target.value.toUpperCase() })} className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-[#548565]" />
+              <input required value={form.voucherCode} onChange={(event) => setForm({ ...form, voucherCode: event.target.value.toUpperCase() })} aria-invalid={Boolean(fieldErrors.voucherCode)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-[#548565]', fieldErrors.voucherCode)} />
+              <FieldError error={fieldErrors.voucherCode} />
             </label>
             <label className="text-xs font-medium text-[#536257]">Loại giảm giá
               <select value={form.discountType} onChange={(event) => setForm({ ...form, discountType: event.target.value as Promotion['discountType'] })} className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2">
@@ -263,22 +264,20 @@ export function PromotionManagement() {
               </select>
             </label>
             <label className="text-xs font-medium text-[#536257]">Mô tả
-              <textarea required rows={2} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-[#548565]" />
+              <textarea required rows={2} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} aria-invalid={Boolean(fieldErrors.description)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-[#548565]', fieldErrors.description)} />
+              <FieldError error={fieldErrors.description} />
             </label>
             <label className="text-xs font-medium text-[#536257]">Giá trị giảm
-              <input required type="number" min="1" max={form.discountType === 'PERCENTAGE' ? 100 : undefined} value={form.discountValue} onChange={(event) => setForm({ ...form, discountValue: Number(event.target.value) })} className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2" />
+              <input required type="number" min="0.01" max={form.discountType === 'PERCENTAGE' ? 100 : undefined} value={form.discountValue} onChange={(event) => setForm({ ...form, discountValue: Number(event.target.value) })} aria-invalid={Boolean(fieldErrors.discountValue)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2', fieldErrors.discountValue)} />
+              <FieldError error={fieldErrors.discountValue} />
             </label>
             <label className="text-xs font-medium text-[#536257]">Ngày bắt đầu
-              <input required type="date" value={form.startDate} onChange={(event) => setForm({ ...form, startDate: event.target.value })} className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2" />
+              <input required type="date" value={form.startDate} onChange={(event) => setForm({ ...form, startDate: event.target.value })} aria-invalid={Boolean(fieldErrors.startDate)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2', fieldErrors.startDate)} />
+              <FieldError error={fieldErrors.startDate} />
             </label>
             <label className="text-xs font-medium text-[#536257]">Ngày kết thúc
-              <input required type="date" value={form.endDate} onChange={(event) => setForm({ ...form, endDate: event.target.value })} className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2" />
-            </label>
-            <label className="text-xs font-medium text-[#536257]">Giới hạn lượt dùng
-              <input required type="number" min="1" value={form.usageLimit} onChange={(event) => setForm({ ...form, usageLimit: Number(event.target.value) })} className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2" />
-            </label>
-            <label className="text-xs font-medium text-[#536257]">Số lượt đã dùng
-              <input required type="number" min="0" value={form.usedCount} onChange={(event) => setForm({ ...form, usedCount: Number(event.target.value) })} className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2" />
+              <input required type="date" value={form.endDate} onChange={(event) => setForm({ ...form, endDate: event.target.value })} aria-invalid={Boolean(fieldErrors.endDate)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2', fieldErrors.endDate)} />
+              <FieldError error={fieldErrors.endDate} />
             </label>
             <label className="flex items-center gap-2 text-xs font-medium text-[#536257] sm:col-span-2">
               <input type="checkbox" checked={form.isActive} onChange={(event) => setForm({ ...form, isActive: event.target.checked })} />

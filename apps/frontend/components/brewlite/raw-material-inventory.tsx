@@ -21,6 +21,8 @@ import {
 } from '@/lib/raw-material-inventory'
 import { authStore } from '@/lib/session'
 import { adminApi } from '@/lib/api'
+import { isValidPersonName } from '@/lib/validation'
+import { FieldError, fieldErrorClass } from './form-field'
 
 type InventoryTab = 'ingredients' | 'transactions'
 type IngredientMode = 'EXISTING' | 'NEW'
@@ -38,6 +40,7 @@ type TransactionForm = {
   note: string
   staffName: string
 }
+type TransactionFieldErrors = Partial<Record<'name' | 'ingredientId' | 'minAlertThreshold' | 'quantity' | 'price' | 'note' | 'staffName', string>>
 
 const EMPTY_FORM: TransactionForm = {
   mode: 'EXISTING',
@@ -82,6 +85,7 @@ export function RawMaterialInventory() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<TransactionForm>(EMPTY_FORM)
   const [formError, setFormError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<TransactionFieldErrors>({})
 
   useEffect(() => {
     Promise.all([adminApi.inventory(), adminApi.inventoryTransactions()])
@@ -142,6 +146,7 @@ export function RawMaterialInventory() {
   function openNewIngredientDialog() {
     setForm({ ...EMPTY_FORM, mode: 'NEW', type: 'IMPORT', staffName: session?.name ?? '' })
     setFormError('')
+    setFieldErrors({})
     setDialogOpen(true)
   }
 
@@ -153,6 +158,7 @@ export function RawMaterialInventory() {
       staffName: session?.name ?? '',
     })
     setFormError('')
+    setFieldErrors({})
     setDialogOpen(true)
   }
 
@@ -174,20 +180,20 @@ export function RawMaterialInventory() {
     const staffName = form.staffName.trim()
     const currentIngredient = ingredients.find((item) => item.id === form.ingredientId)
 
-    if (
-      (form.mode === 'NEW' && (!name || form.type !== 'IMPORT')) ||
-      (form.mode === 'EXISTING' && !currentIngredient) ||
-      !Number.isInteger(quantity) ||
-      quantity <= 0 ||
-      !form.price.trim() ||
-      !Number.isSafeInteger(price) ||
-      price < 0 ||
-      !note ||
-      !staffName ||
-      (form.mode === 'NEW' &&
-        (!Number.isFinite(minAlertThreshold) || minAlertThreshold < 0))
-    ) {
-      setFormError('Vui lòng nhập đầy đủ thông tin hợp lệ. Số lượng phải là số nguyên lớn hơn 0.')
+    const errors: TransactionFieldErrors = {
+      name: form.mode === 'NEW' && !name ? 'Vui lòng nhập tên nguyên liệu.' : undefined,
+      ingredientId: form.mode === 'EXISTING' && !currentIngredient ? 'Vui lòng chọn nguyên liệu.' : undefined,
+      minAlertThreshold: form.mode === 'NEW' && (!Number.isFinite(minAlertThreshold) || minAlertThreshold < 0)
+        ? 'Ngưỡng cảnh báo phải là số không âm.'
+        : undefined,
+      quantity: Number.isInteger(quantity) && quantity > 0 ? undefined : 'Số lượng phải là số nguyên lớn hơn 0.',
+      price: Number.isSafeInteger(price) && price > 0 ? undefined : 'Giá trị giao dịch phải là số nguyên lớn hơn 0.',
+      note: note ? undefined : 'Vui lòng nhập lý do hoặc ghi chú.',
+      staffName: isValidPersonName(staffName) ? undefined : 'Tên nhân sự phải có ít nhất 2 chữ cái hợp lệ.',
+    }
+    setFieldErrors(errors)
+    if (Object.values(errors).some(Boolean) || (form.mode === 'NEW' && form.type !== 'IMPORT')) {
+      if (form.mode === 'NEW' && form.type !== 'IMPORT') setFormError('Nguyên liệu mới chỉ có thể bắt đầu bằng giao dịch nhập kho.')
       return
     }
 
@@ -633,8 +639,10 @@ export function RawMaterialInventory() {
                       value={form.name}
                       onChange={(event) => setForm({ ...form, name: event.target.value })}
                       placeholder="Ví dụ: Cà phê hạt"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]"
+                      aria-invalid={Boolean(fieldErrors.name)}
+                      className={fieldErrorClass('w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]', fieldErrors.name)}
                     />
+                    <FieldError error={fieldErrors.name} />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -670,8 +678,10 @@ export function RawMaterialInventory() {
                         onChange={(event) =>
                           setForm({ ...form, minAlertThreshold: event.target.value })
                         }
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]"
+                        aria-invalid={Boolean(fieldErrors.minAlertThreshold)}
+                        className={fieldErrorClass('w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]', fieldErrors.minAlertThreshold)}
                       />
+                      <FieldError error={fieldErrors.minAlertThreshold} />
                     </div>
                   </div>
                   <p className="rounded-lg bg-[#f7f8f6] px-3 py-2 text-[10px] text-[#68766d]">
@@ -688,7 +698,8 @@ export function RawMaterialInventory() {
                     required
                     value={form.ingredientId}
                     onChange={(event) => setForm({ ...form, ingredientId: event.target.value })}
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]"
+                    aria-invalid={Boolean(fieldErrors.ingredientId)}
+                    className={fieldErrorClass('w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]', fieldErrors.ingredientId)}
                   >
                     {ingredients.map((ingredient) => (
                       <option key={ingredient.id} value={ingredient.id}>
@@ -696,6 +707,7 @@ export function RawMaterialInventory() {
                       </option>
                     ))}
                   </select>
+                  <FieldError error={fieldErrors.ingredientId} />
                 </div>
               )}
 
@@ -735,8 +747,10 @@ export function RawMaterialInventory() {
                     required
                     value={form.quantity}
                     onChange={(event) => setForm({ ...form, quantity: event.target.value })}
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]"
+                    aria-invalid={Boolean(fieldErrors.quantity)}
+                    className={fieldErrorClass('w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]', fieldErrors.quantity)}
                   />
+                  <FieldError error={fieldErrors.quantity} />
                 </div>
               </div>
               <div>
@@ -746,13 +760,15 @@ export function RawMaterialInventory() {
                 <input
                   id="transaction-price"
                   type="number"
-                  min="0"
+                  min="1"
                   step="1"
                   required
                   value={form.price}
                   onChange={(event) => setForm({ ...form, price: event.target.value })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]"
+                  aria-invalid={Boolean(fieldErrors.price)}
+                  className={fieldErrorClass('w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]', fieldErrors.price)}
                 />
+                <FieldError error={fieldErrors.price} />
               </div>
               <div>
                 <label htmlFor="transaction-note" className="mb-1.5 block text-xs font-semibold text-[#46574c]">
@@ -765,8 +781,10 @@ export function RawMaterialInventory() {
                   value={form.note}
                   onChange={(event) => setForm({ ...form, note: event.target.value })}
                   placeholder="Nhập lý do nhập, xuất hoặc điều chỉnh"
-                  className="w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]"
+                  aria-invalid={Boolean(fieldErrors.note)}
+                  className={fieldErrorClass('w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]', fieldErrors.note)}
                 />
+                <FieldError error={fieldErrors.note} />
               </div>
               <div>
                 <label htmlFor="transaction-staff" className="mb-1.5 block text-xs font-semibold text-[#46574c]">
@@ -777,8 +795,10 @@ export function RawMaterialInventory() {
                   required
                   value={form.staffName}
                   onChange={(event) => setForm({ ...form, staffName: event.target.value })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]"
+                  aria-invalid={Boolean(fieldErrors.staffName)}
+                  className={fieldErrorClass('w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none focus:border-[#548565]', fieldErrors.staffName)}
                 />
+                <FieldError error={fieldErrors.staffName} />
               </div>
               <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
                 <button

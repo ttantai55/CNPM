@@ -22,19 +22,20 @@ import { Modal } from './modal'
 
 type CustomizeDialogProps = {
   product: Product | null
+  item?: CartItem | null
   onClose: () => void
   onConfirm: (item: Omit<CartItem, 'key'>) => void
 }
 
-export function CustomizeDialog({ product, onClose, onConfirm }: CustomizeDialogProps) {
+export function CustomizeDialog({ product, item = null, onClose, onConfirm }: CustomizeDialogProps) {
   return (
     <Modal
       open={product !== null}
       onClose={onClose}
-      title="Tùy chỉnh thức uống"
+      title={item ? 'Chỉnh sửa món trong giỏ' : 'Tùy chỉnh thức uống'}
       description="Chọn size, độ ngọt, lượng đá và topping"
     >
-      {product && <CustomizeForm key={product.id} product={product} onConfirm={onConfirm} />}
+      {product && <CustomizeForm key={`${product.id}-${item?.key ?? 'new'}`} product={product} item={item} onConfirm={onConfirm} />}
     </Modal>
   )
 }
@@ -69,17 +70,19 @@ function OptionChip({
 
 function CustomizeForm({
   product,
+  item,
   onConfirm,
 }: {
   product: Product
+  item: CartItem | null
   onConfirm: (item: Omit<CartItem, 'key'>) => void
 }) {
-  const [size, setSize] = useState<SizeOption>('M')
-  const [sugar, setSugar] = useState<SugarOption>('50%')
-  const [ice, setIce] = useState<IceOption>('Đá vừa')
-  const [toppingIds, setToppingIds] = useState<string[]>([])
-  const [note, setNote] = useState('')
-  const [quantity, setQuantity] = useState(1)
+  const [size, setSize] = useState<SizeOption>(item?.size ?? 'M')
+  const [sugar, setSugar] = useState<SugarOption>(item?.sugar ?? '50%')
+  const [ice, setIce] = useState<IceOption>(item?.ice ?? 'Đá vừa')
+  const [toppingIds, setToppingIds] = useState<string[]>(item?.toppingIds ?? [])
+  const [note, setNote] = useState(item?.note ?? '')
+  const [quantity, setQuantity] = useState(item?.quantity ?? 1)
   const toppings = toppingStore.useStore()
 
   const unitPrice = getUnitPrice({ productId: product.id, size, toppingIds })
@@ -208,7 +211,7 @@ function CustomizeForm({
           type="submit"
           className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          Thêm vào giỏ · {formatPrice(total)}
+          {item ? 'Cập nhật món' : 'Thêm vào giỏ'} · {formatPrice(total)}
         </button>
       </div>
     </form>
