@@ -7,11 +7,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.doan.domain.User;
+import vn.doan.dto.request.ChangePasswordRequest;
 import vn.doan.dto.request.UpdateRoleRequest;
 import vn.doan.dto.request.UserCreateRequest;
 import vn.doan.dto.response.UpdateRoleResponse;
 import vn.doan.dto.response.UserProfileResponse;
 import vn.doan.dto.response.UserResponse;
+import vn.doan.exception.BusinessValidationException;
 import vn.doan.exception.ResourceNotFoundException;
 import vn.doan.repository.UserRepository;
 
@@ -22,6 +24,21 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Transactional
+    public void changePassword(String userId, ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getHashPassword())) {
+            throw new BusinessValidationException("Mật khẩu hiện tại không chính xác.");
+        }
+        if (passwordEncoder.matches(request.getNewPassword(), user.getHashPassword())) {
+            throw new BusinessValidationException("Mật khẩu mới phải khác mật khẩu hiện tại.");
+        }
+
+        user.setHashPassword(passwordEncoder.encode(request.getNewPassword()));
+    }
 
     public UserProfileResponse getUserProfile(String userId) {
         User user = userRepository.findById(userId)

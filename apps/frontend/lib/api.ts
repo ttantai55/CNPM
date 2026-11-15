@@ -98,7 +98,7 @@ export type ApiPromotion = {
 export type ApiIngredient = {
   id: string
   name: string
-  unit: 'PACK' | 'CAN' | 'BOX' | 'PIECE'
+  unit: 'PACK' | 'CAN' | 'BOX' | 'PIECE' | 'KG' | 'BOTTLE'
   currentStock: number
   minAlertThreshold: number
   isBelowThreshold: boolean
@@ -119,6 +119,8 @@ export const authApi = {
     api<AuthResult>('/api/auth/login', json('POST', { loginId, password })),
   register: (body: { username: string; password: string; email: string; phone: string; fullName: string }) =>
     api<AuthResult>('/api/auth/register', json('POST', body)),
+  changePassword: (id: string, body: { currentPassword: string; newPassword: string }) =>
+    api<void>(`/api/users/${encodeURIComponent(id)}/change-password`, json('POST', body)),
   profile: (id: string) => api<ApiUser>(`/api/users/${encodeURIComponent(id)}`),
   updateProfile: (id: string, body: Partial<ApiUser>) =>
     api<ApiUser>(`/api/users/${encodeURIComponent(id)}`, json('PATCH', body)),

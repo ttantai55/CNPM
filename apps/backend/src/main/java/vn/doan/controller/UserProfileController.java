@@ -1,14 +1,18 @@
 package vn.doan.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import vn.doan.domain.Customer;
 import vn.doan.domain.User;
+import vn.doan.dto.request.ChangePasswordRequest;
 import vn.doan.dto.request.UserUpdateRequest;
 import vn.doan.dto.response.UserResponse;
 import vn.doan.exception.ResourceNotFoundException;
 import vn.doan.repository.UserRepository;
+import vn.doan.service.UserService;
 
 @RestController
 @RequestMapping("/api/users")
@@ -16,6 +20,7 @@ import vn.doan.repository.UserRepository;
 @CrossOrigin(origins = "*")
 public class UserProfileController {
     private final UserRepository users;
+    private final UserService userService;
 
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
@@ -48,6 +53,14 @@ public class UserProfileController {
             customer.setAddress(request.getAddress());
         }
         return response(users.save(user));
+    }
+
+    @PostMapping("/{id}/change-password")
+    public ResponseEntity<Void> changePassword(
+            @PathVariable String id,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(id, request);
+        return ResponseEntity.noContent().build();
     }
 
     private User findUser(String id) {

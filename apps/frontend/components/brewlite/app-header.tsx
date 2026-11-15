@@ -3,15 +3,28 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Bell, ChevronDown, Clock3, Coffee, History, LogOut, Search, ShoppingBag, UserRound, X } from 'lucide-react'
+import {
+  Bell,
+  ChevronDown,
+  Clock3,
+  Coffee,
+  History,
+  KeyRound,
+  LogOut,
+  Search,
+  ShoppingBag,
+  UserRound,
+  X,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatPrice } from '@/lib/menu'
 import { fromApiOrder, orderStore, STATUS_LABEL, type Order } from '@/lib/orders'
 import { notificationStore } from '@/lib/notifications'
 import { ordersApi } from '@/lib/api'
 import { Modal } from './modal'
+import { ChangePasswordDialog } from './change-password-dialog'
 
-export type User = { name: string; displayName?: string; email: string; avatarUrl?: string }
+export type User = { id?: string; name: string; displayName?: string; email: string; avatarUrl?: string }
 
 type AppHeaderProps = {
   query: string
@@ -48,6 +61,7 @@ export function AppHeader({
   const unread = notifications.filter((notification) => !notification.isRead).length
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const [orderHistoryOpen, setOrderHistoryOpen] = useState(false)
   const [detailOrder, setDetailOrder] = useState<Order | null>(null)
   const [detailError, setDetailError] = useState('')
@@ -261,6 +275,19 @@ export function AppHeader({
                   <UserRound className="size-4" aria-hidden="true" />
                   Hồ sơ của tôi
                 </button>
+                {user.id && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAccountMenuOpen(false)
+                      setChangePasswordOpen(true)
+                    }}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-foreground hover:bg-muted"
+                  >
+                    <KeyRound className="size-4" aria-hidden="true" />
+                    Đổi mật khẩu
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {
@@ -290,6 +317,13 @@ export function AppHeader({
       </div>
       <div className="px-4 pb-3 md:hidden">{searchField('search-mobile')}</div>
     </header>
+    {user?.id && (
+      <ChangePasswordDialog
+        open={changePasswordOpen}
+        onClose={() => setChangePasswordOpen(false)}
+        userId={user.id}
+      />
+    )}
     <Modal
       open={logoutConfirmOpen}
       onClose={() => setLogoutConfirmOpen(false)}

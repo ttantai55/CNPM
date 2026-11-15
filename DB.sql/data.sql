@@ -80,7 +80,8 @@ VALUES
     ('PROD_0029', 'Tiramisu Cà Phê', 52000, 'Bánh tiramisu mềm mượt với mascarpone và cà phê espresso', 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80', TRUE, 'CAT_0004', 4.9, 0),
     ('PROD_0030', 'Cheesecake Chanh Dây', 49000, 'Cheesecake béo mịn, điểm vị chua dịu của chanh dây', 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80', TRUE, 'CAT_0004', 4.8, 0),
     ('PROD_0031', 'Danish Táo Quế', 39000, 'Bánh Danish giòn thơm với táo nướng và quế', 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80', TRUE, 'CAT_0004', 4.7, 0),
-    ('PROD_0032', 'Bánh Chuối Óc Chó', 35000, 'Bánh chuối mềm ẩm, thêm óc chó rang bùi thơm', 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=800&q=80', TRUE, 'CAT_0004', 4.8, 0),
+    -- Image credit: Orangetopic, CC BY 2.0 (https://commons.wikimedia.org/wiki/File:Banana_bread_loaf_on_a_plate.jpg)
+    ('PROD_0032', 'Bánh Chuối Óc Chó', 35000, 'Bánh chuối mềm ẩm, thêm óc chó rang bùi thơm', 'https://upload.wikimedia.org/wikipedia/commons/5/54/Banana_bread_loaf_on_a_plate.jpg', TRUE, 'CAT_0004', 4.8, 0),
     ('PROD_0033', 'Muffin Việt Quất', 33000, 'Muffin nướng mềm với việt quất chua ngọt trong từng miếng', 'https://images.unsplash.com/photo-1486427944299-d1955d23e34d?auto=format&fit=crop&w=800&q=80', TRUE, 'CAT_0004', 4.8, 0),
     ('PROD_0034', 'Su Kem Vanilla', 28000, 'Vỏ su nhẹ xốp, nhân kem vanilla mát lạnh', 'https://images.unsplash.com/photo-1486427944299-d1955d23e34d?auto=format&fit=crop&w=800&q=80', TRUE, 'CAT_0004', 4.7, 0),
     ('PROD_0035', 'Tart Trứng Nướng', 32000, 'Đế tart bơ giòn với nhân trứng sữa nướng vàng', 'https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=800&q=80', TRUE, 'CAT_0004', 4.8, 0),
@@ -109,10 +110,15 @@ ON CONFLICT (id) DO UPDATE SET
 
 INSERT INTO ingredients (id, name, unit, current_stock, min_alert_threshold)
 VALUES
-    ('ING_0001', 'Hạt cà phê Arabica', 'PACK', 20, 5),
-    ('ING_0002', 'Sữa tươi', 'BOX', 30, 8),
-    ('ING_0003', 'Trà đen', 'PACK', 18, 5),
-    ('ING_0004', 'Đường nâu', 'PACK', 15, 4)
+    ('ING_0001', 'Hạt cà phê Arabica', 'KG', 20, 5),
+    ('ING_0002', 'Trà đen', 'KG', 18, 5),
+    ('ING_0003', 'Matcha', 'KG', 10, 3),
+    ('ING_0004', 'Sữa tươi', 'BOX', 30, 8),
+    ('ING_0005', 'Sữa đặc', 'BOX', 18, 5),
+    ('ING_0006', 'Siro đường', 'BOTTLE', 15, 4),
+    ('ING_0007', 'Trân châu đen', 'KG', 12, 3),
+    ('ING_0008', 'Kem phô mai', 'BOX', 10, 3),
+    ('ING_0009', 'Siro vanilla', 'BOTTLE', 8, 2)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     unit = EXCLUDED.unit,
@@ -122,9 +128,9 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO promotions
     (id, voucher_code, description, discount_type, discount_value, start_date, end_date, usage_limit, used_count, is_active)
 VALUES
-    ('PROMO_DEMO_001', 'TAIDEPTRAI', 'Nhóm trưởng quá đẹp trai đi', 'PERCENTAGE', 50, CURRENT_DATE, CURRENT_DATE + 30, 100, 2, TRUE),
-    ('PROMO_DEMO_002', 'HUNGGAY', 'thghunghgay', 'PERCENTAGE', 10, CURRENT_DATE, CURRENT_DATE + 30, 100, 0, TRUE),
-    ('PROMO_DEMO_003', 'CONCHOBAO', '7gao', 'PERCENTAGE', 10, CURRENT_DATE, CURRENT_DATE + 30, 100, 1, TRUE)
+    ('PROMO_DEMO_001', 'BREWLITE20', 'Ưu đãi khai trương giảm 20%', 'PERCENTAGE', 20, CURRENT_DATE, CURRENT_DATE + 90, 500, 0, TRUE),
+    ('PROMO_DEMO_002', 'OPEN15K', 'Giảm trực tiếp 15.000đ cho đơn hàng', 'FIX_AMOUNT', 15000, CURRENT_DATE, CURRENT_DATE + 90, 500, 0, TRUE),
+    ('PROMO_DEMO_003', 'NEWMEMBER15', 'Thành viên mới giảm 15%', 'PERCENTAGE', 15, CURRENT_DATE, CURRENT_DATE + 90, 500, 0, TRUE)
 ON CONFLICT (id) DO UPDATE SET
     voucher_code = EXCLUDED.voucher_code,
     description = EXCLUDED.description,
