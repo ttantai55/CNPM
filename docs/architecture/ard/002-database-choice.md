@@ -1,4 +1,4 @@
-# ADR 002: Lựa chọn PostgreSQL / SQL Server làm Cơ sở dữ liệu chính và H2 cho Kiểm thử
+# ADR 002: Lựa chọn PostgreSQ làm Cơ sở dữ liệu chính và H2 cho Kiểm thử
 
 ## Trạng thái
 Đã chấp thuận (Accepted)
@@ -8,13 +8,16 @@ Hệ thống quản lý cửa hàng cà phê đòi hỏi một hệ quản trị
 
 ## Quyết định (Decision)
 Nhóm quyết định cấu hình hệ thống cơ sở dữ liệu trên nền tảng **Spring Data JPA / Hibernate** với chiến lược đa môi trường:
-* **Môi trường Phát triển & Vận hành (Runtime):** Tích hợp cả hai driver kết nối là **PostgreSQL (`org.postgresql:postgresql`)** và **Microsoft SQL Server (`com.microsoft.sqlserver:mssql-jdbc`)**, cho phép chuyển đổi linh hoạt qua cấu hình môi trường (`application.properties` / Docker) mà không cần sửa đổi mã nguồn tầng Repository.
+* **Môi trường Phát triển & Vận hành (Runtime):** Tích hợp driver kết nối là **PostgreSQL (`org.postgresql:postgresql`)** và cho phép chuyển đổi linh hoạt qua cấu hình môi trường (`application.properties` / Docker) mà không cần sửa đổi mã nguồn tầng Repository.
 * **Môi trường Kiểm thử (Test scope):** Sử dụng **H2 In-memory Database (`com.h2database:h2`)** kết hợp `spring-boot-starter-test` để khởi tạo nhanh schema tạm thời phục vụ kiểm thử.
 
 ## Hệ quả (Consequences / Trade-offs)
-* **Ưu điểm:**
-  * Đảm bảo tuyệt đối tính toàn vẹn tham chiếu (Foreign Key) và tính chất ACID cho các giao dịch tạo đơn hàng và thanh toán tại cửa hàng cà phê.
-  * Tương thích cao giữa các môi trường máy tính của thành viên trong nhóm nhờ Hibernate Dialect tự động biên dịch câu lệnh SQL tương ứng cho PostgreSQL hoặc SQL Server.
-  * Tốc độ chạy kiểm thử tự động rất nhanh và cô lập hoàn toàn nhờ H2 Database chạy trực tiếp trên RAM ở scope `test`.
-* **Nhược điểm (Trade-off):**
-  * Các truy vấn tùy chỉnh (Custom Queries) cần ưu tiên viết bằng chuẩn JPQL thay vì Native SQL đặc thù của riêng SQL Server hay PostgreSQL để đảm bảo tính tương thích đa hệ quản trị và chạy tốt trên cả H2 khi test.
+
+- **Ưu điểm:**
+  - Đảm bảo tuyệt đối tính toàn vẹn tham chiếu (Foreign Key) và tính chất ACID khắt khe cho các giao dịch tạo đơn hàng, thanh toán và trừ tồn kho tại cửa hàng.
+  - Tận dụng được tối đa các tính năng nâng cao đặc thù của riêng PostgreSQL (như kiểu dữ liệu `JSONB` cho tùy chọn topping/combo, hoặc các Index chuyên biệt) để tối ưu truy vấn mà không bị gò bó bởi chuẩn SQL chung.
+  - Môi trường phát triển của tất cả thành viên trong nhóm được đồng bộ nhất quán 100% nhờ việc chạy chung một cấu hình PostgreSQL thông qua Docker Compose.
+
+- **Nhược điểm (Trade-off):**
+  - **Khóa chặt công nghệ (Vendor Lock-in):** Khi lạm dụng Native SQL hoặc các hàm đặc thù của PostgreSQL để tối ưu tốc độ, mã nguồn (repository) sẽ bị gắn chặt với hệ quản trị này. Nếu tương lai muốn đổi sang MySQL hay SQL Server sẽ tốn rất nhiều chi phí đập đi viết lại.
+  - **Tốn tài nguyên khi kiểm thử (Testing):** Do không dùng database siêu nhẹ trên RAM (như H2) để đảm bảo test đúng môi trường thực tế, nhóm phải sử dụng công cụ như Testcontainers (giả lập PostgreSQL thật trong Docker khi chạy test), làm tăng thời gian và RAM khi chạy các bộ kiểm thử tự động (CI/CD).

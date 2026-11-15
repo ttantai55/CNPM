@@ -15,9 +15,9 @@
 
     <!-- Project information -->
     <groupId>vn.doan</groupId>
-    <artifactId>doan-pttk</artifactId>
+    <artifactId>doan-cnpm</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>DoAnPTTK</name>
+    <name>DoAnCNPM</name>
     <description>Đồ án quản lý phòng gym</description>
 
     <!-- Java version -->
