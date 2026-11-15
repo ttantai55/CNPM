@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, Archive, ArrowRight, Check, Clock3, Coffee, MapPin, Search, ShoppingBag } from 'lucide-react'
+import { Activity, Archive, ArrowRight, Check, Clock3, Coffee, MapPin, Search, ShoppingBag, Trash2 } from 'lucide-react'
 import { CATEGORY_LABELS, type CategoryId } from '@/lib/menu'
-import { advanceOrder, archiveCompletedOrder, archiveCompletedOrders, migrateOrderStatuses, orderStore, PAYMENT_LABEL, refreshOrders, type Order, type OrderStatus } from '@/lib/orders'
+import { advanceOrder, archiveCompletedOrder, archiveCompletedOrders, migrateOrderStatuses, orderStore, PAYMENT_LABEL, refreshOrders, removeCancelledOrder, type Order, type OrderStatus } from '@/lib/orders'
 import { DashboardHeader, RoleGuard } from './role-shell'
 import { Modal } from './modal'
 
@@ -11,6 +11,7 @@ const COLUMNS: { statuses: OrderStatus[]; title: string; tone: string; action?: 
   { statuses: ['PENDING', 'CONFIRMED'], title: 'Đơn mới', tone: 'bg-[#eef3fb] text-[#52709e]', action: 'Bắt đầu chuẩn bị' },
   { statuses: ['PREPARING'], title: 'Đang chuẩn bị', tone: 'bg-[#fbf2e7] text-[#a97b40]', action: 'Hoàn tất đơn' },
   { statuses: ['COMPLETED'], title: 'Hoàn tất', tone: 'bg-[#edf5ef] text-[#4f805e]' },
+  { statuses: ['CANCELLED'], title: 'Đã hủy', tone: 'bg-[#f8efec] text-[#8d4c3b]' },
 ]
 
 const categoryOptions: { value: CategoryId; label: string }[] = [
@@ -20,9 +21,11 @@ const categoryOptions: { value: CategoryId; label: string }[] = [
   { value: 'juice', label: CATEGORY_LABELS.juice },
 ]
 
-function OrderCard({ order, action }: { order: Order; action?: string }) {
-  const age = Math.max(0, Math.floor((Date.now() - order.createdAt) / 60_000))
-  const isUrgent = age >= 15 && order.status !== 'COMPLETED'
+function OrderCard({ order, action, now }: { order: Order; action?: string; now: number }) {
+  const age = order.paymentCompletedAt > 0 && !['PENDING', 'CANCELLED'].includes(order.status)
+    ? Math.max(0, Math.floor((now - order.paymentCompletedAt) / 60_000))
+    : null
+  const isUrgent = age !== null && age >= 15 && order.status !== 'COMPLETED'
 
   return (
     <article className="rounded-xl border border-[#e9ede9] bg-white p-4 shadow-[0_2px_8px_rgba(27,52,39,0.03)]">
@@ -31,9 +34,11 @@ function OrderCard({ order, action }: { order: Order; action?: string }) {
           <p className="text-[13px] font-bold tracking-wide text-[#2c4639]">#{order.code}</p>
           <p className="mt-1 text-[11px] text-[#8b978f]">{order.customerName}</p>
         </div>
-        <span className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${isUrgent ? 'bg-[#fff0ed] text-[#bd5c4c]' : 'bg-[#f3f5f3] text-[#718078]'}`}>
-          <Clock3 className="size-3" /> {age} phút
-        </span>
+        {age !== null && (
+          <span className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${isUrgent ? 'bg-[#fff0ed] text-[#bd5c4c]' : 'bg-[#f3f5f3] text-[#718078]'}`}>
+            <Clock3 className="size-3" /> {age} phút
+          </span>
+        )}
       </div>
 
       <div className="mt-3 flex items-center justify-between border-y border-dashed border-[#edf0ed] py-2.5">
@@ -68,6 +73,20 @@ function OrderCard({ order, action }: { order: Order; action?: string }) {
         >
           {action} <ArrowRight className="size-3.5" />
         </button>
+      ) : order.status === 'CANCELLED' ? (
+        <button
+          type="button"
+          onClick={() => {
+            try {
+              removeCancelledOrder(order.code)
+            } catch (error) {
+              window.alert(error instanceof Error ? error.message : 'Không thể xóa đơn hàng.')
+            }
+          }}
+          className="mt-4 flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[#8d4c3b] text-[11px] font-semibold text-white transition hover:bg-[#743b2d]"
+        >
+          Xóa đơn <Trash2 className="size-3.5" />
+        </button>
       ) : order.status === 'COMPLETED' ? (
         <button
           type="button"
@@ -85,8 +104,9 @@ function OrderCard({ order, action }: { order: Order; action?: string }) {
   )
 }
 
-function OrdersBoard() {
+export function OrdersBoardContent({ embedded = false }: { embedded?: boolean }) {
   const orders = orderStore.useStore()
+  const [now, setNow] = useState(() => Date.now())
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<CategoryId>('all')
   const [historyOpen, setHistoryOpen] = useState(false)
@@ -97,6 +117,18 @@ function OrdersBoard() {
     migrateOrderStatuses()
     archiveCompletedOrders()
     const timer = window.setInterval(archiveCompletedOrders, 15_000)
+    const syncTimer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void refreshOrders().catch((error: unknown) => console.error('Unable to sync orders', error))
+      }
+    }, 5_000)
+    return () => {
+      window.clearInterval(timer)
+      window.clearInterval(syncTimer)
+    }
+  }, [])
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000)
     return () => window.clearInterval(timer)
   }, [])
   const filteredOrders = useMemo(() => {
@@ -122,10 +154,8 @@ function OrdersBoard() {
   const activeOrders = orders.filter((order) => ['PENDING', 'CONFIRMED', 'PREPARING'].includes(order.status)).length
 
   return (
-    <RoleGuard role="STAFF">
-      <div className="min-h-dvh bg-[#f7f8f6]">
-        <DashboardHeader role="STAFF" title="Order management" />
-        <main className="mx-auto max-w-[1580px] px-8 py-7">
+    <>
+      <div className={`mx-auto max-w-[1580px] ${embedded ? 'px-0 py-4' : 'px-8 py-7'}`}>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-medium text-[#96a198]">
@@ -171,7 +201,7 @@ function OrdersBoard() {
             </div>
           </div>
 
-          <div className="mt-5 grid items-start gap-4 xl:grid-cols-3">
+          <div className="mt-5 grid items-start gap-4 xl:grid-cols-4">
             {COLUMNS.map((column) => {
               const columnOrders = filteredOrders
                 .filter((order) => column.statuses.includes(order.status))
@@ -190,6 +220,7 @@ function OrdersBoard() {
                       <OrderCard
                         key={order.code}
                         order={order}
+                        now={now}
                         action={order.status === 'PENDING' || order.status === 'COMPLETED' ? undefined : column.action}
                       />
                     ))}
@@ -202,7 +233,6 @@ function OrdersBoard() {
             })}
           </div>
           <p className="mt-5 text-center text-[10px] text-[#a0aaa3]">Đơn hàng được đồng bộ tức thì trên trình duyệt này và các tab đang mở.</p>
-        </main>
       </div>
       <Modal
         open={historyOpen}
@@ -254,10 +284,17 @@ function OrdersBoard() {
           )}
         </div>
       </Modal>
-    </RoleGuard>
+    </>
   )
 }
 
 export default function StaffOrdersDashboard() {
-  return <OrdersBoard />
+  return (
+    <RoleGuard role="STAFF">
+      <div className="min-h-dvh bg-[#f7f8f6]">
+        <DashboardHeader role="STAFF" title="Order management" />
+        <OrdersBoardContent />
+      </div>
+    </RoleGuard>
+  )
 }

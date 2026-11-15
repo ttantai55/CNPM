@@ -75,21 +75,29 @@ export function DashboardHeader({ role, title }: { role: Role; title: string }) 
       open={logoutConfirmOpen}
       onClose={() => setLogoutConfirmOpen(false)}
       title="Xác nhận đăng xuất"
-      description="Bạn có chắc muốn đăng xuất không ?"
-      className="p-5"
+      description="Bạn có chắc chắn muốn đăng xuất khỏi tài khoản BrewLite?"
+      className="sm:max-w-md"
     >
-      <div className="flex justify-end gap-2 px-5 pb-5">
+      <div className="flex items-center gap-3 px-5 py-5">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[#f3eee7] text-[#5c4033]">
+          <LogOut className="size-5" aria-hidden="true" />
+        </span>
+        <p className="text-sm leading-6 text-[#81766d]">
+          Phiên làm việc hiện tại sẽ kết thúc. Bạn có thể đăng nhập lại bất cứ lúc nào.
+        </p>
+      </div>
+      <div className="flex flex-col gap-2.5 border-t border-[#ede8e1] bg-[#fcfbf7] px-5 py-4 sm:flex-row sm:justify-end">
         <button
           type="button"
           onClick={() => setLogoutConfirmOpen(false)}
-          className="rounded-xl border border-[#e4e9e5] px-4 py-2.5 text-sm font-semibold text-[#65736a] transition hover:bg-[#f3f5f3]"
+          className="h-11 w-full rounded-xl border border-[#e4dcd2] bg-white px-5 text-sm font-semibold text-[#5c4033] transition hover:bg-[#f7f2eb] sm:w-auto"
         >
           Hủy
         </button>
         <button
           type="button"
           onClick={signOut}
-          className="rounded-xl bg-[#aa5348] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#91443a]"
+          className="h-11 w-full rounded-xl bg-[#5c4033] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#493228] sm:w-auto"
         >
           Xác nhận đăng xuất
         </button>

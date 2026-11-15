@@ -48,14 +48,15 @@ import {
 } from '@/lib/menu'
 import { orderStore } from '@/lib/orders'
 import { RawMaterialInventory } from './raw-material-inventory'
+import { OrdersBoardContent } from './staff-orders-dashboard'
 import { PromotionManagement } from './promotion-management'
 import { CategoryManagement } from './category-management'
 import { StaffManagement } from './staff-management'
 import { CustomerManagement } from './customer-management'
 import { DashboardHeader, RoleGuard } from './role-shell'
 import { publishBatchNotification } from '@/lib/notifications'
-import { refreshOrders } from '@/lib/orders'
 import { adminApi, menuApi } from '@/lib/api'
+import { FieldError, fieldErrorClass } from './form-field'
 
 function dateInputValue(date: Date) {
   const year = date.getFullYear()
@@ -82,6 +83,7 @@ function getDateRange(preset: 'today' | 'yesterday' | 'last7' | 'custom', custom
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Tổng quan', icon: LayoutDashboard },
+  { id: 'orders', label: 'Quản lý đơn hàng', icon: ShoppingBag },
   { id: 'inventory', label: 'Quản lý Menu', icon: Boxes },
   { id: 'categories', label: 'Quản lý danh mục', icon: ListTree },
   { id: 'staff', label: 'Quản lý nhân viên', icon: UsersRound },
@@ -105,7 +107,6 @@ function ManagerContent() {
   const dateBounds = getDateRange(datePreset, customDate)
 
   useEffect(() => {
-    void refreshOrders().catch((error: unknown) => console.error('Unable to load orders', error))
     const normalized = normalizeMenuProducts(productsList)
     if (JSON.stringify(normalized) !== JSON.stringify(productsList)) {
       menuProductStore.set(normalized)
@@ -156,6 +157,7 @@ function ManagerContent() {
     image: '',
   })
   const [formError, setFormError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; description?: string; category?: string; price?: string }>({})
   const [notifyCustomers, setNotifyCustomers] = useState(false)
 
   // State cho Modal Xác nhận xóa
@@ -216,6 +218,7 @@ function ManagerContent() {
     setNotifyCustomers(false)
     setFormData({ name: '', description: '', category: categories[0]?.id ?? '', price: 45000, image: '' })
     setFormError('')
+    setFieldErrors({})
     setIsFormOpen(true)
   }
 
@@ -231,6 +234,7 @@ function ManagerContent() {
       image: product.imageUrl,
     })
     setFormError('')
+    setFieldErrors({})
     setIsFormOpen(true)
   }
 
@@ -240,8 +244,14 @@ function ManagerContent() {
     const name = formData.name.trim()
     const description = formData.description.trim()
     const price = Number(formData.price)
-    if (!name || !description || !formData.category || !Number.isFinite(price) || price < 1000) {
-      setFormError('Vui lòng nhập tên, mô tả, danh mục và giá bán hợp lệ (tối thiểu 1.000 đ).')
+    const errors = {
+      name: name ? '' : 'Vui lòng nhập tên thức uống.',
+      description: description ? '' : 'Vui lòng nhập mô tả.',
+      category: formData.category ? '' : 'Vui lòng chọn danh mục.',
+      price: Number.isFinite(price) && price >= 1000 ? '' : 'Giá bán phải từ 1.000 đ trở lên.',
+    }
+    setFieldErrors(errors)
+    if (Object.values(errors).some(Boolean)) {
       return
     }
 
@@ -401,6 +411,10 @@ function ManagerContent() {
                 trend="down"
                 tone="amber"
               />
+            </section>
+
+            <section id="orders" className="mt-5 scroll-mt-5 rounded-2xl border border-[#e8ede8] bg-white p-4">
+              <OrdersBoardContent embedded />
             </section>
 
             <section
@@ -645,7 +659,7 @@ function ManagerContent() {
                 </button>
               </div>
 
-              <form onSubmit={handleSaveProduct} className="mt-4 space-y-4">
+              <form onSubmit={handleSaveProduct} noValidate className="mt-4 space-y-4">
                 {formError && (
                   <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
                     {formError}
@@ -662,8 +676,10 @@ function ManagerContent() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="vd: Cà phê muối, Trà lài thanh long..."
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none transition focus:border-[#548565]"
+                    aria-invalid={Boolean(fieldErrors.name)}
+                    className={fieldErrorClass('w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none transition focus:border-[#548565]', fieldErrors.name)}
                   />
+                  <FieldError error={fieldErrors.name} />
                 </div>
 
                 <div>
@@ -677,8 +693,10 @@ function ManagerContent() {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Mô tả ngắn về thành phần hoặc hương vị"
-                    className="w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none transition focus:border-[#548565]"
+                    aria-invalid={Boolean(fieldErrors.description)}
+                    className={fieldErrorClass('w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none transition focus:border-[#548565]', fieldErrors.description)}
                   />
+                  <FieldError error={fieldErrors.description} />
                 </div>
 
                 <div>
@@ -691,12 +709,14 @@ function ManagerContent() {
                     onChange={(e) =>
                       setFormData({ ...formData, category: e.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none transition focus:border-[#548565]"
+                    aria-invalid={Boolean(fieldErrors.category)}
+                    className={fieldErrorClass('w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none transition focus:border-[#548565]', fieldErrors.category)}
                   >
                     {categories.map((category) => (
                       <option key={category.id} value={category.id}>{category.name}</option>
                     ))}
                   </select>
+                  <FieldError error={fieldErrors.category} />
                 </div>
 
                 <div>
@@ -713,8 +733,10 @@ function ManagerContent() {
                     onChange={(e) =>
                       setFormData({ ...formData, price: Number(e.target.value) })
                     }
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none transition focus:border-[#548565]"
+                    aria-invalid={Boolean(fieldErrors.price)}
+                    className={fieldErrorClass('w-full rounded-lg border border-gray-200 px-3 py-2 text-xs outline-none transition focus:border-[#548565]', fieldErrors.price)}
                   />
+                  <FieldError error={fieldErrors.price} />
                 </div>
 
                 <div>

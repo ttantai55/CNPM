@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.doan.domain.LoyaltyTransaction;
 import vn.doan.domain.Order;
+import vn.doan.domain.OrderItem;
 import vn.doan.domain.Payment;
 import vn.doan.domain.User;
 import vn.doan.domain.enums.LoyalType;
@@ -18,6 +19,7 @@ import vn.doan.dto.response.PaymentUrlResponse;
 import vn.doan.repository.LoyaltyTransactionRepo;
 import vn.doan.repository.OrderRepository;
 import vn.doan.repository.PaymentRepository;
+import vn.doan.repository.ProductRepository;
 import vn.doan.dto.response.PaymentResponse;
 
 import java.time.LocalDateTime;
@@ -30,6 +32,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
     private final LoyaltyTransactionRepo loyaltyTransactionRepo;
 
     // * 1. Khởi tạo giao dịch trả về url
@@ -77,7 +80,7 @@ public class PaymentService {
         Order order = orderRepository.findById(callbackDTO.getOrderId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng."));
 
-        Payment payment = paymentRepository.findByOrder(order)
+        Payment payment = paymentRepository.findByOrderForUpdate(order)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy giao dịch thanh toán."));
 
         if (payment.getPaymentStatus() == PaymentStatus.SUCCESS) {
@@ -90,6 +93,7 @@ public class PaymentService {
             payment.setPaymentStatus(PaymentStatus.SUCCESS);
             payment.setPaymentDate(LocalDateTime.now());
             order.changeStatus(OrderStatus.CONFIRMED);
+            recordWeeklySales(order);
             // tích điểm thưởng
             User user = order.getCustomer().getUser(); 
             if (user != null) {
@@ -116,6 +120,19 @@ public class PaymentService {
             
             // Trả về DTO
             return new PaymentResult(PaymentStatus.FAILED, "Thanh toán thất bại hoặc bị hủy", order.getId());
+        }
+    }
+
+    private void recordWeeklySales(Order order) {
+        for (OrderItem item : order.getItems()) {
+            int quantity = Math.toIntExact(item.getQuantity());
+            if (quantity < 1) {
+                throw new IllegalStateException("Số lượng sản phẩm trong đơn hàng không hợp lệ.");
+            }
+            int updatedProducts = productRepository.incrementWeeklySalesCount(item.getProduct().getId(), quantity);
+            if (updatedProducts != 1) {
+                throw new IllegalStateException("Không thể cập nhật số lượng bán của sản phẩm.");
+            }
         }
     }
 

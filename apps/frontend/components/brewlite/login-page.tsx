@@ -16,9 +16,9 @@ import {
 import { authStore, dashboardForRole, type Role } from '@/lib/session'
 import { cartStore } from '@/lib/cart'
 import { authApi } from '@/lib/api'
+import { isValidEmail, isValidPersonName, isValidVietnamesePhone } from '@/lib/validation'
 
-const identifierPattern = /^(?:[^\s@]+@[^\s@]+\.[^\s@]+|(?:\+?84|0)\d{9,10}|[\p{L}\d_.-]{3,40})$/u
-const phonePattern = /^(?:\+?84|0)\d{9,10}$/
+const usernamePattern = /^[\p{L}\d_.-]{3,40}$/u
 const DEMO_ACCOUNTS = [
   { label: 'Khách hàng', loginId: 'user@brewlite.vn', role: 'CUSTOMER' },
   { label: 'Nhân viên', loginId: 'staff@brewlite.vn', role: 'STAFF' },
@@ -44,10 +44,19 @@ export function LoginPage() {
   const [registrationComplete, setRegistrationComplete] = useState(false)
 
   const identifierError =
-    mode === 'login' && submitted && !identifierPattern.test(identifier.trim())
+    mode === 'login' && submitted &&
+    !isValidEmail(identifier.trim()) &&
+    !isValidVietnamesePhone(identifier.trim()) &&
+    !usernamePattern.test(identifier.trim())
       ? 'Vui lòng nhập email, số điện thoại hoặc tên đăng nhập hợp lệ.'
       : ''
   const passwordError = mode === 'login' && submitted && password.length < 6 ? 'Mật khẩu cần có ít nhất 6 ký tự.' : ''
+  const registerNameError = submitted && registerName.trim().length < 3 ? 'Tên đăng nhập tối thiểu 3 ký tự.' : ''
+  const registerFullNameError = submitted && !isValidPersonName(registerFullName) ? 'Họ tên phải có ít nhất 2 chữ cái hợp lệ.' : ''
+  const registerEmailError = submitted && !isValidEmail(registerEmail) ? 'Vui lòng nhập địa chỉ email hợp lệ.' : ''
+  const registerPhoneError = submitted && !isValidVietnamesePhone(registerPhone) ? 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0.' : ''
+  const registerPasswordError = submitted && registerPassword.length < 8 ? 'Mật khẩu tối thiểu 8 ký tự.' : ''
+  const registerConfirmError = submitted && registerConfirm !== registerPassword ? 'Mật khẩu xác nhận không khớp.' : ''
 
   function saveSession(result: Awaited<ReturnType<typeof authApi.login>>) {
     const user = result.user
@@ -87,7 +96,11 @@ export function LoginPage() {
 
   async function signIn() {
     setSubmitted(true)
-    if (!identifierPattern.test(identifier.trim()) || password.length < 6) return
+    if (
+      !isValidEmail(identifier.trim()) &&
+      !isValidVietnamesePhone(identifier.trim()) &&
+      !usernamePattern.test(identifier.trim())
+    ) return
     await loginWith(identifier.trim(), password)
   }
 
@@ -97,8 +110,8 @@ export function LoginPage() {
     const username = registerName.trim()
     const email = registerEmail.trim()
     const phone = registerPhone.trim()
-    if (username.length < 3 || registerFullName.trim().length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-      || !phonePattern.test(phone) || registerPassword.length < 8 || registerPassword !== registerConfirm) {
+    if (username.length < 3 || !isValidPersonName(registerFullName) || !isValidEmail(email)
+      || !isValidVietnamesePhone(phone) || registerPassword.length < 8 || registerPassword !== registerConfirm) {
       return
     }
     setSubmitting(true)
@@ -222,7 +235,7 @@ export function LoginPage() {
                   onChange={(event) => setIdentifier(event.target.value)}
                   placeholder="Ví dụ: user@brewlite.vn"
                   aria-invalid={Boolean(identifierError)}
-                  className={`h-[50px] w-full rounded-xl border bg-white pl-11 pr-4 text-sm text-[#263b32] outline-none transition focus:ring-4 ${identifierError ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-[#e4e9e5] focus:border-[#4b806c] focus:ring-[#4b806c]/10'}`}
+                  className={`h-[50px] w-full rounded-xl border bg-white pl-11 pr-4 text-sm text-[#263b32] outline-none transition focus:ring-4 ${identifierError ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : 'border-[#e4e9e5] focus:border-[#4b806c] focus:ring-[#4b806c]/10'}`}
                 />
               </div>
               {identifierError && <p className="mt-1.5 text-xs text-red-600">{identifierError}</p>}
@@ -240,7 +253,7 @@ export function LoginPage() {
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Nhập mật khẩu"
                   aria-invalid={Boolean(passwordError)}
-                  className={`h-[50px] w-full rounded-xl border bg-white pl-11 pr-12 text-sm text-[#263b32] outline-none transition focus:ring-4 ${passwordError ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : 'border-[#e4e9e5] focus:border-[#4b806c] focus:ring-[#4b806c]/10'}`}
+                  className={`h-[50px] w-full rounded-xl border bg-white pl-11 pr-12 text-sm text-[#263b32] outline-none transition focus:ring-4 ${passwordError ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : 'border-[#e4e9e5] focus:border-[#4b806c] focus:ring-[#4b806c]/10'}`}
                 />
                 <button
                   type="button"
@@ -307,32 +320,33 @@ export function LoginPage() {
             <form noValidate onSubmit={register} className="space-y-4">
               <div>
                 <label htmlFor="register-username" className="mb-2 block text-[13px] font-semibold text-[#35463e]">Tên đăng nhập</label>
-                <input id="register-username" required minLength={3} autoComplete="username" value={registerName} onChange={(event) => setRegisterName(event.target.value)} className="h-[50px] w-full rounded-xl border border-[#e4e9e5] bg-white px-4 text-sm outline-none focus:border-[#4b806c] focus:ring-4 focus:ring-[#4b806c]/10" />
-                {submitted && registerName.trim().length < 3 && <p className="mt-1 text-xs text-red-600">Tên đăng nhập tối thiểu 3 ký tự.</p>}
+                <input id="register-username" required minLength={3} autoComplete="username" value={registerName} onChange={(event) => setRegisterName(event.target.value)} className={`h-[50px] w-full rounded-xl border bg-white px-4 text-sm outline-none focus:ring-4 ${registerNameError ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : 'border-[#e4e9e5] focus:border-[#4b806c] focus:ring-[#4b806c]/10'}`} />
+                {registerNameError && <p className="mt-1 text-xs text-red-600">{registerNameError}</p>}
               </div>
               <div>
                 <label htmlFor="register-full-name" className="mb-2 block text-[13px] font-semibold text-[#35463e]">Họ và tên</label>
-                <input id="register-full-name" required autoComplete="name" value={registerFullName} onChange={(event) => setRegisterFullName(event.target.value)} className="h-[50px] w-full rounded-xl border border-[#e4e9e5] bg-white px-4 text-sm outline-none focus:border-[#4b806c] focus:ring-4 focus:ring-[#4b806c]/10" />
-                {submitted && registerFullName.trim().length < 2 && <p className="mt-1 text-xs text-red-600">Vui lòng nhập họ tên.</p>}
+                <input id="register-full-name" required autoComplete="name" value={registerFullName} onChange={(event) => setRegisterFullName(event.target.value)} className={`h-[50px] w-full rounded-xl border bg-white px-4 text-sm outline-none focus:ring-4 ${registerFullNameError ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : 'border-[#e4e9e5] focus:border-[#4b806c] focus:ring-[#4b806c]/10'}`} />
+                {registerFullNameError && <p className="mt-1 text-xs text-red-600">{registerFullNameError}</p>}
               </div>
               <div>
                 <label htmlFor="register-email" className="mb-2 block text-[13px] font-semibold text-[#35463e]">Email</label>
-                <input id="register-email" required type="email" autoComplete="email" value={registerEmail} onChange={(event) => setRegisterEmail(event.target.value)} className="h-[50px] w-full rounded-xl border border-[#e4e9e5] bg-white px-4 text-sm outline-none focus:border-[#4b806c] focus:ring-4 focus:ring-[#4b806c]/10" />
+                <input id="register-email" required type="email" autoComplete="email" value={registerEmail} onChange={(event) => setRegisterEmail(event.target.value)} className={`h-[50px] w-full rounded-xl border bg-white px-4 text-sm outline-none focus:ring-4 ${registerEmailError ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : 'border-[#e4e9e5] focus:border-[#4b806c] focus:ring-[#4b806c]/10'}`} />
+                {registerEmailError && <p className="mt-1 text-xs text-red-600">{registerEmailError}</p>}
               </div>
               <div>
                 <label htmlFor="register-phone" className="mb-2 block text-[13px] font-semibold text-[#35463e]">Số điện thoại</label>
-                <input id="register-phone" required autoComplete="tel" value={registerPhone} onChange={(event) => setRegisterPhone(event.target.value)} className="h-[50px] w-full rounded-xl border border-[#e4e9e5] bg-white px-4 text-sm outline-none focus:border-[#4b806c] focus:ring-4 focus:ring-[#4b806c]/10" />
-                {submitted && !phonePattern.test(registerPhone.trim()) && <p className="mt-1 text-xs text-red-600">Số điện thoại không hợp lệ.</p>}
+                <input id="register-phone" required autoComplete="tel" value={registerPhone} onChange={(event) => setRegisterPhone(event.target.value)} className={`h-[50px] w-full rounded-xl border bg-white px-4 text-sm outline-none focus:ring-4 ${registerPhoneError ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : 'border-[#e4e9e5] focus:border-[#4b806c] focus:ring-[#4b806c]/10'}`} />
+                {registerPhoneError && <p className="mt-1 text-xs text-red-600">{registerPhoneError}</p>}
               </div>
               <div>
                 <label htmlFor="register-password" className="mb-2 block text-[13px] font-semibold text-[#35463e]">Mật khẩu</label>
-                <input id="register-password" required minLength={8} type="password" autoComplete="new-password" value={registerPassword} onChange={(event) => setRegisterPassword(event.target.value)} className="h-[50px] w-full rounded-xl border border-[#e4e9e5] bg-white px-4 text-sm outline-none focus:border-[#4b806c] focus:ring-4 focus:ring-[#4b806c]/10" />
-                {submitted && registerPassword.length < 8 && <p className="mt-1 text-xs text-red-600">Mật khẩu tối thiểu 8 ký tự.</p>}
+                <input id="register-password" required minLength={8} type="password" autoComplete="new-password" value={registerPassword} onChange={(event) => setRegisterPassword(event.target.value)} aria-invalid={Boolean(registerPasswordError)} className={`h-[50px] w-full rounded-xl border bg-white px-4 text-sm outline-none focus:ring-4 ${registerPasswordError ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : 'border-[#e4e9e5] focus:border-[#4b806c] focus:ring-[#4b806c]/10'}`} />
+                {registerPasswordError && <p className="mt-1 text-xs text-red-600">{registerPasswordError}</p>}
               </div>
               <div>
                 <label htmlFor="register-confirm" className="mb-2 block text-[13px] font-semibold text-[#35463e]">Nhập lại mật khẩu</label>
-                <input id="register-confirm" required type="password" autoComplete="new-password" value={registerConfirm} onChange={(event) => setRegisterConfirm(event.target.value)} className="h-[50px] w-full rounded-xl border border-[#e4e9e5] bg-white px-4 text-sm outline-none focus:border-[#4b806c] focus:ring-4 focus:ring-[#4b806c]/10" />
-                {submitted && registerConfirm !== registerPassword && <p className="mt-1 text-xs text-red-600">Mật khẩu xác nhận không khớp.</p>}
+                <input id="register-confirm" required type="password" autoComplete="new-password" value={registerConfirm} onChange={(event) => setRegisterConfirm(event.target.value)} aria-invalid={Boolean(registerConfirmError)} className={`h-[50px] w-full rounded-xl border bg-white px-4 text-sm outline-none focus:ring-4 ${registerConfirmError ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : 'border-[#e4e9e5] focus:border-[#4b806c] focus:ring-[#4b806c]/10'}`} />
+                {registerConfirmError && <p className="mt-1 text-xs text-red-600">{registerConfirmError}</p>}
               </div>
               {notice && <p role="status" className="rounded-lg bg-[#edf5f0] px-3 py-2 text-xs text-[#32735a]">{notice}</p>}
               <button type="submit" disabled={submitting} className="flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#285b4b] text-sm font-semibold text-white disabled:opacity-70">

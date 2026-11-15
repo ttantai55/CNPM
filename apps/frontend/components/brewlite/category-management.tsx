@@ -5,6 +5,7 @@ import { Pencil, Plus } from 'lucide-react'
 import { categoryStore, type MenuCategory } from '@/lib/menu'
 import { Modal } from './modal'
 import { menuApi } from '@/lib/api'
+import { FieldError, fieldErrorClass } from './form-field'
 
 function toSlug(value: string) {
   return value
@@ -24,12 +25,14 @@ export function CategoryManagement() {
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; slug?: string }>({})
 
   function startAdd() {
     setEditing(null)
     setName('')
     setSlug('')
     setError('')
+    setFieldErrors({})
     setOpen(true)
   }
 
@@ -38,6 +41,7 @@ export function CategoryManagement() {
     setName(category.name)
     setSlug(category.slug)
     setError('')
+    setFieldErrors({})
     setOpen(true)
   }
 
@@ -51,12 +55,15 @@ export function CategoryManagement() {
         (category.id.toLowerCase() === normalizedSlug.toLowerCase() ||
           category.slug.toLowerCase() === normalizedSlug.toLowerCase()),
     )
-    if (!trimmedName || !normalizedSlug || ['all', 'favorites'].includes(normalizedSlug)) {
-      setError('Vui lòng nhập tên và slug danh mục hợp lệ.')
-      return
+    const nextFieldErrors = {
+      name: trimmedName ? '' : 'Vui lòng nhập tên danh mục.',
+      slug: !normalizedSlug || ['all', 'favorites'].includes(normalizedSlug)
+        ? 'Vui lòng nhập slug hợp lệ.'
+        : '',
     }
-    if (duplicate) {
-      setError('Slug danh mục đã tồn tại.')
+    if (duplicate) nextFieldErrors.slug = 'Slug danh mục đã tồn tại.'
+    setFieldErrors(nextFieldErrors)
+    if (nextFieldErrors.name || nextFieldErrors.slug) {
       return
     }
     try {
@@ -143,7 +150,7 @@ export function CategoryManagement() {
         title={editing ? 'Chỉnh sửa danh mục' : 'Thêm danh mục'}
         description="Tên và slug dùng để nhận diện danh mục"
       >
-        <form onSubmit={save} className="space-y-4 px-5 py-4">
+        <form onSubmit={save} noValidate className="space-y-4 px-5 py-4">
           {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
           <label className="block text-xs font-medium text-[#536257]">
             Tên danh mục
@@ -155,8 +162,10 @@ export function CategoryManagement() {
                 setName(event.target.value)
                 if (!editing) setSlug(toSlug(event.target.value))
               }}
-              className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-[#548565]"
+              aria-invalid={Boolean(fieldErrors.name)}
+              className={fieldErrorClass('mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-[#548565]', fieldErrors.name)}
             />
+            <FieldError error={fieldErrors.name} />
           </label>
           <label className="block text-xs font-medium text-[#536257]">
             Icon / slug
@@ -164,8 +173,10 @@ export function CategoryManagement() {
               required
               value={slug}
               onChange={(event) => setSlug(event.target.value)}
-              className="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-[#548565]"
+              aria-invalid={Boolean(fieldErrors.slug)}
+              className={fieldErrorClass('mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-[#548565]', fieldErrors.slug)}
             />
+            <FieldError error={fieldErrors.slug} />
           </label>
           <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
             <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-gray-200 px-4 py-2 text-xs">Hủy</button>

@@ -1,13 +1,18 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Check, Clock3, Coffee, MapPin, PackageCheck, ReceiptText } from 'lucide-react'
-import { formatPrice } from '@/lib/menu'
-import { fromApiOrder, migrateOrderStatuses, orderStore, PAYMENT_LABEL, STATUS_LABEL, type Order, type OrderStatus } from '@/lib/orders'
-import { ordersApi } from '@/lib/api'
+import { formatPrice, toppingStore } from '@/lib/menu'
+import { fromApiOrder, isOrderLocallyDeleted, migrateOrderStatuses, orderStore, PAYMENT_LABEL, STATUS_LABEL, cancelOrderPayment, confirmOrderPayment, orderToCartItems, resumeOrderPayment, type Order, type OrderStatus, type PaymentMethod } from '@/lib/orders'
+import { menuApi, ordersApi } from '@/lib/api'
+import { fromApiToppings } from '@/lib/menu'
+import { dispatchCart, restoreCartItems } from '@/lib/cart'
+import { authStore } from '@/lib/session'
+import { MockPaymentModal } from '@/components/payment/mock-payment-modal'
 import { DashboardHeader, RoleGuard } from './role-shell'
+import { Modal } from './modal'
 
 const STEPS: { status: OrderStatus; title: string; description: string }[] = [
   { status: 'PENDING', title: 'Chờ thanh toán', description: 'Đơn đang chờ thanh toán hoặc xác nhận.' },
@@ -34,16 +39,49 @@ function estimatedPickup(order: Order) {
 function OrderTrackingContent() {
   const params = useParams<{ code: string }>()
   const router = useRouter()
+  const session = authStore.useStore()
   const orders = orderStore.useStore()
+  const [paymentOrder, setPaymentOrder] = useState<Order | null>(null)
+  const [paymentError, setPaymentError] = useState('')
+  const [restoringCart, setRestoringCart] = useState(false)
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [cancellingOrder, setCancellingOrder] = useState(false)
   const code = decodeURIComponent(params.code)
   const order = orders.find((item) => item.code === code)
+
+  async function continuePayment() {
+    if (!order) return
+    setPaymentError('')
+    try {
+      const resumed = await resumeOrderPayment(order, session?.email, session?.id)
+      setPaymentOrder(resumed)
+      if (resumed.code !== order.code) router.replace(`/orders/${encodeURIComponent(resumed.code)}`)
+    } catch (cause) {
+      setPaymentError(cause instanceof Error ? cause.message : 'Không thể tiếp tục thanh toán.')
+    }
+  }
+
+  async function restoreCartFromOrder(sourceOrder: Order) {
+    setRestoringCart(true)
+    try {
+      const remoteToppings = await menuApi.toppings()
+      toppingStore.set(fromApiToppings(remoteToppings))
+    } catch (cause) {
+      setPaymentError(cause instanceof Error ? cause.message : 'Không tải được thông tin topping để khôi phục giỏ hàng.')
+    } finally {
+      restoreCartItems(orderToCartItems(sourceOrder))
+      setRestoringCart(false)
+    }
+  }
 
   useEffect(() => {
     migrateOrderStatuses()
     void ordersApi.get(code)
       .then((remote) => {
         const mapped = fromApiOrder(remote)
-        orderStore.set((current) => [mapped, ...current.filter((entry) => entry.code !== mapped.code)])
+        if (!isOrderLocallyDeleted(mapped.code)) {
+          orderStore.set((current) => [mapped, ...current.filter((entry) => entry.code !== mapped.code)])
+        }
       })
       .catch((error: unknown) => console.error('Unable to load order', error))
   }, [code])
@@ -53,7 +91,7 @@ function OrderTrackingContent() {
       <div className="min-h-dvh bg-[#fcfbf7]">
         <DashboardHeader role="CUSTOMER" title="Theo dõi đơn hàng" />
         <main className="mx-auto max-w-[1080px] px-4 py-8 sm:px-6">
-          <Link href="/" className="inline-flex items-center gap-2 text-xs font-semibold text-[#5c4033] hover:text-[#2e2520]">
+          <Link href="/" className="inline-flex items-center gap-2 rounded-full bg-[#5c4033] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#493228] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b9855a] focus-visible:ring-offset-2">
             <ArrowLeft className="size-4" /> Trở về menu
           </Link>
 
@@ -82,6 +120,30 @@ function OrderTrackingContent() {
                   {STATUS_LABEL[order.status]}
                 </span>
               </header>
+
+              {order.status === 'PENDING' && (
+                <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#ead9c5] bg-[#fff9f1] px-4 py-3">
+                  <p className="text-sm text-[#725638]">Đơn hàng đang chờ thanh toán.</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCancelDialogOpen(true)}
+                      className="rounded-xl border border-[#c68b79] bg-white px-4 py-2.5 text-xs font-semibold text-[#8d4c3b] transition hover:bg-[#f8efec]"
+                    >
+                      Hủy đơn hàng
+                    </button>
+                    <button
+                      type="button"
+                      disabled={restoringCart}
+                      onClick={() => void continuePayment()}
+                      className="rounded-xl bg-[#a96834] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#8e562b] disabled:opacity-60"
+                    >
+                      Tiếp tục thanh toán
+                    </button>
+                  </div>
+                </div>
+              )}
+              {paymentError && <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{paymentError}</p>}
 
               {order.status === 'CANCELLED' ? (
                 <div role="alert" className="mt-6 rounded-2xl border border-[#ead2ca] bg-[#f8efec] px-4 py-3 text-sm text-[#8d4c3b]">
@@ -180,6 +242,73 @@ function OrderTrackingContent() {
           )}
         </main>
       </div>
+      <Modal
+        open={cancelDialogOpen}
+        onClose={() => {
+          if (!cancellingOrder) setCancelDialogOpen(false)
+        }}
+        title="Hủy đơn hàng"
+        description="Bạn có chắc chắn muốn hủy đơn hàng này không?"
+        className="p-5"
+      >
+        <div className="flex justify-end gap-2 px-5 pb-5">
+          <button
+            type="button"
+            disabled={cancellingOrder}
+            onClick={() => setCancelDialogOpen(false)}
+            className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted disabled:opacity-60"
+          >
+            Không
+          </button>
+          <button
+            type="button"
+            disabled={cancellingOrder || order?.status !== 'PENDING'}
+            onClick={async () => {
+              if (!order || order.status !== 'PENDING') return
+              setCancellingOrder(true)
+              setPaymentError('')
+              try {
+                await cancelOrderPayment(order)
+                setCancelDialogOpen(false)
+              } catch (cause) {
+                setPaymentError(cause instanceof Error ? cause.message : 'Không thể hủy đơn hàng.')
+              } finally {
+                setCancellingOrder(false)
+              }
+            }}
+            className="rounded-xl bg-[#5c4033] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#493228] disabled:opacity-60"
+          >
+            Xác nhận
+          </button>
+        </div>
+      </Modal>
+      {paymentOrder && (
+        <MockPaymentModal
+          order={paymentOrder}
+          onClose={() => setPaymentOrder(null)}
+          onFailure={async (failedOrder) => {
+            await restoreCartFromOrder(failedOrder)
+            const cancelled = await cancelOrderPayment(failedOrder)
+            setPaymentOrder(cancelled)
+            return cancelled
+          }}
+          onRetry={async (failedOrder) => {
+            const restored = await resumeOrderPayment(failedOrder, session?.email, session?.id)
+            setPaymentOrder(restored)
+            router.replace(`/orders/${encodeURIComponent(restored.code)}`)
+            return restored
+          }}
+          onSuccess={async (method: PaymentMethod) => {
+            try {
+              const paid = await confirmOrderPayment(paymentOrder.code, method, paymentOrder.total)
+              setPaymentOrder(null)
+              if (paid) router.push(`/orders/${encodeURIComponent(paid.code)}`)
+            } catch (cause) {
+              setPaymentError(cause instanceof Error ? cause.message : 'Không thể xác nhận thanh toán.')
+            }
+          }}
+        />
+      )}
     </RoleGuard>
   )
 }

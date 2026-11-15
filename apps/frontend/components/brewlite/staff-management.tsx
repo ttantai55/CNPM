@@ -10,6 +10,8 @@ import {
 import { authStore } from '@/lib/session'
 import { Modal } from './modal'
 import { staffApi } from '@/lib/api'
+import { isValidEmail, isValidPersonName, isValidVietnamesePhone } from '@/lib/validation'
+import { FieldError, fieldErrorClass } from './form-field'
 
 type StaffForm = {
   username: string
@@ -19,6 +21,7 @@ type StaffForm = {
   phone: string
   position: StaffPosition
 }
+type StaffFieldErrors = Partial<Record<keyof StaffForm, string>>
 
 const EMPTY_FORM: StaffForm = {
   username: '',
@@ -35,6 +38,7 @@ export function StaffManagement() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<StaffAccount | null>(null)
   const [form, setForm] = useState<StaffForm>(EMPTY_FORM)
+  const [fieldErrors, setFieldErrors] = useState<StaffFieldErrors>({})
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<StaffAccount | null>(null)
@@ -60,6 +64,7 @@ export function StaffManagement() {
     setEditing(null)
     setForm({ ...EMPTY_FORM })
     setError('')
+    setFieldErrors({})
     setFormOpen(true)
   }
 
@@ -74,6 +79,7 @@ export function StaffManagement() {
       position: account.position,
     })
     setError('')
+    setFieldErrors({})
     setFormOpen(true)
   }
 
@@ -83,8 +89,15 @@ export function StaffManagement() {
     const fullName = form.fullName.trim()
     const email = form.email.trim().toLowerCase()
     const phone = form.phone.trim()
-    if (!username || !fullName || !email || !phone || (!editing && form.password.length < 1)) {
-      setError('Vui lòng nhập đủ thông tin; mật khẩu cần ít nhất 1 ký tự.')
+    const errors: StaffFieldErrors = {
+      username: username ? undefined : 'Vui lòng nhập tên đăng nhập.',
+      fullName: isValidPersonName(fullName) ? undefined : 'Họ tên phải có ít nhất 2 chữ cái hợp lệ.',
+      email: isValidEmail(email) ? undefined : 'Vui lòng nhập địa chỉ email hợp lệ.',
+      phone: isValidVietnamesePhone(phone) ? undefined : 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0.',
+      password: !editing && !form.password.trim() ? 'Vui lòng nhập mật khẩu.' : undefined,
+    }
+    setFieldErrors(errors)
+    if (Object.values(errors).some(Boolean)) {
       return
     }
     if (staff.some((account) => account.id !== editing?.id && (
@@ -188,14 +201,14 @@ export function StaffManagement() {
       </section>
 
       <Modal open={formOpen} onClose={() => setFormOpen(false)} title={editing ? 'Sửa thông tin nhân viên' : 'Thêm nhân viên'} description="Mật khẩu được lưu dưới dạng băm, không thể xem lại.">
-        <form onSubmit={save} className="flex min-h-0 flex-1 flex-col">
+        <form onSubmit={save} noValidate className="flex min-h-0 flex-1 flex-col">
           <div className="grid gap-3 overflow-y-auto px-5 py-4 sm:grid-cols-2">
             {error && <p role="alert" className="rounded-lg bg-red-50 p-2 text-xs text-red-700 sm:col-span-2">{error}</p>}
-            <label className="text-xs font-medium">Họ tên<input required value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="mt-1.5 w-full rounded-lg border px-3 py-2" /></label>
-            <label className="text-xs font-medium">Tên đăng nhập<input required autoComplete="username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="mt-1.5 w-full rounded-lg border px-3 py-2" /></label>
-            <label className="text-xs font-medium">Mật khẩu{editing && ' mới (để trống nếu giữ nguyên)'}<input required={!editing} minLength={1} type="password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="mt-1.5 w-full rounded-lg border px-3 py-2" /></label>
-            <label className="text-xs font-medium">Email<input required type="email" autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1.5 w-full rounded-lg border px-3 py-2" /></label>
-            <label className="text-xs font-medium">Số điện thoại<input required type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1.5 w-full rounded-lg border px-3 py-2" /></label>
+            <label className="text-xs font-medium">Họ tên<input required value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} aria-invalid={Boolean(fieldErrors.fullName)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border px-3 py-2', fieldErrors.fullName)} /><FieldError error={fieldErrors.fullName} /></label>
+            <label className="text-xs font-medium">Tên đăng nhập<input required autoComplete="username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} aria-invalid={Boolean(fieldErrors.username)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border px-3 py-2', fieldErrors.username)} /><FieldError error={fieldErrors.username} /></label>
+            <label className="text-xs font-medium">Mật khẩu{editing && ' mới (để trống nếu giữ nguyên)'}<input required={!editing} minLength={1} type="password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} aria-invalid={Boolean(fieldErrors.password)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border px-3 py-2', fieldErrors.password)} /><FieldError error={fieldErrors.password} /></label>
+            <label className="text-xs font-medium">Email<input required type="email" autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} aria-invalid={Boolean(fieldErrors.email)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border px-3 py-2', fieldErrors.email)} /><FieldError error={fieldErrors.email} /></label>
+            <label className="text-xs font-medium">Số điện thoại<input required type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} aria-invalid={Boolean(fieldErrors.phone)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border px-3 py-2', fieldErrors.phone)} /><FieldError error={fieldErrors.phone} /></label>
             <label className="text-xs font-medium">Chức vụ<select value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value as StaffPosition })} className="mt-1.5 w-full rounded-lg border px-3 py-2"><option value="PHUC_VU">Phục vụ</option><option value="PHA_CHE">Pha chế</option></select></label>
           </div>
           <div className="flex justify-end gap-2 border-t px-5 py-3">

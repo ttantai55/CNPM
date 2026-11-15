@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { ImagePlus, UserRound } from 'lucide-react'
 import type { CustomerProfile } from '@/lib/customer-profile'
 import { Modal } from './modal'
+import { isValidPersonName, isValidVietnamesePhone } from '@/lib/validation'
 
 type ProfileUser = {
   id: string
@@ -28,12 +29,14 @@ const readonlyClass = `${fieldClass} bg-muted text-muted-foreground`
 export function ProfileDialog({ open, onClose, user, profile: initialProfile, onSave }: ProfileDialogProps) {
   const [profile, setProfile] = useState(initialProfile)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string }>({})
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (!open) return
     setProfile(initialProfile)
     setError('')
+    setFieldErrors({})
   }, [open, initialProfile.name, initialProfile.phone, initialProfile.address, initialProfile.gender, initialProfile.dateOfBirth, initialProfile.avatarUrl])
 
   function update(field: keyof CustomerProfile, value: string | boolean) {
@@ -65,8 +68,14 @@ export function ProfileDialog({ open, onClose, user, profile: initialProfile, on
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (profile.name.trim().length < 2) {
-      setError('Vui lòng nhập họ tên có ít nhất 2 ký tự.')
+    const errors = {
+      name: isValidPersonName(profile.name) ? '' : 'Họ tên phải có ít nhất 2 chữ cái hợp lệ.',
+      phone: profile.phone.trim() && !isValidVietnamesePhone(profile.phone)
+        ? 'Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 0.'
+        : '',
+    }
+    setFieldErrors(errors)
+    if (errors.name || errors.phone) {
       return
     }
     setSaving(true)
@@ -115,8 +124,10 @@ export function ProfileDialog({ open, onClose, user, profile: initialProfile, on
                   minLength={2}
                   value={profile.name}
                   onChange={(event) => update('name', event.target.value)}
-                  className={`${fieldClass} mt-1.5`}
+                  aria-invalid={Boolean(fieldErrors.name)}
+                  className={`${fieldClass} mt-1.5 ${fieldErrors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500/25' : ''}`}
                 />
+                {fieldErrors.name && <span className="mt-1 block text-xs text-red-600">{fieldErrors.name}</span>}
               </label>
               <label className="block text-xs font-medium text-muted-foreground">
                 Số điện thoại
@@ -125,8 +136,10 @@ export function ProfileDialog({ open, onClose, user, profile: initialProfile, on
                   autoComplete="tel"
                   value={profile.phone}
                   onChange={(event) => update('phone', event.target.value)}
-                  className={`${fieldClass} mt-1.5`}
+                  aria-invalid={Boolean(fieldErrors.phone)}
+                  className={`${fieldClass} mt-1.5 ${fieldErrors.phone ? 'border-red-500 focus:border-red-500 focus:ring-red-500/25' : ''}`}
                 />
+                {fieldErrors.phone && <span className="mt-1 block text-xs text-red-600">{fieldErrors.phone}</span>}
               </label>
               <label className="block text-xs font-medium text-muted-foreground">
                 Giới tính

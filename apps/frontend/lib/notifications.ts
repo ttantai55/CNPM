@@ -10,6 +10,7 @@ export type CustomerNotification = {
   isRead: boolean
   batchKey?: string
   itemCount?: number
+  orderCode?: string
 }
 
 export const notificationStore = createPersistentStore<CustomerNotification[]>(
@@ -50,4 +51,19 @@ export function publishBatchNotification(kind: 'món' | 'khuyến mãi', count: 
       ...notifications,
     ].slice(0, 100)
   })
+}
+
+export function publishPaymentNotification(orderCode: string) {
+  const now = Date.now()
+  notificationStore.set((notifications) => [
+    {
+      id: `payment-${orderCode}-${now}`,
+      title: 'Thanh toán thành công',
+      body: `Đã thanh toán thành công đơn hàng #${orderCode}`,
+      createdAt: now,
+      isRead: false,
+      orderCode,
+    },
+    ...notifications,
+  ].slice(0, 100))
 }

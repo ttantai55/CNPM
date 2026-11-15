@@ -30,16 +30,21 @@ const HOLD_SECONDS = 10 * 60 - 1
 type MockPaymentModalProps = {
   order: Order
   onClose: () => void
+  onFailure: (order: Order) => Promise<Order>
+  onRetry: (order: Order) => Promise<Order>
   onSuccess: (method: PaymentMethod) => void
 }
 
-export function MockPaymentModal({ order, onClose, onSuccess }: MockPaymentModalProps) {
+export function MockPaymentModal({ order, onClose, onFailure, onRetry, onSuccess }: MockPaymentModalProps) {
+  const [activeOrder, setActiveOrder] = useState(order)
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false)
   const [method, setMethod] = useState<PaymentMethod | null>(null)
   const [phase, setPhase] = useState<Phase>('waiting')
   const [remaining, setRemaining] = useState(HOLD_SECONDS)
   const [paymentUrl, setPaymentUrl] = useState('')
   const [paymentError, setPaymentError] = useState('')
   const [creatingPayment, setCreatingPayment] = useState(false)
+  const [handlingFailure, setHandlingFailure] = useState(false)
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
 
   useEffect(() => {
@@ -72,21 +77,47 @@ export function MockPaymentModal({ order, onClose, onSuccess }: MockPaymentModal
     )
   }
 
-  function simulateFailure() {
+  async function simulateFailure() {
     setPhase('failed')
+    setPaymentError('')
+    setHandlingFailure(true)
+    try {
+      setActiveOrder(await onFailure(activeOrder))
+    } catch (cause) {
+      setPaymentError(cause instanceof Error ? cause.message : 'Không thể cập nhật trạng thái thanh toán.')
+    } finally {
+      setHandlingFailure(false)
+    }
   }
 
-  function retry() {
+  async function retry() {
+    setPaymentError('')
+    if (activeOrder.status === 'CANCELLED') {
+      setCreatingPayment(true)
+      try {
+        const resumedOrder = await onRetry(activeOrder)
+        setActiveOrder(resumedOrder)
+        setPhase('waiting')
+        setRemaining(HOLD_SECONDS)
+        setPaymentUrl('')
+        if (method) await selectMethod(method, resumedOrder)
+      } catch (cause) {
+        setPaymentError(cause instanceof Error ? cause.message : 'Không thể tạo lại đơn để thanh toán.')
+      } finally {
+        setCreatingPayment(false)
+      }
+      return
+    }
     setPhase('waiting')
     if (remaining === 0) setRemaining(HOLD_SECONDS)
     if (method) void selectMethod(method)
   }
 
-  async function selectMethod(nextMethod: PaymentMethod) {
+  async function selectMethod(nextMethod: PaymentMethod, forOrder = activeOrder) {
     setCreatingPayment(true)
     setPaymentError('')
     try {
-      const result = await paymentsApi.create(order.code, nextMethod, order.total)
+      const result = await paymentsApi.create(forOrder.code, nextMethod, forOrder.total)
       setPaymentUrl(result.paymentUrl)
       setMethod(nextMethod)
     } catch (cause) {
@@ -99,27 +130,28 @@ export function MockPaymentModal({ order, onClose, onSuccess }: MockPaymentModal
   const busy = phase === 'processing' || phase === 'success'
 
   return (
-    <Modal
-      open
-      onClose={busy ? () => {} : onClose}
-      title="Thanh toán đơn hàng"
-      description="Chọn phương thức và quét mã QR để hoàn tất"
-      className="sm:max-w-4xl"
-    >
-      {phase === 'success' ? (
-        <SuccessView total={order.total} code={order.code} />
-      ) : (
-        <>
-          <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto p-5 md:grid-cols-[300px_minmax(0,1fr)]">
-            <div className="flex flex-col gap-4">
-              <OrderSummary order={order} />
-              <MethodPicker value={method} onChange={(value) => void selectMethod(value)} disabled={busy || creatingPayment} />
-            </div>
+    <>
+      <Modal
+        open
+        onClose={busy ? () => {} : () => setCloseConfirmOpen(true)}
+        title="Thanh toán đơn hàng"
+        description="Chọn phương thức và quét mã QR để hoàn tất"
+        className="sm:max-w-4xl"
+      >
+        {phase === 'success' ? (
+          <SuccessView total={activeOrder.total} code={activeOrder.code} />
+        ) : (
+          <>
+            <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto p-5 md:grid-cols-[300px_minmax(0,1fr)]">
+              <div className="flex flex-col gap-4">
+                <OrderSummary order={activeOrder} />
+                <MethodPicker value={method} onChange={(value) => void selectMethod(value)} disabled={busy || creatingPayment} />
+              </div>
 
-            <section
-              aria-label="Chi tiết thanh toán"
-              className="flex min-h-[420px] flex-col rounded-2xl border border-border bg-muted/40 p-5"
-            >
+              <section
+                aria-label="Chi tiết thanh toán"
+                className="flex min-h-[420px] flex-col rounded-2xl border border-border bg-muted/40 p-5"
+              >
               {phase === 'failed' && (
                 <div
                   role="alert"
@@ -128,11 +160,16 @@ export function MockPaymentModal({ order, onClose, onSuccess }: MockPaymentModal
                   <XCircle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
                   <div className="flex-1">
                     <p className="font-semibold">Giao dịch không thành công hoặc đã bị hủy</p>
-                    <p className="mt-0.5 text-destructive/80">Đơn hàng vẫn được giữ để bạn thử thanh toán lại.</p>
+                    <p className="mt-0.5 text-destructive/80">
+                      {handlingFailure
+                        ? 'Đang cập nhật trạng thái đơn hàng...'
+                        : 'Món đã được giữ trong giỏ; bạn có thể tạo lại đơn để thanh toán.'}
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={retry}
+                    disabled={handlingFailure || creatingPayment}
                     className="flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-destructive px-3 text-xs font-semibold text-white hover:bg-destructive/90"
                   >
                     <RotateCcw className="size-3.5" aria-hidden="true" />
@@ -164,22 +201,50 @@ export function MockPaymentModal({ order, onClose, onSuccess }: MockPaymentModal
               ) : method === null || !paymentUrl ? (
                 <EmptyMethod />
               ) : method === 'MOMO' ? (
-                <MomoPanel order={order} phase={phase} remaining={remaining} paymentUrl={paymentUrl} />
+                <MomoPanel order={activeOrder} phase={phase} remaining={remaining} paymentUrl={paymentUrl} />
               ) : (
-                <VietQrPanel order={order} phase={phase} remaining={remaining} paymentUrl={paymentUrl} />
+                <VietQrPanel order={activeOrder} phase={phase} remaining={remaining} paymentUrl={paymentUrl} />
               )}
-            </section>
-          </div>
+              </section>
+            </div>
 
-          <SandboxControls
-            disabled={!method || !paymentUrl || phase !== 'waiting'}
-            processing={phase === 'processing'}
-            onSuccess={simulateSuccess}
-            onFailure={simulateFailure}
-          />
-        </>
-      )}
-    </Modal>
+            <SandboxControls
+              disabled={!method || !paymentUrl || phase !== 'waiting'}
+              processing={phase === 'processing'}
+              onSuccess={simulateSuccess}
+              onFailure={simulateFailure}
+            />
+          </>
+        )}
+      </Modal>
+      <Modal
+        open={closeConfirmOpen}
+        onClose={() => setCloseConfirmOpen(false)}
+        title="Xác nhận thanh toán"
+        description="Bạn muốn tiếp tục thanh toán đơn hàng này hay thanh toán sau?"
+        className="p-5"
+      >
+        <div className="flex flex-col gap-2 px-5 pb-5 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={() => setCloseConfirmOpen(false)}
+            className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+          >
+            Tiếp tục thanh toán
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setCloseConfirmOpen(false)
+              onClose()
+            }}
+            className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+          >
+            Thanh toán sau
+          </button>
+        </div>
+      </Modal>
+    </>
   )
 }
 

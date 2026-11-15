@@ -1,6 +1,10 @@
 package vn.doan.repository;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.doan.domain.Order;
 import vn.doan.domain.Payment;
@@ -16,6 +20,10 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
 
     // 1. Tìm thông tin thanh toán theo đơn hàng (Mỗi đơn hàng liên kết với giao dịch thanh toán)
     Optional<Payment> findByOrder(Order order);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Payment p WHERE p.order = :order")
+    Optional<Payment> findByOrderForUpdate(@Param("order") Order order);
 
     // 2. Lấy danh sách giao dịch theo trạng thái thanh toán (ví dụ: tìm các giao dịch PENDING, SUCCESS...)
     List<Payment> findByPaymentStatus(PaymentStatus paymentStatus);
