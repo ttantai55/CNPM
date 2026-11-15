@@ -9,7 +9,7 @@ Trong giai đoạn thiết kế kiến trúc hệ thống cho đồ án Quản l
 ## Quyết định (Decision)
 Nhóm quyết định áp dụng phong cách kiến trúc **Monolithic**, cụ thể là mô hình **Modular Monolith** kết hợp kiến trúc phân lớp (Layered Architecture) tại `apps/backend/`:
 * Toàn bộ các domain nghiệp vụ (Order, Payment, Catalog/Menu, Inventory, Customer, Auth...) được đóng gói chung trong một codebase Spring Boot (`Java 17`) duy nhất và chạy trên cùng một tiến trình (single process).
-* Các thành phần (`controller`, `service`, `repository`, `domain`, `entity`, `enums`) được phân tách ranh giới rõ ràng thông qua cấu trúc package, giao tiếp với nhau qua các interface/method call nội bộ thay vì thông qua mạng (network RPC/HTTP).
+* Các thành phần (`controller`, `service`, `repository`, `domain`, `exception`, `enums`, `config`) được phân tách ranh giới rõ ràng thông qua cấu trúc package, giao tiếp với nhau qua các interface/method call nội bộ thay vì thông qua mạng (network RPC/HTTP).
 
 ## Hệ quả (Consequences / Trade-offs)
 * **Ưu điểm:**
