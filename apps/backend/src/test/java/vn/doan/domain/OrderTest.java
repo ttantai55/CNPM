@@ -15,10 +15,11 @@ class OrderTest {
     void recordsPreparationAndCompletionTimesOnStatusChanges() {
         Order order = new Order();
         order.changeStatus(OrderStatus.CONFIRMED);
+        assertNotNull(order.getPaidAt());
         assertNull(order.getPreparedAt());
         assertNull(order.getCompletedAt());
 
-        LocalDateTime beforePreparation = LocalDateTime.now().minusSeconds(1);
+        LocalDateTime beforePreparation = OrderTime.now().minusSeconds(1);
         order.changeStatus(OrderStatus.PREPARING);
         assertNotNull(order.getPreparedAt());
         assertFalse(order.getPreparedAt().isBefore(beforePreparation));

@@ -33,14 +33,14 @@ public class OrderProcess {
     public OrderProcess(Order order, OrderStatus status) {
         this.order = order;
         this.status = status;
-        this.updateAt = LocalDateTime.now();
+        this.updateAt = OrderTime.now();
     }
 
     public OrderProcess(String id, Order order, OrderStatus status, LocalDateTime updateAt) {
         this.id = id;
         this.order = order;
         this.status = status;
-        this.updateAt = updateAt;
+        this.updateAt = updateAt != null ? updateAt : OrderTime.now();
     }
 
     // Getters and Setters

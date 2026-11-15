@@ -31,7 +31,11 @@ function OrderCard({ order, action, now }: { order: Order; action?: string; now:
       ? order.completedAt
       : 0
   const timestampLabel = timestamp > 0
-    ? new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit' }).format(timestamp)
+    ? new Intl.DateTimeFormat('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Ho_Chi_Minh',
+      }).format(timestamp)
     : null
   const isUrgent = preparationAge !== null && preparationAge >= 15
 
@@ -214,7 +218,19 @@ export function OrdersBoardContent({ embedded = false }: { embedded?: boolean })
             {COLUMNS.map((column) => {
               const columnOrders = filteredOrders
                 .filter((order) => column.statuses.includes(order.status))
-                .sort((a, b) => a.createdAt - b.createdAt)
+                .sort((a, b) => {
+                  if (column.statuses.includes('PENDING')) {
+                    const aPaid = a.status === 'CONFIRMED' || a.paymentCompletedAt > 0
+                    const bPaid = b.status === 'CONFIRMED' || b.paymentCompletedAt > 0
+                    if (aPaid !== bPaid) return aPaid ? -1 : 1
+                    if (aPaid && bPaid) {
+                      return (a.paymentCompletedAt || a.createdAt) -
+                        (b.paymentCompletedAt || b.createdAt) ||
+                        a.createdAt - b.createdAt
+                    }
+                  }
+                  return a.createdAt - b.createdAt
+                })
               return (
                 <section key={column.title} className="min-w-0 rounded-2xl border border-[#e8ece8] bg-[#f0f3f0] p-3.5">
                   <header className="mb-3 flex items-center justify-between px-1">
@@ -280,7 +296,11 @@ export function OrdersBoardContent({ embedded = false }: { embedded?: boolean })
                   <div>
                     <p className="text-xs font-bold text-[#354a3c]">#{order.code} · {order.customerName}</p>
                     <p className="mt-1 text-[10px] text-[#89948c]">
-                      {new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(order.completedAt)}
+                      {new Intl.DateTimeFormat('vi-VN', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                        timeZone: 'Asia/Ho_Chi_Minh',
+                      }).format(order.completedAt)}
                     </p>
                   </div>
                   <div className="text-right">

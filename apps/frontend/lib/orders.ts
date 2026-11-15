@@ -108,6 +108,12 @@ export const orderStore = createStore<Order[]>([])
 const locallyDeletedOrderCodes = createPersistentStore<string[]>('brewlite.locally-deleted-cancelled-orders', [])
 const locallyArchivedOrderCodes = createPersistentStore<string[]>('brewlite.locally-archived-orders', [])
 
+function parseApiDateTime(value?: string | null) {
+  if (!value) return 0
+  const timestamp = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value) ? value : `${value}+07:00`
+  return new Date(timestamp).getTime()
+}
+
 export function isOrderLocallyDeleted(code: string) {
   return locallyDeletedOrderCodes.get().includes(code)
 }
@@ -169,19 +175,19 @@ export function migrateOrderStatuses() {
 }
 
 export function fromApiOrder(remote: ApiOrder): Order {
-  const now = new Date(remote.createdAt).getTime()
   const confirmedAt = remote.processes?.find((process) => process.status === 'CONFIRMED')?.updateAt
-  const paymentCompletedAt = confirmedAt ? new Date(confirmedAt).getTime() : 0
+  const paymentCompletedAt = parseApiDateTime(remote.paidAt ?? confirmedAt)
   const preparedAtValue = remote.preparedAt ??
     remote.processes?.find((process) => process.status === 'PREPARING')?.updateAt
   const completedAtValue = remote.completedAt ??
     remote.processes?.find((process) => process.status === 'COMPLETED')?.updateAt
-  const preparedAt = preparedAtValue ? new Date(preparedAtValue).getTime() : 0
-  const completedAt = completedAtValue ? new Date(completedAtValue).getTime() : 0
+  const preparedAt = parseApiDateTime(preparedAtValue)
+  const completedAt = parseApiDateTime(completedAtValue)
+  const createdAt = parseApiDateTime(remote.createdAt)
   const lastProcessAt = remote.processes?.reduce(
-    (latest, process) => Math.max(latest, new Date(process.updateAt).getTime()),
-    now,
-  ) ?? now
+    (latest, process) => Math.max(latest, parseApiDateTime(process.updateAt)),
+    createdAt,
+  ) ?? createdAt
   return {
     code: remote.id,
     customerId: remote.customerId,
@@ -207,7 +213,7 @@ export function fromApiOrder(remote: ApiOrder): Order {
     total: remote.finalAmount,
     paymentMethod: remote.paymentMethod ?? null,
     status: remote.status as OrderStatus,
-    createdAt: now,
+    createdAt,
     updatedAt: lastProcessAt,
     paymentCompletedAt: Number.isFinite(paymentCompletedAt) ? paymentCompletedAt : 0,
     preparedAt: Number.isFinite(preparedAt) ? preparedAt : 0,
