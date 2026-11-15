@@ -142,21 +142,23 @@ export function LoginPage() {
         <div className="absolute -bottom-48 -right-36 size-[570px] rounded-full bg-[#285347]" />
         <div className="absolute bottom-12 right-10 size-64 rounded-full border border-white/10" />
 
-        <a href="/" className="relative z-10 inline-flex w-fit items-center gap-3" aria-label="BrewLite trang chủ">
-          <span className="flex size-12 items-center justify-center rounded-2xl bg-[#e6b781] text-[#173d34] shadow-lg">
-            <Coffee className="size-6" />
-          </span>
-          <span>
-            <span className="block text-2xl font-bold tracking-tight">BrewLite</span>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/60">Brew your moment</span>
-          </span>
-        </a>
-
-        <div className="relative z-10 -mt-6 max-w-xl">
+        <div className="relative z-10 flex flex-col gap-4">
+          <a href="/" className="inline-flex w-fit items-center gap-3" aria-label="BrewLite trang chủ">
+            <span className="flex size-12 items-center justify-center rounded-2xl bg-[#e6b781] text-[#173d34] shadow-lg">
+              <Coffee className="size-6" />
+            </span>
+            <span>
+              <span className="block text-2xl font-bold tracking-tight">BrewLite</span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/60">Brew your moment</span>
+            </span>
+          </a>
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-2 text-xs font-medium text-white/85">
             <Sparkles className="size-3.5 text-[#e6b781]" />
             Một chút tỉnh táo, thật nhiều cảm hứng
           </span>
+        </div>
+
+        <div className="relative z-10 max-w-xl">
           <h1 className="mt-7 text-5xl font-semibold leading-[1.14] tracking-tight xl:text-[60px]">
             Chậm lại một chút.
             <span className="mt-2 block font-normal italic text-[#e6b781]">Thưởng thức trọn vị.</span>
@@ -238,7 +240,7 @@ export function LoginPage() {
           <div className="mb-8">
             <p className="text-sm font-semibold text-[#b17b4c]">{mode === 'login' ? 'Chào mừng trở lại!' : 'Tham gia BrewLite'}</p>
             <h2 className="mt-2 text-[34px] font-semibold tracking-tight text-[#23372f]">{mode === 'login' ? 'Đăng nhập BrewLite' : 'Tạo tài khoản'}</h2>
-            <p className="mt-2 text-sm text-[#7d8781]">{mode === 'login' ? 'Chọn tài khoản và tiếp tục hành trình vị giác của bạn.' : 'Đăng ký tài khoản khách hàng mới.'}</p>
+            <p className="mt-2 text-sm text-[#7d8781]">{mode === 'login' ? 'Đăng nhập để tiếp tục hành trình vị giác của bạn.' : 'Đăng ký tài khoản khách hàng mới.'}</p>
           </div>
 
           {mode === 'login' ? <form
@@ -326,7 +328,7 @@ export function LoginPage() {
                 <>Đăng nhập <ArrowRight className="size-4" /></>
               )}
             </button>
-            <div className="space-y-2 border-t border-[#e9ede9] pt-4">
+            <div className="hidden space-y-2 border-t border-[#e9ede9] pt-4">
               <p className="text-center text-xs font-semibold text-[#66736b]">Đăng nhập nhanh để dùng thử</p>
               <div className="grid grid-cols-3 gap-2">
                 {DEMO_ACCOUNTS.map((account) => (
