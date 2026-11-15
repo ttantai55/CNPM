@@ -35,6 +35,12 @@ public class Order {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "prepared_at")
+    private LocalDateTime preparedAt;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
@@ -82,6 +88,11 @@ public class Order {
             );
         }
         this.status = newStatus;
+        if (newStatus == OrderStatus.PREPARING) {
+            this.preparedAt = LocalDateTime.now();
+        } else if (newStatus == OrderStatus.COMPLETED) {
+            this.completedAt = LocalDateTime.now();
+        }
         recordProcess(newStatus);
     }
 
@@ -146,6 +157,22 @@ public class Order {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getPreparedAt() {
+        return preparedAt;
+    }
+
+    public void setPreparedAt(LocalDateTime preparedAt) {
+        this.preparedAt = preparedAt;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
     }
 
     public List<OrderItem> getItems() {

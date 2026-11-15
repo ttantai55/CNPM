@@ -162,6 +162,8 @@ function ManagerContent() {
 
   // State cho Modal Xác nhận xóa
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null)
+  const [deletingProductBusy, setDeletingProductBusy] = useState(false)
+  const [deleteProductError, setDeleteProductError] = useState('')
 
   const selectedOrders = useMemo(
     () => orders.filter((order) => order.createdAt >= dateBounds.start && order.createdAt <= dateBounds.end),
@@ -289,11 +291,17 @@ function ManagerContent() {
   }
 
   // Xác nhận xóa món
-  const handleConfirmDelete = () => {
-    if (deletingProduct) {
-      void deleteProduct(deletingProduct.id)
-        .then(() => setDeletingProduct(null))
-        .catch((error: unknown) => setFormError(error instanceof Error ? error.message : 'Không thể xóa sản phẩm.'))
+  const handleConfirmDelete = async () => {
+    if (!deletingProduct || deletingProductBusy) return
+    setDeletingProductBusy(true)
+    setDeleteProductError('')
+    try {
+      await deleteProduct(deletingProduct.id)
+      setDeletingProduct(null)
+    } catch (error) {
+      setDeleteProductError(error instanceof Error ? error.message : 'Không thể xóa sản phẩm.')
+    } finally {
+      setDeletingProductBusy(false)
     }
   }
 
@@ -590,7 +598,10 @@ function ManagerContent() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => setDeletingProduct(product)}
+                                onClick={() => {
+                                  setDeleteProductError('')
+                                  setDeletingProduct(product)
+                                }}
                                 className="flex items-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-medium text-[#9b7771] transition-colors hover:bg-red-50 hover:text-red-600"
                                 aria-label={`Xóa ${product.name}`}
                               >
@@ -815,7 +826,11 @@ function ManagerContent() {
               <div className="mt-5 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
-                  onClick={() => setDeletingProduct(null)}
+                  onClick={() => {
+                    if (deletingProductBusy) return
+                    setDeleteProductError('')
+                    setDeletingProduct(null)
+                  }}
                   className="rounded-lg border border-gray-200 px-3.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50"
                 >
                   Hủy
@@ -823,11 +838,13 @@ function ManagerContent() {
                 <button
                   type="button"
                   onClick={handleConfirmDelete}
+                  disabled={deletingProductBusy}
                   className="rounded-lg bg-red-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700"
                 >
-                  Xác nhận xóa
+                  {deletingProductBusy ? 'Đang xóa...' : 'Xác nhận xóa'}
                 </button>
               </div>
+              {deleteProductError && <p role="alert" className="mt-3 text-xs text-red-600">{deleteProductError}</p>}
             </div>
           </div>
         )}
