@@ -78,6 +78,8 @@ export type ApiOrder = {
   finalAmount: number
   status: string
   createdAt: string
+  preparedAt?: string | null
+  completedAt?: string | null
   processes?: Array<{ status: string; updateAt: string }>
   voucherCode?: string | null
   paymentMethod?: 'MOMO' | 'VIETQR' | null

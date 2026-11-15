@@ -195,10 +195,6 @@ function CheckoutForm({
   return (
     <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-4">
-        <div className="flex items-center justify-between rounded-xl bg-secondary px-3 py-2.5 text-sm">
-          <span className="font-semibold text-foreground">Nhận tại quán</span>
-          <span className="text-xs text-muted-foreground">Miễn phí</span>
-        </div>
         <section aria-label="Tóm tắt món đặt" className="rounded-xl border border-border px-3 py-2.5">
           <h3 className="text-xs font-semibold text-foreground">Tóm tắt món đặt</h3>
           <ul className="mt-2 space-y-2">

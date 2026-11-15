@@ -276,6 +276,8 @@ public class OrderService {
                 order.getFinalAmount(),
                 order.getStatus().name(),
                 order.getCreatedAt(),
+                order.getPreparedAt(),
+                order.getCompletedAt(),
                 itemResponses,
                 processResponses,
                 voucherCode,

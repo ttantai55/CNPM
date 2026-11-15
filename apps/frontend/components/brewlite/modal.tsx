@@ -4,6 +4,9 @@ import { useEffect, useEffectEvent, useId, useRef } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+let activeModalCount = 0
+let previousBodyOverflow = ''
+
 type ModalProps = {
   open: boolean
   onClose: () => void
@@ -31,8 +34,11 @@ export function Modal({
   useEffect(() => {
     if (!open) return
     const previouslyFocused = document.activeElement as HTMLElement | null
-    const { overflow } = document.body.style
-    document.body.style.overflow = 'hidden'
+    if (activeModalCount === 0) {
+      previousBodyOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+    }
+    activeModalCount += 1
     panelRef.current?.focus()
 
     function onKeyDown(event: KeyboardEvent) {
@@ -41,7 +47,10 @@ export function Modal({
     window.addEventListener('keydown', onKeyDown)
     return () => {
       window.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = overflow
+      activeModalCount = Math.max(0, activeModalCount - 1)
+      if (activeModalCount === 0) {
+        document.body.style.overflow = previousBodyOverflow
+      }
       previouslyFocused?.focus()
     }
   }, [open])

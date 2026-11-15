@@ -88,11 +88,16 @@ CREATE TABLE IF NOT EXISTS orders (
     final_amount bigint NOT NULL DEFAULT 0,
     status varchar(255) NOT NULL DEFAULT 'PENDING',
     created_at timestamp without time zone NOT NULL DEFAULT current_timestamp,
+    prepared_at timestamp without time zone,
+    completed_at timestamp without time zone,
     CONSTRAINT fk_orders_customer
         FOREIGN KEY (customer_id) REFERENCES customers (id),
     CONSTRAINT fk_orders_promotion
         FOREIGN KEY (promotion_id) REFERENCES promotions (id)
 );
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS prepared_at timestamp without time zone;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS completed_at timestamp without time zone;
 
 CREATE TABLE IF NOT EXISTS carts (
     id varchar(255) PRIMARY KEY,

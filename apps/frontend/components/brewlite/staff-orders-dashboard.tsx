@@ -22,10 +22,18 @@ const categoryOptions: { value: CategoryId; label: string }[] = [
 ]
 
 function OrderCard({ order, action, now }: { order: Order; action?: string; now: number }) {
-  const age = order.paymentCompletedAt > 0 && !['PENDING', 'CANCELLED'].includes(order.status)
-    ? Math.max(0, Math.floor((now - order.paymentCompletedAt) / 60_000))
+  const preparationAge = order.status === 'PREPARING' && order.preparedAt > 0
+    ? Math.max(0, Math.floor((now - order.preparedAt) / 60_000))
     : null
-  const isUrgent = age !== null && age >= 15 && order.status !== 'COMPLETED'
+  const timestamp = order.status === 'PREPARING'
+    ? order.preparedAt
+    : order.status === 'COMPLETED'
+      ? order.completedAt
+      : 0
+  const timestampLabel = timestamp > 0
+    ? new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit' }).format(timestamp)
+    : null
+  const isUrgent = preparationAge !== null && preparationAge >= 15
 
   return (
     <article className="rounded-xl border border-[#e9ede9] bg-white p-4 shadow-[0_2px_8px_rgba(27,52,39,0.03)]">
@@ -34,9 +42,10 @@ function OrderCard({ order, action, now }: { order: Order; action?: string; now:
           <p className="text-[13px] font-bold tracking-wide text-[#2c4639]">#{order.code}</p>
           <p className="mt-1 text-[11px] text-[#8b978f]">{order.customerName}</p>
         </div>
-        {age !== null && (
+        {timestampLabel && (
           <span className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${isUrgent ? 'bg-[#fff0ed] text-[#bd5c4c]' : 'bg-[#f3f5f3] text-[#718078]'}`}>
-            <Clock3 className="size-3" /> {age} phút
+            <Clock3 className="size-3" />
+            {order.status === 'PREPARING' ? `Bắt đầu ${timestampLabel} · ${preparationAge} phút` : `Hoàn tất ${timestampLabel}`}
           </span>
         )}
       </div>

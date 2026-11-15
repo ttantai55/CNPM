@@ -53,6 +53,7 @@ export type Order = {
   createdAt: number
   updatedAt: number
   paymentCompletedAt: number
+  preparedAt: number
   preparationTime: number
   completedAt: number
   isArchived: boolean
@@ -61,7 +62,7 @@ export type Order = {
 /** Order details collected at checkout, before the payment is confirmed. */
 export type OrderDraft = Omit<
   Order,
-  'code' | 'paymentMethod' | 'status' | 'createdAt' | 'updatedAt' | 'preparationTime' | 'completedAt' | 'isArchived' | 'paymentCompletedAt'
+  'code' | 'paymentMethod' | 'status' | 'createdAt' | 'updatedAt' | 'paymentCompletedAt' | 'preparedAt' | 'preparationTime' | 'completedAt' | 'isArchived'
 >
 
 export const PAYMENT_LABEL: Record<PaymentMethod, string> = { MOMO: 'Ví MoMo', VIETQR: 'VietQR' }
@@ -77,6 +78,14 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   CONFIRMED: 'PREPARING',
   PREPARING: 'COMPLETED',
+}
+
+const ORDER_STATUS_RANK: Record<OrderStatus, number> = {
+  PENDING: 0,
+  CONFIRMED: 1,
+  PREPARING: 2,
+  COMPLETED: 3,
+  CANCELLED: 4,
 }
 
 export function cartItemToLine(item: CartItem): OrderLine {
@@ -97,6 +106,7 @@ export function cartItemToLine(item: CartItem): OrderLine {
 
 export const orderStore = createStore<Order[]>([])
 const locallyDeletedOrderCodes = createPersistentStore<string[]>('brewlite.locally-deleted-cancelled-orders', [])
+const locallyArchivedOrderCodes = createPersistentStore<string[]>('brewlite.locally-archived-orders', [])
 
 export function isOrderLocallyDeleted(code: string) {
   return locallyDeletedOrderCodes.get().includes(code)
@@ -120,6 +130,7 @@ export function migrateOrderStatuses() {
     order.total !== order.subtotal - (order.discountAmount ?? 0) ||
     Boolean(order.address) ||
     typeof order.preparationTime !== 'number' ||
+    typeof order.preparedAt !== 'number' ||
     typeof order.completedAt !== 'number' ||
     typeof order.paymentCompletedAt !== 'number' ||
     (order.status === 'COMPLETED' && order.completedAt <= 0) ||
@@ -146,6 +157,7 @@ export function migrateOrderStatuses() {
       deliveryFee: 0,
       total: order.subtotal - (order.discountAmount ?? 0),
       preparationTime: order.preparationTime ?? 0,
+      preparedAt: order.preparedAt ?? (status === 'COMPLETED' ? order.paymentCompletedAt ?? order.updatedAt : 0),
       completedAt,
       paymentCompletedAt: order.paymentCompletedAt ?? 0,
       isArchived:
@@ -160,6 +172,16 @@ export function fromApiOrder(remote: ApiOrder): Order {
   const now = new Date(remote.createdAt).getTime()
   const confirmedAt = remote.processes?.find((process) => process.status === 'CONFIRMED')?.updateAt
   const paymentCompletedAt = confirmedAt ? new Date(confirmedAt).getTime() : 0
+  const preparedAtValue = remote.preparedAt ??
+    remote.processes?.find((process) => process.status === 'PREPARING')?.updateAt
+  const completedAtValue = remote.completedAt ??
+    remote.processes?.find((process) => process.status === 'COMPLETED')?.updateAt
+  const preparedAt = preparedAtValue ? new Date(preparedAtValue).getTime() : 0
+  const completedAt = completedAtValue ? new Date(completedAtValue).getTime() : 0
+  const lastProcessAt = remote.processes?.reduce(
+    (latest, process) => Math.max(latest, new Date(process.updateAt).getTime()),
+    now,
+  ) ?? now
   return {
     code: remote.id,
     customerId: remote.customerId,
@@ -186,10 +208,13 @@ export function fromApiOrder(remote: ApiOrder): Order {
     paymentMethod: remote.paymentMethod ?? null,
     status: remote.status as OrderStatus,
     createdAt: now,
-    updatedAt: now,
+    updatedAt: lastProcessAt,
     paymentCompletedAt: Number.isFinite(paymentCompletedAt) ? paymentCompletedAt : 0,
-    preparationTime: 0,
-    completedAt: 0,
+    preparedAt: Number.isFinite(preparedAt) ? preparedAt : 0,
+    preparationTime: preparedAt > 0 && completedAt > 0
+      ? Math.max(0, Math.round((completedAt - preparedAt) / 60_000))
+      : 0,
+    completedAt: Number.isFinite(completedAt) ? completedAt : 0,
     isArchived: false,
   }
 }
@@ -293,16 +318,12 @@ export async function advanceOrder(code: string) {
   if (!next) return
   const remote = await ordersApi.status(code, next)
   const mapped = fromApiOrder(remote)
-  const now = Date.now()
   orderStore.set((orders) =>
     orders.map((order) => order.code !== code ? order : {
       ...mapped,
       customerEmail: order.customerEmail,
       note: order.note,
       paymentMethod: order.paymentMethod,
-      updatedAt: now,
-      preparationTime: next === 'COMPLETED' ? Math.max(0, Math.round((now - order.updatedAt) / 60_000)) : order.preparationTime,
-      completedAt: next === 'COMPLETED' ? now : order.completedAt,
       isArchived: false,
     }),
   )
@@ -311,10 +332,25 @@ export async function advanceOrder(code: string) {
 export async function refreshOrders(query = '') {
   const remoteOrders = await ordersApi.list(query)
   const deletedCodes = new Set(locallyDeletedOrderCodes.get())
-  orderStore.set(remoteOrders.map(fromApiOrder).filter((order) => !deletedCodes.has(order.code)))
+  const archivedCodes = new Set(locallyArchivedOrderCodes.get())
+  const currentOrders = new Map(orderStore.get().map((order) => [order.code, order]))
+  orderStore.set(remoteOrders.map((remote) => {
+    const order = fromApiOrder(remote)
+    const current = currentOrders.get(order.code)
+    if (current && ORDER_STATUS_RANK[current.status] > ORDER_STATUS_RANK[order.status]) {
+      return current
+    }
+    return {
+      ...order,
+      customerEmail: current?.customerEmail,
+      note: current?.note,
+      isArchived: archivedCodes.has(order.code) || current?.isArchived === true,
+    }
+  }).filter((order) => !deletedCodes.has(order.code)))
 }
 
 export function archiveCompletedOrder(code: string) {
+  locallyArchivedOrderCodes.set((codes) => codes.includes(code) ? codes : [...codes, code])
   orderStore.set((orders) =>
     orders.map((order) =>
       order.code === code && order.status === 'COMPLETED'
@@ -326,13 +362,15 @@ export function archiveCompletedOrder(code: string) {
 
 export function archiveCompletedOrders(now = Date.now()) {
   const orders = orderStore.get()
-  if (!orders.some(
+  const newlyArchived = orders.filter(
     (order) =>
       order.status === 'COMPLETED' &&
       !order.isArchived &&
       order.completedAt > 0 &&
       now - order.completedAt >= 5 * 60_000,
-  )) return
+  ).map((order) => order.code)
+  if (newlyArchived.length === 0) return
+  locallyArchivedOrderCodes.set((codes) => [...new Set([...codes, ...newlyArchived])])
   orderStore.set((current) =>
     current.map((order) =>
       order.status === 'COMPLETED' &&
