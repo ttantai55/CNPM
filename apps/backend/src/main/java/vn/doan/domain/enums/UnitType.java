@@ -4,5 +4,7 @@ public enum UnitType {
     PACK,
     CAN,
     BOX,
-    PIECE;
+    PIECE,
+    KG,
+    BOTTLE;
 }

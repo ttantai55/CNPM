@@ -81,6 +81,7 @@ export function BrewLiteApp() {
   const [profile, setProfile] = useState<CustomerProfile | null>(null)
   const user: User | null = session && profile
     ? {
+        id: session.id,
         name: profile.name || session.username || session.name,
         displayName: profile.name.trim() || session.username || session.name,
         email: session.email,
