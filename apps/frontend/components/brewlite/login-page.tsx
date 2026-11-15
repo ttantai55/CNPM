@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import {
   ArrowRight,
   Check,
@@ -23,6 +24,13 @@ const DEMO_ACCOUNTS = [
   { label: 'Khách hàng', loginId: 'user@brewlite.vn', role: 'CUSTOMER' },
   { label: 'Nhân viên', loginId: 'staff@brewlite.vn', role: 'STAFF' },
   { label: 'Quản lý', loginId: 'manager@brewlite.vn', role: 'MANAGER' },
+] as const
+const LOGIN_HIGHLIGHTS = [
+  { name: 'Trà sữa trân châu', image: '/images/tra-sua-tran-chau.png', slogan: 'Một ngụm là mê, thêm trân châu là nhớ.' },
+  { name: 'Trà sữa matcha', image: '/images/tra-sua-matcha.png', slogan: 'Matcha xanh mát, bật mood ngày mới.' },
+  { name: 'Mocha caramel', image: '/images/mocha-caramel.png', slogan: 'Caramel ngọt dịu, chiều nay thêm chill.' },
+  { name: 'Cold brew', image: '/images/cold-brew.png', slogan: 'Ủ lạnh thật lâu, tỉnh táo thật sâu.' },
+  { name: 'Thanh long xoài', image: '/images/thanh-long-xoai.png', slogan: 'Xoài chín, thanh long — mùa hè trong tay.' },
 ] as const
 
 export function LoginPage() {
@@ -157,20 +165,39 @@ export function LoginPage() {
             Cà phê rang mới, trà thơm mỗi ngày — chọn vị bạn yêu và để BrewLite chăm chút phần còn lại.
           </p>
 
-          <div className="relative mt-11 flex h-[240px] max-w-[410px] items-center justify-center overflow-hidden rounded-[30px] border border-white/10 bg-gradient-to-br from-[#285b4c] via-[#1d4a3e] to-[#173d34]">
-            <div className="absolute left-8 top-8 size-36 rounded-full bg-[#d49a62]/15 blur-2xl" />
-            <div className="absolute bottom-0 right-5 size-48 rounded-full bg-[#e7b77d]/10 blur-3xl" />
-            <div className="relative flex size-44 items-center justify-center rounded-full border border-white/10 bg-white/[0.04]">
-              <div className="flex size-32 items-center justify-center rounded-[34px] bg-[#f3e8d8] shadow-[0_22px_45px_rgba(0,0,0,0.2)]">
-                <Coffee className="size-[68px] stroke-[1.2] text-[#6b4935]" />
-              </div>
-              <span className="absolute -right-16 top-6 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-[#244b40] shadow-lg">
-                Freshly brewed
-              </span>
-              <span className="absolute -left-14 bottom-5 flex items-center gap-1.5 rounded-full border border-white/10 bg-[#183e34]/90 px-3.5 py-2 text-xs font-medium text-white">
-                <span className="size-1.5 rounded-full bg-[#9bd2a7]" />
-                Pha chế mỗi ngày
-              </span>
+          <div
+            className="relative mt-11 h-[260px] max-w-[410px] overflow-hidden rounded-[30px] border border-white/15 bg-[#173d34] shadow-[0_22px_55px_rgba(0,0,0,0.22)]"
+            role="region"
+            aria-label="Thức uống bán chạy tại BrewLite"
+          >
+            <div className="login-marquee-track flex h-full w-max">
+              {[0, 1].map((copy) => (
+                <div
+                  key={copy}
+                  className="flex shrink-0 items-center gap-4 px-2"
+                  aria-hidden={copy === 1}
+                >
+                  {LOGIN_HIGHLIGHTS.map((drink) => (
+                    <article key={drink.name} className="group relative h-[228px] w-[250px] shrink-0 overflow-hidden rounded-[23px]">
+                      <Image
+                        src={drink.image}
+                        alt={drink.name}
+                        fill
+                        sizes="250px"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#101d18]/90 via-[#101d18]/15 to-transparent" />
+                      <div className="absolute inset-x-0 bottom-0 p-5">
+                        <span className="inline-flex rounded-full border border-white/25 bg-black/20 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/90 backdrop-blur-sm">
+                          BrewLite bestseller
+                        </span>
+                        <p className="mt-3 text-lg font-semibold leading-snug text-white">{drink.slogan}</p>
+                        <p className="mt-1.5 text-xs font-medium text-white/70">{drink.name}</p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
         </div>
