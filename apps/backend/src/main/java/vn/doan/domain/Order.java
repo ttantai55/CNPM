@@ -35,6 +35,9 @@ public class Order {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
     @Column(name = "prepared_at")
     private LocalDateTime preparedAt;
 
@@ -50,14 +53,14 @@ public class Order {
     // 1. Constructor không tham số
     public Order() {
         this.status = OrderStatus.PENDING;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = OrderTime.now();
     }
 
     // 2. Constructor tạo mới nhanh trong Service khi đặt đơn
     public Order(Customer customer) {
         this.customer = customer;
         this.status = OrderStatus.PENDING;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = OrderTime.now();
         recordProcess(OrderStatus.PENDING);
     }
 
@@ -75,7 +78,7 @@ public class Order {
         this.discount = discount;
         this.finalAmount = finalAmount;
         this.status = status != null ? status : OrderStatus.PENDING;
-        this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
+        this.createdAt = createdAt != null ? createdAt : OrderTime.now();
         recordProcess(this.status);
     }
 
@@ -88,10 +91,12 @@ public class Order {
             );
         }
         this.status = newStatus;
-        if (newStatus == OrderStatus.PREPARING) {
-            this.preparedAt = LocalDateTime.now();
+        if (newStatus == OrderStatus.CONFIRMED) {
+            this.paidAt = OrderTime.now();
+        } else if (newStatus == OrderStatus.PREPARING) {
+            this.preparedAt = OrderTime.now();
         } else if (newStatus == OrderStatus.COMPLETED) {
-            this.completedAt = LocalDateTime.now();
+            this.completedAt = OrderTime.now();
         }
         recordProcess(newStatus);
     }
@@ -157,6 +162,14 @@ public class Order {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getPaidAt() {
+        return paidAt;
+    }
+
+    public void setPaidAt(LocalDateTime paidAt) {
+        this.paidAt = paidAt;
     }
 
     public LocalDateTime getPreparedAt() {

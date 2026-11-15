@@ -19,6 +19,7 @@ public class OrderResponse {
 
     private String status; // Lấy tên Enum OrderStatus
     private LocalDateTime createdAt;
+    private LocalDateTime paidAt;
     private LocalDateTime preparedAt;
     private LocalDateTime completedAt;
 
@@ -37,8 +38,8 @@ public class OrderResponse {
 
     public OrderResponse(String id, String customerId, String customerName, String customerPhone, 
                          long totalAmount, long discountAmount, long finalAmount, String status, 
-                         LocalDateTime createdAt, LocalDateTime preparedAt, LocalDateTime completedAt,
-                         List<OrderItemResponse> items,
+                         LocalDateTime createdAt, LocalDateTime paidAt, LocalDateTime preparedAt,
+                         LocalDateTime completedAt, List<OrderItemResponse> items,
                          List<OrderProcessResponse> processes, String voucherCode, String paymentMethod) {
         this.id = id;
         this.customerId = customerId;
@@ -49,6 +50,7 @@ public class OrderResponse {
         this.finalAmount = finalAmount;
         this.status = status;
         this.createdAt = createdAt;
+        this.paidAt = paidAt;
         this.preparedAt = preparedAt;
         this.completedAt = completedAt;
         this.items = items;
@@ -75,6 +77,8 @@ public class OrderResponse {
     public String getStatus() { return status; }
     
     public LocalDateTime getCreatedAt() { return createdAt; }
+
+    public LocalDateTime getPaidAt() { return paidAt; }
 
     public LocalDateTime getPreparedAt() { return preparedAt; }
 

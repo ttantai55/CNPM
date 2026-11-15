@@ -78,6 +78,7 @@ export type ApiOrder = {
   finalAmount: number
   status: string
   createdAt: string
+  paidAt?: string | null
   preparedAt?: string | null
   completedAt?: string | null
   processes?: Array<{ status: string; updateAt: string }>
