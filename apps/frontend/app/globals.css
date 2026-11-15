@@ -107,3 +107,26 @@
 .no-scrollbar {
   scrollbar-width: none;
 }
+
+@keyframes login-marquee {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.login-marquee-track {
+  animation: login-marquee 40s linear infinite;
+}
+
+.login-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-marquee-track {
+    animation: none;
+  }
+}
