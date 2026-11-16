@@ -1,6 +1,6 @@
 # ☕ BrewLite — Hệ Thống Quản Lý Quán Coffee
 
-![Java](https://img.shields.io/badge/Java-21+-orange?logo=openjdk)
+![Java](https://img.shields.io/badge/Java-17+-orange?logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-Backend-6DB33F?logo=springboot&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-Frontend-000000?logo=nextdotjs)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql&logoColor=white)
@@ -10,7 +10,7 @@ BrewLite là hệ thống đặt đồ uống tự động hóa áp dụng kiế
 
 - **Nền tảng ứng dụng:** Java Spring Boot, Next.js
 - **Quản trị dữ liệu:** PostgreSQL
-- **DevOps & Kiểm thử tự động:** Docker, Testcontainers, Cypress, GitHub Actions
+- **DevOps & Kiểm thử tự động:** Docker, Cypress, GitHub Actions
 
 Tài liệu này cung cấp cái nhìn toàn diện về kiến trúc, bộ công cụ phát triển, quy trình kiểm thử và triển khai hệ thống, giúp các thành viên mới nhanh chóng thiết lập môi trường local và tham gia phát triển.
 
@@ -35,7 +35,7 @@ Tài liệu này cung cấp cái nhìn toàn diện về kiến trúc, bộ côn
 
 ### 👤 Dành cho Khách hàng (Customer)
 
-- **Xác thực & Tài khoản:** Đăng ký, đăng nhập (JWT + Refresh Token), quên/đặt lại mật khẩu.
+- **Xác thực & Tài khoản:** Đăng ký và đăng nhập bằng tên đăng nhập, email hoặc số điện thoại.
 - **Thực đơn & Tùy chỉnh món:** Xem danh sách đồ uống, chọn kích cỡ (`S`, `M`, `L`), thêm topping và ghi chú riêng cho từng ly.
 - **Giỏ hàng & Đặt hàng:** Quản lý giỏ hàng đồng bộ, đặt hàng online.
 - **Khuyến mãi & Điểm thưởng:** Áp dụng mã voucher giảm giá và quy đổi điểm tích lũy (Loyalty Points).
@@ -58,10 +58,10 @@ Tài liệu này cung cấp cái nhìn toàn diện về kiến trúc, bộ côn
 
 | Thành phần | Công nghệ |
 | :--- | :--- |
-| **Frontend** | Next.js (App Router), React, TailwindCSS, Axios |
-| **Backend** | Java 21+, Spring Boot, Spring Security (JWT), Spring Data JPA, Flyway |
-| **Cơ sở dữ liệu & Cache** | PostgreSQL, DBeaver |
-| **Kiểm thử** | JUnit 5 / Spring Boot Test, Testcontainers (PostgreSQL), Cypress (E2E) |
+| **Frontend** | Next.js (App Router), React, TailwindCSS, Fetch API |
+| **Backend** | Java 17+, Spring Boot, Spring Security, Spring Data JPA, Flyway |
+| **Cơ sở dữ liệu & Cache** | PostgreSQL, Redis, DBeaver |
+| **Kiểm thử** | JUnit 5 / Spring Boot Test, Cypress (E2E) |
 | **Triển khai (DevOps)** | Docker, Docker Compose, Supabase, Render, Vercel, GitHub Actions |
 
 ---
@@ -71,16 +71,19 @@ Tài liệu này cung cấp cái nhìn toàn diện về kiến trúc, bộ côn
 ```text
 brewlite/
 ├── .github/
-│   └── workflows/              # Pipeline CI/CD (GitHub Actions)
+│   └── workflows/              # CI và CD (GitHub Actions)
 ├── apps/
-│   ├── backend/                # Spring Boot API (Port 8081)
-│   │   ├── src/main/java/      # Controllers, Services, Repositories, Security, Domain
-│   │   └── src/main/resources/ # application.properties, Flyway SQL migrations
-│   └── frontend/               # Giao diện Next.js (Port 3000)
-├── test/                       # Kiểm thử tự động Cypress E2E
+│   ├── backend/                # Spring Boot API (port 8081), Dockerfile/.dockerignore
+│   │   └── src/main/resources/
+│   │       ├── application.properties
+│   │       └── db/migration/   # V1 schema, V2 dữ liệu mẫu
+│   └── frontend/               # Next.js (port 3000), Dockerfile/.dockerignore, .env.example
+├── test/                       # Kiểm thử Cypress E2E
+│   ├── package.json
 │   ├── cypress.config.js
-│   └── e2e/                    # Kịch bản luồng đặt hàng & thanh toán
-├── docker-compose.yml          # Chạy toàn bộ hệ thống local (PostgreSQL, Backend, Frontend)
+│   ├── pnpm-lock.yaml
+│   └── e2e/                    # Kịch bản đăng nhập tài khoản mẫu
+├── docker-compose.yml          # db, redis, backend, frontend
 └── README.md
 ```
 
@@ -93,22 +96,22 @@ brewlite/
 | Công cụ | Mục đích | Mức độ |
 | :--- | :--- | :--- |
 | **Git** | Clone mã nguồn và quản lý phiên bản | Bắt buộc |
-| **Docker Desktop** | Chạy các dịch vụ PostgreSQL qua Docker Compose | Bắt buộc (nếu chạy Docker) |
-| **Java JDK 21+** | Biên dịch và chạy Spring Boot *(đã có sẵn Maven Wrapper `./mvnw`)* | Bắt buộc (nếu chạy local) |
-| **Node.js (LTS 18+) & pnpm** | Cài thư viện, chạy Frontend và bộ test Cypress | Bắt buộc (nếu chạy local/Cypress) |
-| **PostgreSQL** | Hệ quản trị CSDL và bộ nhớ đệm | Bắt buộc (nếu không dùng Docker) |
+| **Docker Desktop** | Chạy PostgreSQL, Redis, Backend và Frontend qua Compose | Bắt buộc (nếu chạy Docker) |
+| **Java JDK 17+** | Biên dịch và chạy Spring Boot *(Maven Wrapper ở `apps/backend`)* | Bắt buộc (nếu chạy local) |
+| **Node.js 20+ & pnpm 12** | Cài thư viện, chạy Frontend và bộ test Cypress | Bắt buộc (nếu chạy local/Cypress) |
+| **PostgreSQL** | Hệ quản trị CSDL | Bắt buộc (nếu không dùng Docker) |
 | **VS Code / DBeaver / REST Client** | Soạn code, quản trị CSDL, kiểm thử API | Khuyến nghị |
 
 ### 2. Lưu ý cấu hình trước khi chạy
 
-1. **Khởi động Docker Desktop** trước khi chạy `docker compose up -d`.
+1. **Khởi động Docker Desktop** trước khi chạy Docker Compose.
 2. **Biến môi trường:**
-   - **Backend:** cấu hình URL kết nối PostgreSQL trong `application.properties` hoặc qua biến môi trường.
-   - **Frontend:** tạo file `.env.local` từ `.env.example` và đặt `NEXT_PUBLIC_API_URL` trỏ về Backend.
-3. **Kiểm tra sức khỏe dịch vụ:** Backend phản hồi bình thường tại `http://localhost:8081`.
+   - **Backend:** cấu hình kết nối PostgreSQL qua `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`.
+   - **Frontend local:** tạo `apps/frontend/.env.local` từ `.env.example`.
+3. **Health endpoint:** `http://localhost:8081/actuator/health`.
 
 > [!WARNING]
-> **Tuyệt đối không** commit thông tin nhạy cảm (mật khẩu Database, JWT Secret) lên GitHub.
+> **Tuyệt đối không** commit thông tin nhạy cảm (mật khẩu Database, khóa xác thực) lên GitHub.
 
 ---
 
@@ -129,16 +132,22 @@ cd <TEN_THU_MUC_DU_AN>
 
 #### Cách 1 — Chạy toàn bộ bằng Docker Compose (khuyên dùng)
 
-Chỉ cần Docker đang chạy. Lệnh dưới khởi động đủ 4 dịch vụ: PostgreSQL, Backend, Frontend.
+Chỉ cần Docker đang chạy. Lệnh dưới build và khởi động đủ 4 dịch vụ: PostgreSQL (`db`), Redis, Backend và Frontend; Backend chỉ khởi động sau khi DB/Redis khỏe, Frontend chỉ khởi động sau khi Backend khỏe.
 
 ```bash
-docker compose up --build
+docker compose up --build --wait
 ```
 
 Dừng hệ thống:
 
 ```bash
 docker compose down
+```
+
+Muốn xóa cả dữ liệu PostgreSQL để kiểm tra cài mới:
+
+```bash
+docker compose down -v
 ```
 
 #### Cách 2 — Chạy Backend và Frontend thủ công
@@ -148,14 +157,14 @@ Dùng Docker cho PostgreSQL; Backend và Frontend chạy trực tiếp trên má
 **2.1. Khởi động PostgreSQL**
 
 ```bash
-docker compose up -d 
+docker compose up -d db redis
 ```
 
 Thông tin kết nối (đã khớp sẵn với `docker-compose.yml` và `application.properties`, không cần sửa):
 
 | Dịch vụ | Địa chỉ | Thông tin |
 | :--- | :--- | :--- |
-| PostgreSQL | `localhost:5432` | database `drinkshop_db`, user `brewlite`, mật khẩu `taidz@2026` |
+| PostgreSQL | `localhost:5432` | database `drinkshop_db`, user `brewlite`, mật khẩu `taidz@2026` (hoặc `DATABASE_PASSWORD`) |
 
 > [!NOTE]
 > Nếu máy đã cài PostgreSQL riêng, hãy tắt service đó hoặc đổi cổng để tránh trùng cổng `5432` của Docker.
@@ -164,24 +173,23 @@ Thông tin kết nối (đã khớp sẵn với `docker-compose.yml` và `applic
 
 ```bash
 cd apps/backend
-./mvnw spring-boot:run        # Windows PowerShell: .\mvnw spring-boot:run
+./mvnw spring-boot:run        # Linux / macOS
+# Windows PowerShell:
+.\mvnw.cmd spring-boot:run
 ```
 
-Thành công khi console hiện dòng `Started ... Application in ... seconds`. Các bảng dữ liệu được Hibernate tự tạo (`ddl-auto=update`).
+Flyway tự chạy các migration trong `src/main/resources/db/migration` khi backend khởi động; Hibernate chỉ kiểm tra schema (`ddl-auto=validate`), không tự tạo bảng.
 
 **2.3. Chạy Frontend (Next.js)** — mở một terminal mới:
 
 ```bash
 cd apps/frontend
+cp .env.example .env.local
 pnpm install
 pnpm dev
 ```
 
-Nếu Frontend không gọi được API, tạo file `apps/frontend/.env.local`:
-
-```bash
-NEXT_PUBLIC_API_URL=http://localhost:8081
-```
+`NEXT_PUBLIC_API_URL` trong `.env.local` trỏ tới backend local (`http://localhost:8081`). Next.js chuyển tiếp request `/api` để trình duyệt gọi cùng origin.
 
 ### Bước 3. Địa chỉ truy cập
 
@@ -189,7 +197,9 @@ NEXT_PUBLIC_API_URL=http://localhost:8081
 | :--- | :--- |
 | Frontend | http://localhost:3000 |
 | Backend API | http://localhost:8081 |
+| Backend health | http://localhost:8081/actuator/health |
 | PostgreSQL | `localhost:5432` |
+| Redis | chỉ dùng nội bộ trong Compose |
 
 ### Bước 4. Kiểm tra nhanh
 
@@ -199,73 +209,88 @@ Chức năng thanh toán dùng cơ chế **In-App QR Modal** ngay trên trang Ch
 
 ### Bước 5. Tài khoản mẫu
 
-| Vai trò | Tài khoản | Mật khẩu |
-| :--- | :--- | :--- |
-| Quản lý (ADMIN / STORE_MANAGER) | `demo-manager` | `BrewLite123!` |
-| Nhân viên / Barista (STAFF) | `demo-staff` | `BrewLite123!` |
-| Khách hàng (CUSTOMER) | `demo-customer` | `BrewLite123!` |
+| Vai trò | Tên đăng nhập | Email đăng nhập | Mật khẩu |
+| :--- | :--- | :--- | :--- |
+| Quản lý (MANAGER) | `demo-manager` | `manager@brewlite.vn` | `BrewLite123!` |
+| Nhân viên (STAFF) | `demo-staff` | `staff@brewlite.vn` | `BrewLite123!` |
+| Khách hàng (CUSTOMER) | `demo-customer` | `user@brewlite.vn` | `BrewLite123!` |
 
 Khách hàng mới có thể đăng ký tài khoản ngay trên giao diện.
+
+### Flyway migrations
+
+- Khi backend kết nối PostgreSQL, Flyway chạy lần lượt migration chưa áp dụng và lưu lịch sử trong `flyway_schema_history`. Migration lỗi sẽ làm backend dừng; Flyway kiểm tra checksum mỗi lần migrate và Hibernate validate schema khi khởi động.
+- Không sửa migration đã chạy trên môi trường dùng chung. Thêm thay đổi mới bằng file tiếp theo, ví dụ `apps/backend/src/main/resources/db/migration/V3__add_product_index.sql`; chỉ chứa SQL cho phần thay đổi đó.
+- `V1` tạo schema PostgreSQL ban đầu, `V2` thêm dữ liệu mẫu. Với Supabase hoặc database đã có dữ liệu, sao lưu và đối chiếu schema trước khi kết nối; không để ứng dụng chạy các migration khởi tạo lên database đang dùng. Chỉ baseline có chủ đích sau khi xác nhận trạng thái schema và lịch sử phù hợp.
 
 ---
 
 ## 🧪 Kiểm thử (Testing)
 
-Dự án áp dụng mô hình kiểm thử 3 tầng: **Unit Test**, **Integration Test** và **End-to-End Test**, đảm bảo tính chính xác từ từng hàm nghiệp vụ đến toàn bộ luồng trải nghiệm người dùng.
+Dự án kiểm thử backend bằng JUnit/Spring Boot Test và các luồng đăng nhập đầu cuối bằng Cypress.
 
 ### 1. Kiểm thử đơn vị (Unit Test — JUnit 5 & Mockito)
 
-**Mục tiêu:** Kiểm tra độc lập từng hàm logic ở tầng Service/Utils (tính tổng giỏ hàng, áp dụng khuyến mãi, quy đổi điểm thưởng, kiểm tra tồn kho, xác thực người dùng, sinh/giải mã JWT) mà không phụ thuộc cơ sở dữ liệu hay mạng.
+**Mục tiêu:** Kiểm tra các entity và service nghiệp vụ (đơn hàng, loyalty, thanh toán, người dùng) bằng JUnit/Mockito.
 
 - **Vị trí mã nguồn:** `apps/backend/src/test/java/vn/doan`
 
 ```bash
 cd apps/backend
-
-# Chạy toàn bộ test
 ./mvnw test
-
-# Chạy một file test cụ thể
-./mvnw test -Dtest=CartServiceTest
+# Windows PowerShell:
+.\mvnw.cmd test
 ```
 
-### 2. Kiểm thử tích hợp (Integration Test — Spring Boot Test & MockMvc)
+### 2. Kiểm thử tích hợp (Spring Boot Test)
 
-**Mục tiêu:** Kiểm tra sự phối hợp giữa các tầng (`Controller` → `Security Filter` → `Service` → `Repository` → `Database`) qua các request HTTP thực tế; xác minh mã trạng thái (`200`, `201`, `400`, `401`, `403`), cấu trúc JSON trả về và các ràng buộc dưới CSDL.
+**Mục tiêu:** Kiểm tra các service nghiệp vụ và xác nhận Spring context khởi động với cấu hình H2 dành cho kiểm thử.
 
 - **Vị trí mã nguồn:** `apps/backend/src/test/java/vn/doan/`
 
 ```bash
 cd apps/backend
 
-# Chạy một file Integration Test cụ thể
-./mvnw test -Dtest=PaymentControllerIntegrationTest
+# Chạy riêng test thanh toán
+./mvnw test -Dtest=PaymentServiceTest
+# Windows PowerShell:
+.\mvnw.cmd test -Dtest=PaymentServiceTest
 ```
 
 > 📄 **Báo cáo chi tiết:** xem tại `apps/backend/target/surefire-reports/`.
 
 ### 3. Kiểm thử đầu cuối (End-to-End — Cypress)
 
-**Mục tiêu:** Mô phỏng thao tác thực tế của khách hàng trên trình duyệt: truy cập trang chủ → đăng nhập (`demo-customer`) → chọn món, tùy chỉnh kích cỡ/topping → thêm vào giỏ → áp dụng ưu đãi/điểm thưởng → thanh toán (In-App QR Modal) → kiểm tra trạng thái đơn hàng.
+**Mục tiêu:** Đăng nhập qua giao diện với đủ ba tài khoản mẫu và xác nhận điều hướng theo vai trò.
 
-- **Vị trí mã nguồn:** `test/e2e/cypress/e2e/payment-flow.cy.js`
+- **Vị trí mã nguồn:** `test/e2e/demo-login.cy.js`
 - **Điều kiện trước khi chạy:** toàn bộ dịch vụ phải đang hoạt động:
   - Frontend tại `http://localhost:3000`
-  - Backend API tại `http://localhost:8081`
-  - PostgreSQL đã khởi động và có sẵn dữ liệu mẫu
+  - Backend khỏe tại `http://localhost:8081/actuator/health`
+  - PostgreSQL đã migrate và có dữ liệu mẫu
 
 ```bash
-# Bước 1: Vào thư mục test và cài thư viện
+# Bước 1: Khởi động stack từ thư mục gốc repo, đợi healthcheck hoàn tất
+docker compose up --build -d --wait
+
+# Bước 2: Vào thư mục test và cài thư viện
 cd test
 pnpm install
 
-# Bước 2: Chạy kịch bản E2E
+# Bước 3: Chạy kịch bản E2E
 # Cách 1 — Giao diện trực quan (dùng khi demo):
 pnpm exec cypress open
 
 # Cách 2 — Chạy ẩn, không mở trình duyệt (dùng cho CI/CD):
 pnpm exec cypress run
 ```
+
+### Troubleshooting
+
+- **Trùng cổng `5432`:** dừng PostgreSQL cài sẵn hoặc đổi cổng host `5432` trong `docker-compose.yml`.
+- **Docker chưa bật:** khởi động Docker Desktop, kiểm tra `docker info`, rồi chạy lại Compose.
+- **Thiếu `.env.local`:** trong `apps/frontend`, sao chép `.env.example` thành `.env.local` rồi khởi động lại Next.js.
+- **Lỗi CORS/API:** dùng frontend tại `http://localhost:3000` để request `/api` đi qua Next.js rewrite; xác nhận backend khỏe tại `/actuator/health` và `BACKEND_URL` trong Compose trỏ tới `http://backend:8081`.
 
 ---
 
@@ -278,11 +303,9 @@ pnpm exec cypress run
 cd apps/backend
 
 # 2. Đóng gói ứng dụng (lần đầu tải thư viện hơi lâu)
-# Windows (PowerShell):
-.\mvnw clean package -DskipTests
-
-# Linux / macOS:
 ./mvnw clean package -DskipTests
+# Windows PowerShell:
+.\mvnw.cmd clean package -DskipTests
 
 # Kết quả: file thực thi tại target/doan-cnpm-0.0.1-SNAPSHOT.jar
 ```
@@ -291,7 +314,7 @@ Khởi chạy ứng dụng:
 
 ```bash
 # Cách 1: Chạy qua Maven (khuyên dùng khi phát triển)
-./mvnw spring-boot:run          # Windows: .\mvnw spring-boot:run
+./mvnw spring-boot:run          # Windows: .\mvnw.cmd spring-boot:run
 
 # Cách 2: Chạy file .jar đã build (dùng khi deploy)
 java -jar target/doan-cnpm-0.0.1-SNAPSHOT.jar
@@ -341,8 +364,6 @@ Các bước đưa BrewLite lên môi trường Production gồm: Cơ sở dữ 
 
 5. Nhấn **Create Web Service** để Render kéo code và build Docker image (khoảng 3–5 phút).
 6. Sau khi deploy thành công, Render cấp URL công khai, ví dụ `https://brewlite-backend-xxxx.onrender.com`.
-7. **Lấy Deploy Hook (dùng cho CI/CD):** vào tab **Settings** của Web Service → mục **Deploy Hook** → sao chép URL để thêm vào GitHub Secrets.
-
 ### 3. Frontend: Vercel
 
 1. Cập nhật địa chỉ Backend (từ Render) vào `apps/frontend/vercel.json` để cấu hình Reverse Proxy (tránh lỗi CORS và Mixed Content khi gọi API):
@@ -373,10 +394,6 @@ Các bước đưa BrewLite lên môi trường Production gồm: Cơ sở dữ 
 
 ### 4. Tự động hóa CI/CD (GitHub Actions)
 
-1. Vào kho GitHub → **Settings** → **Secrets and variables** → **Actions**.
-2. Thêm Secret mới:
-   - **Name:** `PROD_DEPLOY_WEBHOOK`
-   - **Secret:** dán URL Deploy Hook lấy từ Render ở mục 2.
-3. Khi push commit lên nhánh `main`:
-   - **Vercel** tự động build và deploy lại Frontend.
-   - **GitHub Actions** chạy kiểm thử, đóng gói và kích hoạt Deploy Hook để Render tự cập nhật Backend mới nhất.
+- `.github/workflows/ci.yml` chạy backend tests, build frontend và Cypress sau khi Compose khỏe.
+- `.github/workflows/cd.yml` build JAR và Docker image khi push lên `main` hoặc tag `v*`; workflow hiện lưu image thành artifact, không tự deploy lên Render.
+- Cấu hình auto-deploy trên Render và Vercel riêng trong dashboard của từng dịch vụ.

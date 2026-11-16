@@ -1,4 +1,4 @@
--- PostgreSQL schema matching the Spring Data JPA entities.
+-- Initial PostgreSQL schema matching the Spring Data JPA entities.
 
 CREATE TABLE IF NOT EXISTS customers (
     id varchar(255) PRIMARY KEY,

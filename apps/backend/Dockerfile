@@ -9,15 +9,15 @@ RUN sed -i 's/\r$//' ./mvnw && chmod +x ./mvnw && ./mvnw dependency:go-offline
 
 # Copy mã nguồn và đóng gói file .jar
 COPY src ./src
-RUN ./mvnw clean package -DskipTests
+RUN ./mvnw -B clean package -DskipTests
 
 # Giai đoạn 2: Chạy ứng dụng với JRE gọn nhẹ và quyền user hạn chế
-FROM eclipse-temurin:17-jre-noble
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-RUN groupadd -r spring && useradd -r -g spring spring
+RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder /app/target/doan-cnpm-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8081
 ENTRYPOINT ["java", "-Xmx350m", "-Xms256m", "-jar", "app.jar"]

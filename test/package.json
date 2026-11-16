@@ -1,0 +1,8 @@
+{
+  "name": "brewlite-e2e",
+  "private": true,
+  "packageManager": "pnpm@12.3.4",
+  "devDependencies": {
+    "cypress": "^14.5.4"
+  }
+}

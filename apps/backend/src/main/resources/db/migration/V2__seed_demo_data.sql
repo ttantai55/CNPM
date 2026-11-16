@@ -1,3 +1,4 @@
+-- Demo accounts and catalog data for fresh installations.
 INSERT INTO customers (id, name, gender, phone)
 VALUES ('CUST_DEMO', 'Khách hàng Demo', FALSE, '0900000001')
 ON CONFLICT (id) DO UPDATE SET

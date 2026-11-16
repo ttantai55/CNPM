@@ -1,8 +1,14 @@
 *.zip
 target/
+**/target/
+node_modules/
+.next/
+*.tsbuildinfo
 *.class
 *.jar
 *.war
+.env*
+!.env.example
 .idea/
 .vscode/
 .github/modernize/
