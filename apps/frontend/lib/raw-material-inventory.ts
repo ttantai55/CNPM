@@ -2,15 +2,14 @@
 
 import { createPersistentStore } from './persistent-store'
 
-export type UnitType = 'PACK' | 'CAN' | 'BOX' | 'PIECE' | 'KG' | 'BOTTLE'
+export type UnitType = 'KG' | 'BOX' | 'BOTTLE' | 'PACK' | 'ROLL'
 
 export const UNIT_LABELS: Record<UnitType, string> = {
-  PACK: 'Gói / Bịch',
-  CAN: 'Lon / Hộp thiếc',
-  BOX: 'Thùng / Hộp',
-  PIECE: 'Cái / Quả',
   KG: 'Kilogram',
+  BOX: 'Thùng / Hộp',
   BOTTLE: 'Chai',
+  PACK: 'Gói / Bịch',
+  ROLL: 'Cuộn',
 }
 
 export interface Ingredient {
