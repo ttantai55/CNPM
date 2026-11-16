@@ -285,7 +285,8 @@ Kịch bản đăng nhập qua API, đặt Latte size L kèm topping, thanh toá
 - **Trùng cổng:** dừng dịch vụ đang chiếm cổng hoặc đặt `POSTGRES_HOST_PORT`, `REDIS_HOST_PORT`, `BACKEND_HOST_PORT`, hay `FRONTEND_HOST_PORT` trước khi chạy Compose.
 - **Docker chưa chạy:** mở Docker Desktop rồi kiểm tra `docker compose ps`.
 - **Thiếu `.env.local`:** trong `apps/frontend`, chạy `Copy-Item .env.example .env.local` trên PowerShell hoặc `cp .env.example .env.local` trên Linux/macOS.
-- **Lỗi CORS/API:** xác nhận Backend khỏe tại `/health`, `NEXT_PUBLIC_API_URL` trỏ tới `http://localhost:8081`, rồi khởi động lại frontend.
+- **Lỗi CORS/API khi chạy local:** xác nhận Backend khỏe tại `/health`, đặt `NEXT_PUBLIC_API_URL=http://localhost:8081` trong `.env.local`, rồi khởi động lại frontend.
+- **Lỗi CORS khi deploy:** Backend mặc định cho phép domain demo `https://brewlite-frontend-omega.vercel.app`; nếu dùng domain khác hoặc Vercel Preview, đặt biến `CORS_ALLOWED_ORIGINS` trên Render thành danh sách origin cách nhau bằng dấu phẩy. `NEXT_PUBLIC_API_URL` có thể là URL backend gốc hoặc URL kết thúc bằng `/api`.
 
 ---
 
