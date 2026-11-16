@@ -74,11 +74,14 @@ CREATE TABLE IF NOT EXISTS users (
     phone varchar(255),
     full_name varchar(255),
     position varchar(20),
+    loyalty_points integer NOT NULL DEFAULT 0,
     CONSTRAINT fk_users_customer
         FOREIGN KEY (customer_id) REFERENCES customers (id),
     CONSTRAINT fk_users_barista
         FOREIGN KEY (barista_id) REFERENCES baristas (id)
 );
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS loyalty_points integer NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS orders (
     id varchar(255) PRIMARY KEY,

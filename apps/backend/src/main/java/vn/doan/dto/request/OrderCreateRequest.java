@@ -12,6 +12,8 @@ public class OrderCreateRequest {
     // Mã Voucher giảm giá (Nếu có)
     private String voucherCode;
 
+    private String loyaltyRewardCode;
+
     // Danh sách các món hàng (Bắt buộc phải có ít nhất 1 món)
     @NotEmpty(message = "Đơn hàng phải có ít nhất 1 sản phẩm")
     @Valid // Kích hoạt validate bên trong OrderItemRequest
@@ -47,6 +49,14 @@ public class OrderCreateRequest {
 
     public void setVoucherCode(String voucherCode) {
         this.voucherCode = voucherCode;
+    }
+
+    public String getLoyaltyRewardCode() {
+        return loyaltyRewardCode;
+    }
+
+    public void setLoyaltyRewardCode(String loyaltyRewardCode) {
+        this.loyaltyRewardCode = loyaltyRewardCode;
     }
 
     public List<OrderItemRequest> getItems() {

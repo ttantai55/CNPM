@@ -14,7 +14,7 @@ public class OrderResponse {
 
     // Chi tiết tiền nong
     private long totalAmount;
-    private long discountAmount; // Tiền được giảm giá (Tính toán từ voucherCode)
+    private long discountAmount; // Tổng tiền giảm từ voucher và điểm thưởng
     private long finalAmount;
 
     private String status; // Lấy tên Enum OrderStatus

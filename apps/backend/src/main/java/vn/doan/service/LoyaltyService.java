@@ -38,7 +38,7 @@ public class LoyaltyService {
     @Transactional
     public LoyaltyTransactionResponse processManualTransaction(LoyaltyTransactionRequest request) {
         // Kiểm tra User
-        User user = userRepository.findById(request.getUserId())
+        User user = userRepository.findByIdForUpdate(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
 
         // Kiểm tra Order
@@ -55,9 +55,7 @@ public class LoyaltyService {
             throw new IllegalArgumentException("Loại giao dịch điểm không hợp lệ.");
         }
 
-        // Lấy số dư hiện tại của khách hàng
-        List<LoyaltyTransaction> history = loyaltyTransactionRepo.findByUserId(user.getId());
-        int currentBalance = history.isEmpty() ? 0 : history.get(history.size() - 1).getBalancedAfter();
+        int currentBalance = user.getLoyaltyPoints();
 
         // Tính số dư mới
         int newBalance;
@@ -69,6 +67,7 @@ public class LoyaltyService {
         } else {
             newBalance = currentBalance + request.getPoints(); 
         }
+        user.setLoyaltyPoints(newBalance);
 
         // Tạo Entity mới và lưu
         LoyaltyTransaction transaction = new LoyaltyTransaction(

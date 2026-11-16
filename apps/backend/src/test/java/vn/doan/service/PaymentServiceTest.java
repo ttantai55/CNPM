@@ -12,7 +12,6 @@ import vn.doan.domain.Payment;
 import vn.doan.domain.Product;
 import vn.doan.domain.enums.PaymentMethod;
 import vn.doan.dto.request.PaymentCallbackDTO;
-import vn.doan.repository.LoyaltyTransactionRepo;
 import vn.doan.repository.OrderRepository;
 import vn.doan.repository.PaymentRepository;
 import vn.doan.repository.ProductRepository;
@@ -27,7 +26,6 @@ class PaymentServiceTest {
     @Mock private PaymentRepository paymentRepository;
     @Mock private OrderRepository orderRepository;
     @Mock private ProductRepository productRepository;
-    @Mock private LoyaltyTransactionRepo loyaltyTransactionRepo;
 
     private PaymentService paymentService;
 
@@ -36,8 +34,7 @@ class PaymentServiceTest {
         paymentService = new PaymentService(
                 paymentRepository,
                 orderRepository,
-                productRepository,
-                loyaltyTransactionRepo
+                productRepository
         );
     }
 
