@@ -2,8 +2,6 @@ package vn.doan.domain;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "customers")
@@ -34,10 +32,6 @@ public class Customer {
 
     @Column(length = 20)
     private String phone;
-
-    // QUAN HỆ 1 - NHIỀU: 1 Customer thực hiện nhiều đơn hàng Order
-    @OneToMany(mappedBy = "customer")
-    private List<Order> orders = new ArrayList<>();
 
     // BẮT BUỘC CHO JPA: Constructor không tham số
     public Customer() {
@@ -119,11 +113,4 @@ public class Customer {
         this.phone = phone;
     }
 
-    public List<Order> getOrders() {
-        return orders;
-    }
-
-    public void setOrders(List<Order> orders) {
-        this.orders = orders;
-    }
 }

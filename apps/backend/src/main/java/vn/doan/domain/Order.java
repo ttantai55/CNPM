@@ -91,7 +91,7 @@ public class Order {
             );
         }
         this.status = newStatus;
-        if (newStatus == OrderStatus.CONFIRMED) {
+        if (newStatus == OrderStatus.PAID || newStatus == OrderStatus.CONFIRMED) {
             this.paidAt = OrderTime.now();
         } else if (newStatus == OrderStatus.PREPARING) {
             this.preparedAt = OrderTime.now();

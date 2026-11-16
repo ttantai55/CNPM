@@ -256,7 +256,7 @@ export function BrewLiteApp() {
 
   function openCheckout() {
     setCartOpen(false)
-    if (!user) {
+    if (!session || session.role !== 'CUSTOMER') {
       router.push('/login?next=checkout')
       return
     }
@@ -301,9 +301,11 @@ export function BrewLiteApp() {
         query={query}
         onQueryChange={handleQueryChange}
         user={user}
+        isAuthenticated={Boolean(session)}
         onOpenAuth={() => router.push('/login')}
         onLogout={() => {
           authStore.set(null)
+          dispatchCart({ type: 'clear' })
           router.replace('/login')
           showToast('Bạn đã đăng xuất')
         }}
@@ -420,7 +422,7 @@ export function BrewLiteApp() {
         open={cartOpen}
         onClose={() => setCartOpen(false)}
         title="Giỏ hàng của bạn"
-        description={`${cart.length} món đã chọn`}
+        description={cart.length > 0 ? `${cart.length} món đã chọn` : undefined}
         variant="drawer"
       >
         <CartPanel {...cartPanelProps} showHeader={false} className="flex-1" />

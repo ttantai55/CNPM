@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import vn.doan.domain.enums.DiscountType;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "promotions")
@@ -40,10 +38,6 @@ public class Promotion {
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
-
-    // QUAN HỆ 1 - NHIỀU: 1 Voucher khuyến mãi có thể được áp dụng ở nhiều Order
-    @OneToMany(mappedBy = "discount")
-    private List<Order> orders = new ArrayList<>();
 
     @PrePersist
     private void assignId() {
@@ -187,11 +181,4 @@ public class Promotion {
         isActive = active;
     }
 
-    public List<Order> getOrders() {
-        return orders;
-    }
-
-    public void setOrders(List<Order> orders) {
-        this.orders = orders;
-    }
 }

@@ -48,11 +48,15 @@ export function CartPanel({
           </span>
           <div className="flex-1">
             <h2 className="text-[15px] font-semibold text-foreground">Giỏ hàng của bạn</h2>
-            <p className="text-xs text-muted-foreground">{lineCount} món đã chọn</p>
+            {lineCount > 0 && (
+              <p className="text-xs text-muted-foreground">{lineCount} món đã chọn</p>
+            )}
           </div>
-          <span className="flex size-7 items-center justify-center rounded-full bg-secondary text-xs font-bold text-primary">
-            {lineCount}
-          </span>
+          {lineCount > 0 && (
+            <span className="flex size-7 items-center justify-center rounded-full bg-secondary text-xs font-bold text-primary">
+              {lineCount}
+            </span>
+          )}
         </div>
       )}
 

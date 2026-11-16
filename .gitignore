@@ -1,5 +1,9 @@
 *.zip
 target/
+node_modules/
+.next/
+.env*
+!.env.example
 *.class
 *.jar
 *.war

@@ -33,11 +33,6 @@ public class OrderItem {
     private Integer sugarPercent;
     private Integer icePercent;
 
-    @ElementCollection
-    @CollectionTable(name = "order_item_custom_toppings", joinColumns = @JoinColumn(name = "order_item_id"))
-    @Column(name = "topping")
-    private List<String> toppings = new ArrayList<>();
-
     // QUAN HỆ 1 - NHIỀU: 1 OrderItem có nhiều OrderItemTopping đi kèm
     @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItemTopping> orderItemToppings = new ArrayList<>();
@@ -130,9 +125,6 @@ public class OrderItem {
     public void setSugarPercent(Integer sugarPercent) { this.sugarPercent = sugarPercent; }
     public Integer getIcePercent() { return icePercent; }
     public void setIcePercent(Integer icePercent) { this.icePercent = icePercent; }
-    public List<String> getToppings() { return toppings; }
-    public void setToppings(List<String> toppings) { this.toppings = toppings == null ? new ArrayList<>() : toppings; }
-
     public List<OrderItemTopping> getOrderItemToppings() {
         return orderItemToppings;
     }

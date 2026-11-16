@@ -92,7 +92,7 @@ public class PaymentService {
         if (isSuccess) {
             payment.setPaymentStatus(PaymentStatus.SUCCESS);
             payment.setPaymentDate(LocalDateTime.now());
-            order.changeStatus(OrderStatus.CONFIRMED);
+            order.changeStatus(OrderStatus.PAID);
             recordWeeklySales(order);
             // tích điểm thưởng
             User user = order.getCustomer().getUser(); 
@@ -100,7 +100,7 @@ public class PaymentService {
                 int pointsEarned = (int) (order.getFinalAmount() / 10000); // 10k = 1 điểm
                 if (pointsEarned > 0) {
                     List<LoyaltyTransaction> history = loyaltyTransactionRepo.findByUserId(user.getId());
-                    int currentBalance = history.isEmpty() ? 0 : history.get(history.size() - 1).getBalancedAfter();
+                    int currentBalance = history.isEmpty() ? 0 : history.get(history.size() - 1).getBalanceAfter();
                     int newBalance = currentBalance + pointsEarned;
 
                     LoyaltyTransaction loyaltyTx = new LoyaltyTransaction(

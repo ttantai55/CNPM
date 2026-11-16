@@ -1,8 +1,6 @@
 package vn.doan.domain;
 
 import jakarta.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "toppings")
@@ -22,10 +20,6 @@ public class Topping {
 
     @Column(name = "is_available", nullable = false)
     private boolean isAvailable = true;
-
-    // QUAN HỆ 1 - NHIỀU: Một Topping xuất hiện trong nhiều OrderItemTopping
-    @OneToMany(mappedBy = "topping")
-    private List<OrderItemTopping> orderItemToppings = new ArrayList<>();
 
     // BẮT BUỘC CHO JPA: Constructor không tham số
     public Topping() {
@@ -78,11 +72,4 @@ public class Topping {
         isAvailable = available;
     }
 
-    public List<OrderItemTopping> getOrderItemToppings() {
-        return orderItemToppings;
-    }
-
-    public void setOrderItemToppings(List<OrderItemTopping> orderItemToppings) {
-        this.orderItemToppings = orderItemToppings;
-    }
 }

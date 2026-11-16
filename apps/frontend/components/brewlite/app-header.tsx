@@ -30,6 +30,7 @@ type AppHeaderProps = {
   query: string
   onQueryChange: (value: string) => void
   user: User | null
+  isAuthenticated: boolean
   onOpenAuth: () => void
   onOpenProfile: () => void
   latestActiveOrderCode?: string
@@ -45,6 +46,7 @@ export function AppHeader({
   query,
   onQueryChange,
   user,
+  isAuthenticated,
   onOpenAuth,
   onOpenProfile,
   latestActiveOrderCode,
@@ -58,7 +60,9 @@ export function AppHeader({
   const router = useRouter()
   const notifications = notificationStore.useStore()
   const [notificationsOpen, setNotificationsOpen] = useState(false)
-  const unread = notifications.filter((notification) => !notification.isRead).length
+  const unread = isAuthenticated
+    ? notifications.filter((notification) => !notification.isRead).length
+    : 0
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
@@ -89,7 +93,9 @@ export function AppHeader({
   function toggleNotifications() {
     const opening = !notificationsOpen
     setNotificationsOpen(opening)
-    if (opening) notificationStore.set((items) => items.map((item) => ({ ...item, isRead: true })))
+    if (opening && isAuthenticated) {
+      notificationStore.set((items) => items.map((item) => ({ ...item, isRead: true })))
+    }
     setAccountMenuOpen(false)
   }
 
@@ -179,7 +185,12 @@ export function AppHeader({
                   THÔNG BÁO
                 </p>
                 <ul className="flex flex-col">
-                  {notifications.slice(0, 5).map((notification) => (
+                  {!isAuthenticated && (
+                    <li className="px-3 py-5 text-center text-xs text-muted-foreground">
+                      Vui lòng đăng nhập để xem thông báo.
+                    </li>
+                  )}
+                  {isAuthenticated && notifications.slice(0, 5).map((notification) => (
                     <li key={notification.id}>
                       <button
                         type="button"
@@ -195,7 +206,7 @@ export function AppHeader({
                       </button>
                     </li>
                   ))}
-                  {notifications.length === 0 && (
+                  {isAuthenticated && notifications.length === 0 && (
                     <li className="px-3 py-5 text-center text-xs text-muted-foreground">Chưa có thông báo mới.</li>
                   )}
                 </ul>
@@ -351,6 +362,7 @@ export function AppHeader({
           type="button"
           onClick={() => {
             setLogoutConfirmOpen(false)
+            setNotificationsOpen(false)
             onLogout()
           }}
           className="h-11 w-full rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 sm:w-auto"

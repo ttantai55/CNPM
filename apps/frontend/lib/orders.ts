@@ -175,8 +175,8 @@ export function migrateOrderStatuses() {
 }
 
 export function fromApiOrder(remote: ApiOrder): Order {
-  const confirmedAt = remote.processes?.find((process) => process.status === 'CONFIRMED')?.updateAt
-  const paymentCompletedAt = parseApiDateTime(remote.paidAt ?? confirmedAt)
+  const paidAt = remote.processes?.find((process) => ['PAID', 'CONFIRMED'].includes(process.status))?.updateAt
+  const paymentCompletedAt = parseApiDateTime(remote.paidAt ?? paidAt)
   const preparedAtValue = remote.preparedAt ??
     remote.processes?.find((process) => process.status === 'PREPARING')?.updateAt
   const completedAtValue = remote.completedAt ??
@@ -212,7 +212,7 @@ export function fromApiOrder(remote: ApiOrder): Order {
     deliveryFee: 0,
     total: remote.finalAmount,
     paymentMethod: remote.paymentMethod ?? null,
-    status: remote.status as OrderStatus,
+    status: remote.status === 'PAID' ? 'CONFIRMED' : remote.status as OrderStatus,
     createdAt,
     updatedAt: lastProcessAt,
     paymentCompletedAt: Number.isFinite(paymentCompletedAt) ? paymentCompletedAt : 0,

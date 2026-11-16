@@ -51,6 +51,7 @@ public class OrderService {
     // * 2. Lấy danh sách các đơn hàng đang chờ pha chế (Dành cho Barista)
     public List<OrderResponse> getActiveOrdersForBarista() {
         List<OrderStatus> activeStatuses = Arrays.asList(
+                OrderStatus.PAID,
                 OrderStatus.CONFIRMED,
                 OrderStatus.PREPARING
         );
@@ -121,8 +122,6 @@ public class OrderService {
             orderItem.setSize(itemReq.getSize());
             orderItem.setSugarPercent(itemReq.getSugarPercent());
             orderItem.setIcePercent(itemReq.getIcePercent());
-            orderItem.setToppings(selectedToppings.stream().map(Topping::getName).toList());
-            
             // Gắn topping vào orderItem
             for (Topping topping : selectedToppings) {
                 OrderItemTopping itemTopping = new OrderItemTopping(
@@ -245,7 +244,7 @@ public class OrderService {
                     item.getSize(),
                     item.getSugarPercent(),
                     item.getIcePercent(),
-                    item.getToppings()
+                    toppingNames
             );
         }).collect(Collectors.toList());
 
@@ -254,7 +253,7 @@ public class OrderService {
                         process.getId(),
                         order.getId(),
                         process.getStatus().name(),
-                        process.getUpdateAt()
+                        process.getUpdatedAt()
                 )
         ).collect(Collectors.toList());
 

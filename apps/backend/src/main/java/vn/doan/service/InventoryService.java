@@ -60,7 +60,7 @@ public List<IngredientResponse> getAllIngredients() {
             InventoryTransactionResponse response = new InventoryTransactionResponse();
             response.setId(transaction.getId());
             response.setType(transaction.getType());
-            response.setCreateAt(transaction.getCreateAt());
+            response.setCreateAt(transaction.getCreatedAt());
             response.setNote(transaction.getNote());
             response.setBaristaName(transaction.getBarista().getName());
             if (transaction.getDetails() != null) {

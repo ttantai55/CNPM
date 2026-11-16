@@ -1,8 +1,6 @@
 package vn.doan.domain;
 
 import jakarta.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "baristas")
@@ -18,10 +16,6 @@ public class Barista {
 
     @Column(nullable = false, length = 100)
     private String name;
-
-    // QUAN HỆ 1 - NHIỀU: 1 Barista có thể tạo nhiều giao dịch kho
-    @OneToMany(mappedBy = "barista")
-    private List<InventoryTransaction> inventoryTransactions = new ArrayList<>();
 
     // BẮT BUỘC CHO JPA: Constructor không tham số
     public Barista() {
@@ -54,11 +48,4 @@ public class Barista {
         this.name = name;
     }
 
-    public List<InventoryTransaction> getInventoryTransactions() {
-        return inventoryTransactions;
-    }
-
-    public void setInventoryTransactions(List<InventoryTransaction> inventoryTransactions) {
-        this.inventoryTransactions = inventoryTransactions;
-    }
 }

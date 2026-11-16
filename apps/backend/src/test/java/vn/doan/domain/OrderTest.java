@@ -6,6 +6,7 @@ import vn.doan.domain.enums.OrderStatus;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -14,7 +15,8 @@ class OrderTest {
     @Test
     void recordsPreparationAndCompletionTimesOnStatusChanges() {
         Order order = new Order();
-        order.changeStatus(OrderStatus.CONFIRMED);
+        order.changeStatus(OrderStatus.PAID);
+        assertEquals(OrderStatus.PAID, order.getStatus());
         assertNotNull(order.getPaidAt());
         assertNull(order.getPreparedAt());
         assertNull(order.getCompletedAt());

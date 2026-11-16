@@ -17,7 +17,7 @@ public class InventoryTransaction {
     private InventoryTransactionType type;
 
     @Column(name = "create_at", nullable = false)
-    private LocalDateTime createAt;
+    private LocalDateTime createdAt;
 
     private String note;
 
@@ -37,20 +37,20 @@ public class InventoryTransaction {
 
     // BẮT BUỘC CHO JPA: Constructor không tham số
     public InventoryTransaction() {
-        this.createAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
     }
 
     public InventoryTransaction(InventoryTransactionType type, String note, Barista barista) {
         this.type = type;
         this.note = note;
         this.barista = barista;
-        this.createAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
     }
 
-    public InventoryTransaction(String id, InventoryTransactionType type, LocalDateTime createAt, String note, Barista barista, InventoryTransactionDetails details) {
+    public InventoryTransaction(String id, InventoryTransactionType type, LocalDateTime createdAt, String note, Barista barista, InventoryTransactionDetails details) {
         this.id = id;
         this.type = type;
-        this.createAt = createAt;
+        this.createdAt = createdAt;
         this.note = note;
         this.barista = barista;
         this.setDetails(details);
@@ -74,12 +74,12 @@ public class InventoryTransaction {
         this.type = type;
     }
 
-    public LocalDateTime getCreateAt() {
-        return createAt;
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
-    public void setCreateAt(LocalDateTime createAt) {
-        this.createAt = createAt;
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public String getNote() {
