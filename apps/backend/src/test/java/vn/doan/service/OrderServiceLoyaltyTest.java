@@ -82,7 +82,7 @@ class OrderServiceLoyaltyTest {
         verify(loyaltyTransactionRepo).save(transaction.capture());
         assertEquals(LoyalType.EARN, transaction.getValue().getTransactionType());
         assertEquals(50, transaction.getValue().getPoints());
-        assertEquals(50, transaction.getValue().getBalancedAfter());
+        assertEquals(50, transaction.getValue().getBalanceAfter());
         assertThrows(IllegalStateException.class,
                 () -> orderService.changeOrderStatus("ORDER_1", OrderStatus.COMPLETED));
         assertEquals(50, user.getLoyaltyPoints());
@@ -108,7 +108,7 @@ class OrderServiceLoyaltyTest {
         verify(loyaltyTransactionRepo).save(transaction.capture());
         assertEquals(LoyalType.REDEEM, transaction.getValue().getTransactionType());
         assertEquals(2_000, transaction.getValue().getPoints());
-        assertEquals(0, transaction.getValue().getBalancedAfter());
+        assertEquals(0, transaction.getValue().getBalanceAfter());
     }
 
     @Test

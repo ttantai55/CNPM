@@ -55,7 +55,9 @@ public class LoyaltyService {
             throw new IllegalArgumentException("Loại giao dịch điểm không hợp lệ.");
         }
 
-        int currentBalance = user.getLoyaltyPoints();
+        // Lấy số dư hiện tại của khách hàng
+        List<LoyaltyTransaction> history = loyaltyTransactionRepo.findByUserId(user.getId());
+        int currentBalance = history.isEmpty() ? 0 : history.get(history.size() - 1).getBalanceAfter();
 
         // Tính số dư mới
         int newBalance;
@@ -94,7 +96,7 @@ public class LoyaltyService {
                 orderId,
                 tx.getTransactionType().name(),
                 tx.getPoints(),
-                tx.getBalancedAfter(),
+                tx.getBalanceAfter(),
                 tx.getDescription(),
                 tx.getCreateDate() // LocalDate[cite: 36]
         );

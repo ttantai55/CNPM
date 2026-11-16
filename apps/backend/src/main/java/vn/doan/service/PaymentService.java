@@ -3,20 +3,24 @@ package vn.doan.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.doan.domain.LoyaltyTransaction;
 import vn.doan.domain.Order;
 import vn.doan.domain.OrderItem;
 import vn.doan.domain.Payment;
+import vn.doan.domain.User;
+import vn.doan.domain.enums.LoyalType;
 import vn.doan.domain.enums.OrderStatus;
 import vn.doan.domain.enums.PaymentMethod;
 import vn.doan.domain.enums.PaymentStatus;
 import vn.doan.dto.request.PaymentCallbackDTO;
 import vn.doan.dto.request.PaymentCreateRequest;
+import vn.doan.dto.response.PaymentResponse;
 import vn.doan.dto.response.PaymentResult;
 import vn.doan.dto.response.PaymentUrlResponse;
+import vn.doan.repository.LoyaltyTransactionRepo;
 import vn.doan.repository.OrderRepository;
 import vn.doan.repository.PaymentRepository;
 import vn.doan.repository.ProductRepository;
-import vn.doan.dto.response.PaymentResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +33,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final LoyaltyTransactionRepo loyaltyTransactionRepo;
 
     // * 1. Khởi tạo giao dịch trả về url
     @Transactional
@@ -87,8 +92,24 @@ public class PaymentService {
         if (isSuccess) {
             payment.setPaymentStatus(PaymentStatus.SUCCESS);
             payment.setPaymentDate(LocalDateTime.now());
-            order.changeStatus(OrderStatus.CONFIRMED);
+            order.changeStatus(OrderStatus.PAID);
             recordWeeklySales(order);
+            // tích điểm thưởng
+            User user = order.getCustomer().getUser(); 
+            if (user != null) {
+                int pointsEarned = (int) (order.getFinalAmount() / 10000); // 10k = 1 điểm
+                if (pointsEarned > 0) {
+                    List<LoyaltyTransaction> history = loyaltyTransactionRepo.findByUserId(user.getId());
+                    int currentBalance = history.isEmpty() ? 0 : history.get(history.size() - 1).getBalanceAfter();
+                    int newBalance = currentBalance + pointsEarned;
+
+                    LoyaltyTransaction loyaltyTx = new LoyaltyTransaction(
+                            user, order, LoyalType.EARN, pointsEarned, newBalance, "Tích điểm từ đơn hàng " + order.getId()
+                    );
+                    loyaltyTransactionRepo.save(loyaltyTx);
+                }
+            }
+
             // Trả về DTO 
             return new PaymentResult(PaymentStatus.SUCCESS, "Thanh toán thành công", order.getId());
 

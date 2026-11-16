@@ -34,7 +34,7 @@ public class LoyaltyTransaction {
     private int points;
 
     @Column(name = "balanced_after", nullable = false)
-    private int balancedAfter;
+    private int balanceAfter;
 
     private String description;
 
@@ -45,23 +45,23 @@ public class LoyaltyTransaction {
         this.createDate = LocalDate.now();
     }
 
-    public LoyaltyTransaction(User user, Order order, LoyalType transactionType, int points, int balancedAfter, String description) {
+    public LoyaltyTransaction(User user, Order order, LoyalType transactionType, int points, int balanceAfter, String description) {
         this.user = user;
         this.order = order;
         this.transactionType = transactionType;
         this.points = points;
-        this.balancedAfter = balancedAfter;
+        this.balanceAfter = balanceAfter;
         this.description = description;
         this.createDate = LocalDate.now();
     }
 
-    public LoyaltyTransaction(String id, User user, Order order, LoyalType transactionType, int points, int balancedAfter, String description) {
+    public LoyaltyTransaction(String id, User user, Order order, LoyalType transactionType, int points, int balanceAfter, String description) {
         this.id = id;
         this.user = user;
         this.order = order;
         this.transactionType = transactionType;
         this.points = points;
-        this.balancedAfter = balancedAfter;
+        this.balanceAfter = balanceAfter;
         this.description = description;
         this.createDate = LocalDate.now();
     }
@@ -107,12 +107,12 @@ public class LoyaltyTransaction {
         this.points = points;
     }
 
-    public int getBalancedAfter() {
-        return balancedAfter;
+    public int getBalanceAfter() {
+        return balanceAfter;
     }
 
-    public void setBalancedAfter(int balancedAfter) {
-        this.balancedAfter = balancedAfter;
+    public void setBalanceAfter(int balanceAfter) {
+        this.balanceAfter = balanceAfter;
     }
 
     public String getDescription() {

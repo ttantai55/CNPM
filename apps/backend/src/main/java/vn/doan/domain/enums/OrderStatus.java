@@ -4,6 +4,7 @@ import java.util.EnumSet;
 
 public enum OrderStatus {
     PENDING,
+    PAID,
     CONFIRMED,
     PREPARING,
     COMPLETED,
@@ -14,8 +15,8 @@ public enum OrderStatus {
         }
 
         return switch (this) {
-            case PENDING -> EnumSet.of(CONFIRMED, CANCELLED).contains(next);
-            case CONFIRMED -> EnumSet.of(PREPARING, CANCELLED).contains(next);
+            case PENDING -> EnumSet.of(PAID, CONFIRMED, CANCELLED).contains(next);
+            case PAID, CONFIRMED -> EnumSet.of(PREPARING, CANCELLED).contains(next);
             case PREPARING -> next == COMPLETED;
             case COMPLETED, CANCELLED -> false;
         };

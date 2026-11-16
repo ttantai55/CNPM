@@ -1,6 +1,4 @@
--- PostgreSQL schema matching the Spring Data JPA entities.
-
-CREATE TABLE IF NOT EXISTS customers (
+CREATE TABLE customers (
     id varchar(255) PRIMARY KEY,
     name varchar(100) NOT NULL,
     date_of_birth date,
@@ -9,12 +7,12 @@ CREATE TABLE IF NOT EXISTS customers (
     phone varchar(20)
 );
 
-CREATE TABLE IF NOT EXISTS baristas (
+CREATE TABLE baristas (
     id varchar(255) PRIMARY KEY,
     name varchar(100) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS categories (
+CREATE TABLE categories (
     id varchar(255) PRIMARY KEY,
     name varchar(100) NOT NULL,
     slug varchar(120) NOT NULL UNIQUE,
@@ -22,11 +20,11 @@ CREATE TABLE IF NOT EXISTS categories (
     is_active boolean NOT NULL DEFAULT true
 );
 
-CREATE TABLE IF NOT EXISTS inventories (
+CREATE TABLE inventories (
     id varchar(255) PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS promotions (
+CREATE TABLE promotions (
     id varchar(255) PRIMARY KEY,
     voucher_code varchar(50) NOT NULL UNIQUE,
     description varchar(255),
@@ -39,7 +37,7 @@ CREATE TABLE IF NOT EXISTS promotions (
     is_active boolean NOT NULL DEFAULT true
 );
 
-CREATE TABLE IF NOT EXISTS products (
+CREATE TABLE products (
     id varchar(255) PRIMARY KEY,
     name varchar(100) NOT NULL,
     price bigint NOT NULL,
@@ -49,18 +47,17 @@ CREATE TABLE IF NOT EXISTS products (
     rating double precision,
     weekly_sales_count integer NOT NULL DEFAULT 0,
     category_id varchar(255),
-    CONSTRAINT fk_products_category
-        FOREIGN KEY (category_id) REFERENCES categories (id)
+    CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories (id)
 );
 
-CREATE TABLE IF NOT EXISTS toppings (
+CREATE TABLE toppings (
     id varchar(255) PRIMARY KEY,
     name varchar(100) NOT NULL,
     price bigint NOT NULL,
     is_available boolean NOT NULL DEFAULT true
 );
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id varchar(255) PRIMARY KEY,
     username varchar(50) NOT NULL UNIQUE,
     hash_password varchar(255) NOT NULL,
@@ -74,6 +71,13 @@ CREATE TABLE IF NOT EXISTS users (
     phone varchar(255),
     full_name varchar(255),
     position varchar(20),
+<<<<<<< HEAD:apps/backend/src/main/resources/db/migration/V1__init_schema.sql
+    CONSTRAINT fk_users_customer FOREIGN KEY (customer_id) REFERENCES customers (id),
+    CONSTRAINT fk_users_barista FOREIGN KEY (barista_id) REFERENCES baristas (id)
+);
+
+CREATE TABLE orders (
+=======
     loyalty_points integer NOT NULL DEFAULT 0,
     CONSTRAINT fk_users_customer
         FOREIGN KEY (customer_id) REFERENCES customers (id),
@@ -84,6 +88,7 @@ CREATE TABLE IF NOT EXISTS users (
 ALTER TABLE users ADD COLUMN IF NOT EXISTS loyalty_points integer NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS orders (
+>>>>>>> d75b0835e13ec838e1581f40025901cf0ac6ef2c:DB.sql/schema.sql
     id varchar(255) PRIMARY KEY,
     customer_id varchar(255),
     total_amount bigint NOT NULL DEFAULT 0,
@@ -94,45 +99,36 @@ CREATE TABLE IF NOT EXISTS orders (
     paid_at timestamp without time zone,
     prepared_at timestamp without time zone,
     completed_at timestamp without time zone,
-    CONSTRAINT fk_orders_customer
-        FOREIGN KEY (customer_id) REFERENCES customers (id),
-    CONSTRAINT fk_orders_promotion
-        FOREIGN KEY (promotion_id) REFERENCES promotions (id)
+    CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers (id),
+    CONSTRAINT fk_orders_promotion FOREIGN KEY (promotion_id) REFERENCES promotions (id)
 );
 
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS paid_at timestamp without time zone;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS prepared_at timestamp without time zone;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS completed_at timestamp without time zone;
-
-CREATE TABLE IF NOT EXISTS carts (
+CREATE TABLE carts (
     id varchar(255) PRIMARY KEY,
     user_id varchar(255) NOT NULL UNIQUE,
-    CONSTRAINT fk_carts_user
-        FOREIGN KEY (user_id) REFERENCES users (id)
+    CONSTRAINT fk_carts_user FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
-CREATE TABLE IF NOT EXISTS ingredients (
+CREATE TABLE ingredients (
     id varchar(255) PRIMARY KEY,
     name varchar(100) NOT NULL,
     unit varchar(255) NOT NULL,
     current_stock integer NOT NULL,
     min_alert_threshold double precision NOT NULL,
     inventory_id varchar(255),
-    CONSTRAINT fk_ingredients_inventory
-        FOREIGN KEY (inventory_id) REFERENCES inventories (id)
+    CONSTRAINT fk_ingredients_inventory FOREIGN KEY (inventory_id) REFERENCES inventories (id)
 );
 
-CREATE TABLE IF NOT EXISTS inventory_transactions (
+CREATE TABLE inventory_transactions (
     id varchar(255) PRIMARY KEY,
     type varchar(255) NOT NULL,
     create_at timestamp without time zone NOT NULL DEFAULT current_timestamp,
     note varchar(255),
     barista_id varchar(255) NOT NULL,
-    CONSTRAINT fk_inventory_transactions_barista
-        FOREIGN KEY (barista_id) REFERENCES baristas (id)
+    CONSTRAINT fk_inventory_transactions_barista FOREIGN KEY (barista_id) REFERENCES baristas (id)
 );
 
-CREATE TABLE IF NOT EXISTS order_items (
+CREATE TABLE order_items (
     id varchar(255) PRIMARY KEY,
     order_id varchar(255) NOT NULL,
     product_id varchar(255) NOT NULL,
@@ -142,34 +138,30 @@ CREATE TABLE IF NOT EXISTS order_items (
     size varchar(255),
     sugar_percent integer,
     ice_percent integer,
-    CONSTRAINT fk_order_items_order
-        FOREIGN KEY (order_id) REFERENCES orders (id),
-    CONSTRAINT fk_order_items_product
-        FOREIGN KEY (product_id) REFERENCES products (id)
+    CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders (id),
+    CONSTRAINT fk_order_items_product FOREIGN KEY (product_id) REFERENCES products (id)
 );
 
-CREATE TABLE IF NOT EXISTS payments (
+CREATE TABLE payments (
     id varchar(255) PRIMARY KEY,
     order_id varchar(255) NOT NULL UNIQUE,
     total_amount bigint NOT NULL,
     payment_method varchar(255) NOT NULL,
     payment_status varchar(255) NOT NULL,
     payment_date timestamp without time zone NOT NULL DEFAULT current_timestamp,
-    CONSTRAINT fk_payments_order
-        FOREIGN KEY (order_id) REFERENCES orders (id)
+    CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES orders (id)
 );
 
-CREATE TABLE IF NOT EXISTS invoices (
+CREATE TABLE invoices (
     id varchar(255) PRIMARY KEY,
     invoice_number varchar(50) NOT NULL UNIQUE,
     order_id varchar(255) NOT NULL UNIQUE,
     total_paid bigint NOT NULL,
     issued_date timestamp without time zone NOT NULL DEFAULT current_timestamp,
-    CONSTRAINT fk_invoices_order
-        FOREIGN KEY (order_id) REFERENCES orders (id)
+    CONSTRAINT fk_invoices_order FOREIGN KEY (order_id) REFERENCES orders (id)
 );
 
-CREATE TABLE IF NOT EXISTS loyalty_transactions (
+CREATE TABLE loyalty_transactions (
     id varchar(255) PRIMARY KEY,
     user_id varchar(255) NOT NULL,
     order_id varchar(255),
@@ -178,68 +170,48 @@ CREATE TABLE IF NOT EXISTS loyalty_transactions (
     balanced_after integer NOT NULL,
     description varchar(255),
     create_date date,
-    CONSTRAINT fk_loyalty_transactions_user
-        FOREIGN KEY (user_id) REFERENCES users (id),
-    CONSTRAINT fk_loyalty_transactions_order
-        FOREIGN KEY (order_id) REFERENCES orders (id)
+    CONSTRAINT fk_loyalty_transactions_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT fk_loyalty_transactions_order FOREIGN KEY (order_id) REFERENCES orders (id)
 );
 
-CREATE TABLE IF NOT EXISTS cart_items (
+CREATE TABLE cart_items (
     id varchar(255) PRIMARY KEY,
     cart_id varchar(255) NOT NULL,
     product_id varchar(255) NOT NULL,
     quantity integer NOT NULL,
-    CONSTRAINT fk_cart_items_cart
-        FOREIGN KEY (cart_id) REFERENCES carts (id),
-    CONSTRAINT fk_cart_items_product
-        FOREIGN KEY (product_id) REFERENCES products (id)
+    CONSTRAINT fk_cart_items_cart FOREIGN KEY (cart_id) REFERENCES carts (id),
+    CONSTRAINT fk_cart_items_product FOREIGN KEY (product_id) REFERENCES products (id)
 );
 
-CREATE TABLE IF NOT EXISTS inventory_transaction_details (
+CREATE TABLE inventory_transaction_details (
     id varchar(255) PRIMARY KEY,
     transaction_id varchar(255) NOT NULL UNIQUE,
     ingredient_id varchar(255) NOT NULL,
     quantity double precision NOT NULL,
     price bigint NOT NULL,
-    CONSTRAINT fk_inventory_transaction_details_transaction
-        FOREIGN KEY (transaction_id) REFERENCES inventory_transactions (id),
-    CONSTRAINT fk_inventory_transaction_details_ingredient
-        FOREIGN KEY (ingredient_id) REFERENCES ingredients (id)
+    CONSTRAINT fk_inventory_transaction_details_transaction FOREIGN KEY (transaction_id) REFERENCES inventory_transactions (id),
+    CONSTRAINT fk_inventory_transaction_details_ingredient FOREIGN KEY (ingredient_id) REFERENCES ingredients (id)
 );
 
-CREATE TABLE IF NOT EXISTS order_item_toppings (
+CREATE TABLE order_item_toppings (
     id varchar(255) PRIMARY KEY,
     order_item_id varchar(255) NOT NULL,
     topping_id varchar(255) NOT NULL,
     quantity integer NOT NULL,
     price bigint NOT NULL,
-    CONSTRAINT fk_order_item_toppings_item
-        FOREIGN KEY (order_item_id) REFERENCES order_items (id),
-    CONSTRAINT fk_order_item_toppings_topping
-        FOREIGN KEY (topping_id) REFERENCES toppings (id)
+    CONSTRAINT fk_order_item_toppings_item FOREIGN KEY (order_item_id) REFERENCES order_items (id),
+    CONSTRAINT fk_order_item_toppings_topping FOREIGN KEY (topping_id) REFERENCES toppings (id)
 );
 
-CREATE TABLE IF NOT EXISTS order_processes (
+CREATE TABLE order_processes (
     id varchar(255) PRIMARY KEY,
     order_id varchar(255) NOT NULL,
     status varchar(255) NOT NULL,
     update_at timestamp without time zone NOT NULL DEFAULT current_timestamp,
-    CONSTRAINT fk_order_processes_order
-        FOREIGN KEY (order_id) REFERENCES orders (id)
+    CONSTRAINT fk_order_processes_order FOREIGN KEY (order_id) REFERENCES orders (id)
 );
 
-CREATE TABLE IF NOT EXISTS order_item_custom_toppings (
-    order_item_id varchar(255) NOT NULL,
-    topping varchar(255),
-    CONSTRAINT fk_order_item_custom_toppings_item
-        FOREIGN KEY (order_item_id) REFERENCES order_items (id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_orders_customer_created
-    ON orders (customer_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_orders_status_created
-    ON orders (status, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_order_items_order
-    ON order_items (order_id);
-CREATE INDEX IF NOT EXISTS idx_inventory_transactions_created
-    ON inventory_transactions (create_at DESC);
+CREATE INDEX idx_orders_customer_created ON orders (customer_id, created_at DESC);
+CREATE INDEX idx_orders_status_created ON orders (status, created_at DESC);
+CREATE INDEX idx_order_items_order ON order_items (order_id);
+CREATE INDEX idx_inventory_transactions_created ON inventory_transactions (create_at DESC);

@@ -113,11 +113,4 @@ public class Payment {
         this.paymentDate = paymentDate;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return paymentDate;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.paymentDate = createdAt;
-    }
 }

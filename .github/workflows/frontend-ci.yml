@@ -2,15 +2,9 @@ name: Frontend Pipeline
 
 on:
   push:
-    branches: "main"
-    paths:
-      - 'apps/frontend/**'
-      - '.github/workflows/frontend-ci.yml'
+    branches: ["main"]
   pull_request:
-    branches: "main"
-    paths:
-      - 'apps/frontend/**'
-      - '.github/workflows/frontend-ci.yml'
+    branches: ["main"]
 
 jobs:
   frontend-ci:

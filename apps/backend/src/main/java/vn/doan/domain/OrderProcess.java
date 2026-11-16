@@ -24,7 +24,7 @@ public class OrderProcess {
     private OrderStatus status;
 
     @Column(name = "update_at", nullable = false)
-    private LocalDateTime updateAt;
+    private LocalDateTime updatedAt;
 
     // BẮT BUỘC CHO JPA: Constructor không tham số
     public OrderProcess() {
@@ -33,14 +33,14 @@ public class OrderProcess {
     public OrderProcess(Order order, OrderStatus status) {
         this.order = order;
         this.status = status;
-        this.updateAt = OrderTime.now();
+        this.updatedAt = OrderTime.now();
     }
 
-    public OrderProcess(String id, Order order, OrderStatus status, LocalDateTime updateAt) {
+    public OrderProcess(String id, Order order, OrderStatus status, LocalDateTime updatedAt) {
         this.id = id;
         this.order = order;
         this.status = status;
-        this.updateAt = updateAt != null ? updateAt : OrderTime.now();
+        this.updatedAt = updatedAt != null ? updatedAt : OrderTime.now();
     }
 
     // Getters and Setters
@@ -68,11 +68,11 @@ public class OrderProcess {
         this.status = status;
     }
 
-    public LocalDateTime getUpdateAt() {
-        return updateAt;
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 
-    public void setUpdateAt(LocalDateTime updateAt) {
-        this.updateAt = updateAt;
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

@@ -5,7 +5,7 @@ WORKDIR /app
 # Copy cấu hình Maven trước để tận dụng Docker cache khi tải thư viện
 COPY .mvn/ .mvn
 COPY mvnw pom.xml ./
-RUN sed -i 's/\r$//' ./mvnw && chmod +x ./mvnw && ./mvnw dependency:go-offline
+RUN sed -i 's/\r$//' ./mvnw && chmod +x ./mvnw
 
 # Copy mã nguồn và đóng gói file .jar
 COPY src ./src
