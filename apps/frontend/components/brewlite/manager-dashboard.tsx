@@ -307,10 +307,10 @@ function ManagerContent() {
 
   return (
     <RoleGuard role="MANAGER">
-      <div className="min-h-dvh bg-[#f7f8f6]">
+      <div className="flex h-dvh flex-col overflow-hidden bg-[#f7f8f6]">
         <DashboardHeader role="MANAGER" title="Management dashboard" />
-        <div className="mx-auto flex max-w-[1600px]">
-          <aside className="sticky top-0 hidden h-[calc(100dvh-76px)] w-[248px] shrink-0 flex-col border-r border-[#e7ece7] bg-white px-4 py-6 lg:flex">
+        <div className="mx-auto flex h-[calc(100dvh-76px)] min-h-0 w-full max-w-[1600px] overflow-hidden">
+          <aside className="sticky top-0 hidden h-full w-[248px] shrink-0 flex-col border-r border-[#e7ece7] bg-white px-4 py-6 lg:flex">
             <p className="px-3 text-[10px] font-bold uppercase tracking-[0.17em] text-[#a2aba5]">
               Quản lý cửa hàng
             </p>
@@ -345,7 +345,7 @@ function ManagerContent() {
             </div>
           </aside>
 
-          <main className="min-w-0 flex-1 px-6 py-7 xl:px-9">
+          <main className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-7 xl:px-9">
             <div id="overview" className="scroll-mt-5 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="text-xs text-[#99a39c]">
@@ -522,7 +522,7 @@ function ManagerContent() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="max-h-[calc(100dvh-280px)] overflow-auto">
                 <table className="w-full min-w-[720px] text-left">
                   <thead>
                     <tr className="bg-[#fafbfa] text-[10px] font-semibold uppercase tracking-wide text-[#9aa49c]">

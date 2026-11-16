@@ -111,7 +111,7 @@ export function CategoryManagement() {
             <Plus className="size-3.5" /> Thêm danh mục
           </button>
         </div>
-        <ul className="divide-y divide-[#f0f2f0]">
+        <ul className="max-h-[calc(100dvh-280px)] divide-y divide-[#f0f2f0] overflow-y-auto">
           {categories.map((category) => (
             <li key={category.id} className="flex items-center gap-3 px-5 py-3">
               <div className="min-w-0 flex-1">

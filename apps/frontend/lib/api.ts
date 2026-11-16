@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8081'
+const API_BASE_URL = '/api'
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = typeof window === 'undefined'
@@ -10,7 +10,8 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
           return undefined
         }
       })()
-  const response = await fetch(`${API_URL}${path}`, {
+  const endpoint = path.replace(/^\/api(?=\/)/, '')
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
