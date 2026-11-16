@@ -46,6 +46,7 @@ export type Order = {
   subtotal: number
   discountAmount?: number
   promotionCode?: string
+  loyaltyRewardCode?: string
   deliveryFee: number
   total: number
   paymentMethod: PaymentMethod | null
@@ -231,6 +232,7 @@ export async function placeOrder(draft: OrderDraft) {
     customerName: draft.customerName,
     phone: draft.phone,
     voucherCode: draft.promotionCode,
+    loyaltyRewardCode: draft.loyaltyRewardCode,
     items: draft.lines.map((line) => ({
       productId: line.productId,
       quantity: line.quantity,

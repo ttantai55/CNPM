@@ -5,12 +5,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.doan.domain.*;
 import vn.doan.domain.enums.OrderStatus;
+import vn.doan.domain.enums.LoyalType;
+import vn.doan.domain.enums.LoyaltyReward;
 import vn.doan.dto.request.OrderCreateRequest;
 import vn.doan.dto.request.OrderItemRequest;
 import vn.doan.dto.response.OrderItemResponse;
 import vn.doan.dto.response.OrderProcessResponse;
 import vn.doan.dto.response.OrderResponse;
 import vn.doan.repository.OrderRepository;
+import vn.doan.repository.LoyaltyTransactionRepo;
 import vn.doan.repository.PaymentRepository;
 import vn.doan.repository.ProductRepository;
 import vn.doan.repository.PromotionRepository;
@@ -36,6 +39,7 @@ public class OrderService {
     private final PromotionRepository promotionRepository;
     private final ToppingRepository toppingRepository;
     private final CustomerRepository customerRepository;
+    private final LoyaltyTransactionRepo loyaltyTransactionRepo;
 
     // * 1. Lấy thông tin chi tiết một đơn hàng
     public OrderResponse getOrderDetails(String orderId) {
@@ -68,7 +72,7 @@ public class OrderService {
         // Lấy tt khách hàng thông qua UserRepository
         User user = request.getCustomerId() == null || request.getCustomerId().isBlank()
                 ? null
-                : userRepository.findById(request.getCustomerId())
+                : userRepository.findByIdForUpdate(request.getCustomerId())
                         .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại."));
         Customer customer = user == null ? null : user.getInfo();
         if (customer == null) {
@@ -143,6 +147,7 @@ public class OrderService {
         order.setTotalAmount(totalAmount);
         long discountAmount = 0;
         long finalAmount = totalAmount;
+        LoyaltyReward loyaltyReward = null;
 
         // Kiểm tra xem có nhập mã khuyến mãi không
         if (request.getVoucherCode() != null && !request.getVoucherCode().trim().isEmpty()) {
@@ -161,8 +166,38 @@ public class OrderService {
             promotion.setUsedCount(promotion.getUsedCount() + 1); 
         }
 
+        if (request.getLoyaltyRewardCode() != null && !request.getLoyaltyRewardCode().isBlank()) {
+            if (user == null) {
+                throw new IllegalStateException("Bạn cần đăng nhập để đổi điểm thưởng.");
+            }
+            loyaltyReward = LoyaltyReward.findByCode(request.getLoyaltyRewardCode())
+                    .orElseThrow(() -> new IllegalArgumentException("Mốc đổi điểm không hợp lệ."));
+            if (user.getLoyaltyPoints() < loyaltyReward.getPoints()) {
+                throw new IllegalStateException("Bạn không đủ điểm để đổi ưu đãi này.");
+            }
+
+            long highestDrinkPrice = order.getItems().stream()
+                    .mapToLong(OrderItem::getUnitPrice)
+                    .max()
+                    .orElse(0);
+            long loyaltyDiscount = loyaltyReward.calculateDiscount(totalAmount, highestDrinkPrice);
+            finalAmount = Math.max(0, finalAmount - loyaltyDiscount);
+            user.setLoyaltyPoints(user.getLoyaltyPoints() - loyaltyReward.getPoints());
+        }
+
         order.setFinalAmount(finalAmount);
         Order savedOrder = orderRepository.save(order);
+
+        if (loyaltyReward != null) {
+            loyaltyTransactionRepo.save(new LoyaltyTransaction(
+                    user,
+                    savedOrder,
+                    LoyalType.REDEEM,
+                    loyaltyReward.getPoints(),
+                    user.getLoyaltyPoints(),
+                    "Đổi ưu đãi " + loyaltyReward.getCode()
+            ));
+        }
 
         return mapToResponse(savedOrder);
     }
@@ -173,7 +208,28 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng."));
 
+        OrderStatus previousStatus = order.getStatus();
         order.changeStatus(newStatus);
+        if (previousStatus != OrderStatus.COMPLETED && newStatus == OrderStatus.COMPLETED) {
+            User user = order.getCustomer() == null ? null : order.getCustomer().getUser();
+            if (user != null) {
+                user = userRepository.findByIdForUpdate(user.getId())
+                        .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại."));
+                int earnedPoints = Math.toIntExact(order.getFinalAmount() / 1_000);
+                if (earnedPoints > 0) {
+                    int newBalance = user.getLoyaltyPoints() + earnedPoints;
+                    user.setLoyaltyPoints(newBalance);
+                    loyaltyTransactionRepo.save(new LoyaltyTransaction(
+                            user,
+                            order,
+                            LoyalType.EARN,
+                            earnedPoints,
+                            newBalance,
+                            "Tích điểm từ đơn hàng " + order.getId()
+                    ));
+                }
+            }
+        }
     }
 
     // * 5. Khách hàng hoặc nhân viên Hủy đơn
@@ -258,10 +314,9 @@ public class OrderService {
         ).collect(Collectors.toList());
 
         // Lấy thông tin voucher nếu có
-        long discountAmount = 0;
+        long discountAmount = order.getTotalAmount() - order.getFinalAmount();
         String voucherCode = null;
         if (order.getDiscount() != null) {
-            discountAmount = order.getTotalAmount() - order.getFinalAmount();
             voucherCode = order.getDiscount().getVoucherCode();
         }
 

@@ -3,12 +3,9 @@ package vn.doan.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.doan.domain.LoyaltyTransaction;
 import vn.doan.domain.Order;
 import vn.doan.domain.OrderItem;
 import vn.doan.domain.Payment;
-import vn.doan.domain.User;
-import vn.doan.domain.enums.LoyalType;
 import vn.doan.domain.enums.OrderStatus;
 import vn.doan.domain.enums.PaymentMethod;
 import vn.doan.domain.enums.PaymentStatus;
@@ -16,7 +13,6 @@ import vn.doan.dto.request.PaymentCallbackDTO;
 import vn.doan.dto.request.PaymentCreateRequest;
 import vn.doan.dto.response.PaymentResult;
 import vn.doan.dto.response.PaymentUrlResponse;
-import vn.doan.repository.LoyaltyTransactionRepo;
 import vn.doan.repository.OrderRepository;
 import vn.doan.repository.PaymentRepository;
 import vn.doan.repository.ProductRepository;
@@ -33,7 +29,6 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
-    private final LoyaltyTransactionRepo loyaltyTransactionRepo;
 
     // * 1. Khởi tạo giao dịch trả về url
     @Transactional
@@ -94,6 +89,7 @@ public class PaymentService {
             payment.setPaymentDate(LocalDateTime.now());
             order.changeStatus(OrderStatus.PAID);
             recordWeeklySales(order);
+<<<<<<< HEAD
             // tích điểm thưởng
             User user = order.getCustomer().getUser(); 
             if (user != null) {
@@ -110,6 +106,8 @@ public class PaymentService {
                 }
             }
 
+=======
+>>>>>>> d75b0835e13ec838e1581f40025901cf0ac6ef2c
             // Trả về DTO 
             return new PaymentResult(PaymentStatus.SUCCESS, "Thanh toán thành công", order.getId());
 

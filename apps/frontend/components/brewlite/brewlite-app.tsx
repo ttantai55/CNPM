@@ -19,6 +19,7 @@ import {
   getEligiblePromotions,
   promotionStore,
 } from '@/lib/promotions'
+import { getLoyaltyDiscount, LOYALTY_REWARDS } from '@/lib/loyalty'
 import { AppHeader, type User } from './app-header'
 import { CategoryChips, CategorySidebar, type CategoryFilter } from './category-nav'
 import { ProductSection, type SortOption } from './product-section'
@@ -71,6 +72,7 @@ export function BrewLiteApp() {
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [selectedPromotionId, setSelectedPromotionId] = useState('')
+  const [selectedLoyaltyRewardCode, setSelectedLoyaltyRewardCode] = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
   const [paymentOrder, setPaymentOrder] = useState<Order | null>(null)
   const [editingCartItem, setEditingCartItem] = useState<CartItem | null>(null)
@@ -79,6 +81,7 @@ export function BrewLiteApp() {
   const paymentItemsRestored = useRef(false)
   const [toast, setToast] = useState<string | null>(null)
   const [profile, setProfile] = useState<CustomerProfile | null>(null)
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0)
   const user: User | null = session && profile
     ? {
         id: session.id,
@@ -110,8 +113,10 @@ export function BrewLiteApp() {
   useEffect(() => {
     if (!hydrated || !session || session.role !== 'CUSTOMER') {
       setProfile(null)
+      setLoyaltyPoints(0)
       return
     }
+    setLoyaltyPoints(0)
     let active = true
     authApi.profile(session.id)
       .then((user) => {
@@ -125,6 +130,7 @@ export function BrewLiteApp() {
             dateOfBirth: user.dateOfBirth ?? '',
             avatarUrl: user.avatarUrl ?? '',
           })
+          setLoyaltyPoints(user.loyaltyPoints ?? 0)
           authStore.set((current) => current?.id === session.id ? { ...current, name } : current)
         }
       })
@@ -132,6 +138,17 @@ export function BrewLiteApp() {
         if (active) showToast(error instanceof Error ? error.message : 'Không tải được hồ sơ.')
       })
     return () => { active = false }
+  }, [hydrated, session?.id, session?.role])
+
+  useEffect(() => {
+    if (!hydrated || !session || session.role !== 'CUSTOMER') return
+    const refreshPoints = () => {
+      void authApi.profile(session.id)
+        .then((user) => setLoyaltyPoints(user.loyaltyPoints ?? 0))
+        .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Không tải được điểm thưởng.'))
+    }
+    window.addEventListener('focus', refreshPoints)
+    return () => window.removeEventListener('focus', refreshPoints)
   }, [hydrated, session?.id, session?.role])
 
   useEffect(() => {
@@ -236,7 +253,14 @@ export function BrewLiteApp() {
   const cartSubtotal = cart.reduce((sum, i) => sum + getUnitPrice(i) * i.quantity, 0)
   const eligiblePromotions = getEligiblePromotions(availablePromotions, cartSubtotal)
   const selectedPromotion = eligiblePromotions.find((promotion) => promotion.id === selectedPromotionId)
-  const cartTotal = cartSubtotal - getDiscountAmount(selectedPromotion, cartSubtotal)
+  const selectedReward = LOYALTY_REWARDS.find((reward) =>
+    reward.code === selectedLoyaltyRewardCode && loyaltyPoints >= reward.points,
+  )
+  const cartTotal = Math.max(
+    0,
+    cartSubtotal - getDiscountAmount(selectedPromotion, cartSubtotal) -
+      getLoyaltyDiscount(selectedReward, cart, cartSubtotal),
+  )
 
   function showToast(message: string) {
     setToast(message)
@@ -289,6 +313,9 @@ export function BrewLiteApp() {
     promotions: availablePromotions,
     selectedPromotionId,
     onSelectPromotion: setSelectedPromotionId,
+    loyaltyPoints,
+    selectedLoyaltyRewardCode,
+    onSelectLoyaltyReward: setSelectedLoyaltyRewardCode,
   }
 
   if (hydrated && session && session.role !== 'CUSTOMER') {
@@ -458,6 +485,9 @@ export function BrewLiteApp() {
       promotions={availablePromotions}
       selectedPromotionId={selectedPromotionId}
       onSelectPromotion={setSelectedPromotionId}
+      loyaltyPoints={loyaltyPoints}
+      selectedLoyaltyRewardCode={selectedLoyaltyRewardCode}
+      onSelectLoyaltyReward={setSelectedLoyaltyRewardCode}
       onEditCart={() => setCartOpen(true)}
       onProceedToPayment={async (orderData) => {
         setCheckoutOpen(false)
@@ -471,7 +501,13 @@ export function BrewLiteApp() {
             .then((remotePromotions) => promotionStore.set(remotePromotions))
             .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Không cập nhật được lượt dùng mã.'))
         }
+        if (session?.id) {
+          void authApi.profile(session.id)
+            .then((updatedUser) => setLoyaltyPoints(updatedUser.loyaltyPoints ?? 0))
+            .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Không cập nhật được điểm thưởng.'))
+        }
         setSelectedPromotionId('')
+        setSelectedLoyaltyRewardCode('')
         dispatchCart({ type: 'clear' })
         setPaymentOrder(order)
         } catch (error) {

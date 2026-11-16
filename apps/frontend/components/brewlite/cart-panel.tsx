@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { Pencil, ShoppingBag, Trash2 } from 'lucide-react'
 import { formatPrice, getProduct, getTopping, getUnitPrice, toppingStore, type CartItem } from '@/lib/menu'
 import { getDiscountAmount, getEligiblePromotions, type Promotion } from '@/lib/promotions'
+import { getLoyaltyDiscount, LOYALTY_REWARDS } from '@/lib/loyalty'
 import { cn } from '@/lib/utils'
 import { QuantityStepper } from './customize-dialog'
 
@@ -16,6 +17,9 @@ type CartPanelProps = {
   promotions: Promotion[]
   selectedPromotionId: string
   onSelectPromotion: (id: string) => void
+  loyaltyPoints: number
+  selectedLoyaltyRewardCode: string
+  onSelectLoyaltyReward: (code: string) => void
   showHeader?: boolean
   className?: string
 }
@@ -29,6 +33,9 @@ export function CartPanel({
   promotions,
   selectedPromotionId,
   onSelectPromotion,
+  loyaltyPoints,
+  selectedLoyaltyRewardCode,
+  onSelectLoyaltyReward,
   showHeader = true,
   className,
 }: CartPanelProps) {
@@ -37,6 +44,10 @@ export function CartPanel({
   const eligiblePromotions = getEligiblePromotions(promotions, subtotal)
   const selectedPromotion = eligiblePromotions.find((promotion) => promotion.id === selectedPromotionId)
   const discountAmount = getDiscountAmount(selectedPromotion, subtotal)
+  const selectedReward = LOYALTY_REWARDS.find((reward) =>
+    reward.code === selectedLoyaltyRewardCode && loyaltyPoints >= reward.points,
+  )
+  const loyaltyDiscount = getLoyaltyDiscount(selectedReward, items, subtotal)
   const lineCount = items.length
 
   return (
@@ -134,6 +145,9 @@ export function CartPanel({
       )}
 
       <div className="border-t border-border bg-muted/50 px-4 pb-4 pt-4">
+        <p className="mb-3 rounded-lg bg-secondary px-3 py-2 text-xs font-medium text-foreground">
+          Điểm hiện có: {loyaltyPoints.toLocaleString('vi-VN')} điểm
+        </p>
         <label className="mb-3 block text-xs font-medium text-foreground" htmlFor="cart-promotion">
           Chọn mã khuyến mãi
           <select
@@ -151,6 +165,22 @@ export function CartPanel({
             ))}
           </select>
         </label>
+        <label className="mb-3 block text-xs font-medium text-foreground" htmlFor="cart-loyalty-reward">
+          Đổi điểm thưởng
+          <select
+            id="cart-loyalty-reward"
+            value={selectedReward && loyaltyPoints >= selectedReward.points ? selectedReward.code : ''}
+            onChange={(event) => onSelectLoyaltyReward(event.target.value)}
+            className="mt-1.5 h-10 w-full rounded-lg border border-border bg-card px-3 text-xs"
+          >
+            <option value="">Không đổi điểm</option>
+            {LOYALTY_REWARDS.map((reward) => (
+              <option key={reward.code} value={reward.code} disabled={loyaltyPoints < reward.points}>
+                {reward.label}{loyaltyPoints < reward.points ? ' · Chưa đủ điểm' : ''}
+              </option>
+            ))}
+          </select>
+        </label>
         <dl className="flex flex-col gap-2 text-sm">
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Tạm tính</dt>
@@ -162,9 +192,15 @@ export function CartPanel({
               <dd className="font-semibold text-success">−{formatPrice(discountAmount)}</dd>
             </div>
           )}
+          {selectedReward && loyaltyDiscount > 0 && (
+            <div className="flex justify-between">
+              <dt className="text-success">Đổi điểm · {selectedReward.label}</dt>
+              <dd className="font-semibold text-success">−{formatPrice(loyaltyDiscount)}</dd>
+            </div>
+          )}
           <div className="mt-2 flex items-center justify-between border-t border-border pt-3">
             <dt className="font-semibold text-foreground">Tổng cộng</dt>
-            <dd className="text-xl font-bold text-foreground">{formatPrice(subtotal - discountAmount)}</dd>
+            <dd className="text-xl font-bold text-foreground">{formatPrice(Math.max(0, subtotal - discountAmount - loyaltyDiscount))}</dd>
           </div>
         </dl>
         <button

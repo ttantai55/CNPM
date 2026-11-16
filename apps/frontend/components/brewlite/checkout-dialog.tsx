@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { formatPrice, getUnitPrice, type CartItem } from '@/lib/menu'
 import { cartItemToLine, type OrderDraft } from '@/lib/orders'
 import { getDiscountAmount, getEligiblePromotions, type Promotion } from '@/lib/promotions'
+import { getLoyaltyDiscount, LOYALTY_REWARDS } from '@/lib/loyalty'
 import { cn } from '@/lib/utils'
 import { Modal } from './modal'
 import { FormField, inputClass } from './form-field'
@@ -30,6 +31,9 @@ type CheckoutDialogProps = {
   promotions: Promotion[]
   selectedPromotionId: string
   onSelectPromotion: (id: string) => void
+  loyaltyPoints: number
+  selectedLoyaltyRewardCode: string
+  onSelectLoyaltyReward: (code: string) => void
   onProceedToPayment: (draft: OrderDraft) => void
   onEditCart: () => void
 }
@@ -45,6 +49,9 @@ export function CheckoutDialog({
   promotions,
   selectedPromotionId,
   onSelectPromotion,
+  loyaltyPoints,
+  selectedLoyaltyRewardCode,
+  onSelectLoyaltyReward,
   onProceedToPayment,
   onEditCart,
 }: CheckoutDialogProps) {
@@ -73,6 +80,9 @@ export function CheckoutDialog({
           promotions={promotions}
           selectedPromotionId={selectedPromotionId}
           onSelectPromotion={onSelectPromotion}
+          loyaltyPoints={loyaltyPoints}
+          selectedLoyaltyRewardCode={selectedLoyaltyRewardCode}
+          onSelectLoyaltyReward={onSelectLoyaltyReward}
           onSubmit={setPendingDraft}
         />
       </Modal>
@@ -123,6 +133,9 @@ function CheckoutForm({
   promotions,
   selectedPromotionId,
   onSelectPromotion,
+  loyaltyPoints,
+  selectedLoyaltyRewardCode,
+  onSelectLoyaltyReward,
   onSubmit,
 }: {
   items: CartItem[]
@@ -134,6 +147,9 @@ function CheckoutForm({
   promotions: Promotion[]
   selectedPromotionId: string
   onSelectPromotion: (id: string) => void
+  loyaltyPoints: number
+  selectedLoyaltyRewardCode: string
+  onSelectLoyaltyReward: (code: string) => void
   onSubmit: (draft: OrderDraft) => void
 }) {
   const [values, setValues] = useState<FormValues>({
@@ -154,7 +170,11 @@ function CheckoutForm({
   const eligiblePromotions = getEligiblePromotions(promotions, subtotal)
   const selectedPromotion = eligiblePromotions.find((promotion) => promotion.id === selectedPromotionId)
   const discountAmount = getDiscountAmount(selectedPromotion, subtotal)
-  const total = subtotal - discountAmount
+  const selectedReward = LOYALTY_REWARDS.find((reward) =>
+    reward.code === selectedLoyaltyRewardCode && loyaltyPoints >= reward.points,
+  )
+  const loyaltyDiscount = getLoyaltyDiscount(selectedReward, items, subtotal)
+  const total = Math.max(0, subtotal - discountAmount - loyaltyDiscount)
 
   function update(field: keyof FormValues) {
     return (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -185,6 +205,7 @@ function CheckoutForm({
       subtotal,
       discountAmount,
       promotionCode: selectedPromotion?.voucherCode,
+      loyaltyRewardCode: selectedReward && loyaltyPoints >= selectedReward.points ? selectedReward.code : undefined,
       deliveryFee: 0,
       total,
     })
@@ -227,6 +248,22 @@ function CheckoutForm({
             {eligiblePromotions.map((promotion) => (
               <option key={promotion.id} value={promotion.id}>
                 {promotion.voucherCode} · {promotion.discountType === 'PERCENTAGE' ? `${promotion.discountValue}%` : formatPrice(promotion.discountValue)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs font-medium text-foreground" htmlFor="checkout-loyalty-reward">
+          Đổi điểm thưởng · {loyaltyPoints.toLocaleString('vi-VN')} điểm hiện có
+          <select
+            id="checkout-loyalty-reward"
+            value={selectedReward && loyaltyPoints >= selectedReward.points ? selectedReward.code : ''}
+            onChange={(event) => onSelectLoyaltyReward(event.target.value)}
+            className="mt-1.5 h-10 w-full rounded-lg border border-border bg-card px-3 text-xs"
+          >
+            <option value="">Không đổi điểm</option>
+            {LOYALTY_REWARDS.map((reward) => (
+              <option key={reward.code} value={reward.code} disabled={loyaltyPoints < reward.points}>
+                {reward.label}{loyaltyPoints < reward.points ? ' · Chưa đủ điểm' : ''}
               </option>
             ))}
           </select>
@@ -288,6 +325,12 @@ function CheckoutForm({
             <div className="flex justify-between">
               <dt className="text-success">Ưu đãi · {selectedPromotion.voucherCode}</dt>
               <dd className="font-semibold text-success">−{formatPrice(discountAmount)}</dd>
+            </div>
+          )}
+          {selectedReward && loyaltyDiscount > 0 && (
+            <div className="flex justify-between">
+              <dt className="text-success">Đổi điểm · {selectedReward.label}</dt>
+              <dd className="font-semibold text-success">−{formatPrice(loyaltyDiscount)}</dd>
             </div>
           )}
           <div className="flex justify-between pt-1">

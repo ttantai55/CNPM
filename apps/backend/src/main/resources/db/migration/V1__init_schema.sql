@@ -71,11 +71,24 @@ CREATE TABLE users (
     phone varchar(255),
     full_name varchar(255),
     position varchar(20),
+<<<<<<< HEAD:apps/backend/src/main/resources/db/migration/V1__init_schema.sql
     CONSTRAINT fk_users_customer FOREIGN KEY (customer_id) REFERENCES customers (id),
     CONSTRAINT fk_users_barista FOREIGN KEY (barista_id) REFERENCES baristas (id)
 );
 
 CREATE TABLE orders (
+=======
+    loyalty_points integer NOT NULL DEFAULT 0,
+    CONSTRAINT fk_users_customer
+        FOREIGN KEY (customer_id) REFERENCES customers (id),
+    CONSTRAINT fk_users_barista
+        FOREIGN KEY (barista_id) REFERENCES baristas (id)
+);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS loyalty_points integer NOT NULL DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS orders (
+>>>>>>> d75b0835e13ec838e1581f40025901cf0ac6ef2c:DB.sql/schema.sql
     id varchar(255) PRIMARY KEY,
     customer_id varchar(255),
     total_amount bigint NOT NULL DEFAULT 0,

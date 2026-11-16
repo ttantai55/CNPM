@@ -46,6 +46,7 @@ export type ApiUser = {
   gender?: boolean
   dateOfBirth?: string
   address?: string
+  loyaltyPoints?: number
 }
 export type AuthResult = { token: string; user: ApiUser }
 export type ApiProduct = {
@@ -153,6 +154,7 @@ export const ordersApi = {
     customerName: string
     phone: string
     voucherCode?: string
+    loyaltyRewardCode?: string
     items: ApiOrderItem[]
   }) => api<ApiOrder>('/api/orders', json('POST', body)),
   status: (id: string, status: string) =>
