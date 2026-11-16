@@ -89,7 +89,6 @@ public class PaymentService {
             payment.setPaymentDate(LocalDateTime.now());
             order.changeStatus(OrderStatus.PAID);
             recordWeeklySales(order);
-<<<<<<< HEAD
             // tích điểm thưởng
             User user = order.getCustomer().getUser(); 
             if (user != null) {
@@ -106,8 +105,6 @@ public class PaymentService {
                 }
             }
 
-=======
->>>>>>> d75b0835e13ec838e1581f40025901cf0ac6ef2c
             // Trả về DTO 
             return new PaymentResult(PaymentStatus.SUCCESS, "Thanh toán thành công", order.getId());
 
