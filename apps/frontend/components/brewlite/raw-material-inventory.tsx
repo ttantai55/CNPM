@@ -367,7 +367,7 @@ export function RawMaterialInventory() {
                 placeholder="Tìm nguyên liệu..."
               />
             </div>
-            <div className="overflow-x-auto rounded-xl border border-[#edf0ed]">
+            <div className="max-h-[calc(100dvh-280px)] overflow-auto rounded-xl border border-[#edf0ed]">
               <table className="w-full min-w-[700px] text-left">
                 <thead>
                   <tr className="bg-[#fafbfa] text-[10px] font-semibold uppercase tracking-wide text-[#9aa49c]">
@@ -482,7 +482,7 @@ export function RawMaterialInventory() {
                 />
               </div>
             </div>
-            <div className="overflow-x-auto rounded-xl border border-[#edf0ed]">
+            <div className="max-h-[calc(100dvh-280px)] overflow-auto rounded-xl border border-[#edf0ed]">
               <table className="w-full min-w-[1050px] text-left">
                 <thead>
                   <tr className="bg-[#fafbfa] text-[10px] font-semibold uppercase tracking-wide text-[#9aa49c]">

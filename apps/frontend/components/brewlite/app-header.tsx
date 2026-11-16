@@ -32,7 +32,7 @@ type AppHeaderProps = {
   user: User | null
   onOpenAuth: () => void
   onOpenProfile: () => void
-  latestOrderCode?: string
+  latestActiveOrderCode?: string
   activeOrderCount: number
   customerOrders: Order[]
   onResumePayment: (order: Order) => void
@@ -47,7 +47,7 @@ export function AppHeader({
   user,
   onOpenAuth,
   onOpenProfile,
-  latestOrderCode,
+  latestActiveOrderCode,
   activeOrderCount,
   customerOrders,
   onResumePayment,
@@ -205,8 +205,8 @@ export function AppHeader({
 
           <button
             type="button"
-            disabled={!latestOrderCode}
-            onClick={() => latestOrderCode && router.push(`/orders/${encodeURIComponent(latestOrderCode)}`)}
+            disabled={!latestActiveOrderCode}
+            onClick={() => latestActiveOrderCode && router.push(`/orders/${encodeURIComponent(latestActiveOrderCode)}`)}
             aria-label={`Theo dõi đơn hàng${activeOrderCount ? `, ${activeOrderCount} đơn đang xử lý` : ''}`}
             className="relative flex size-10 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
           >

@@ -21,10 +21,7 @@ const categoryOptions: { value: CategoryId; label: string }[] = [
   { value: 'juice', label: CATEGORY_LABELS.juice },
 ]
 
-function OrderCard({ order, action, now }: { order: Order; action?: string; now: number }) {
-  const preparationAge = order.status === 'PREPARING' && order.preparedAt > 0
-    ? Math.max(0, Math.floor((now - order.preparedAt) / 60_000))
-    : null
+function OrderCard({ order, action }: { order: Order; action?: string }) {
   const timestamp = order.status === 'PREPARING'
     ? order.preparedAt
     : order.status === 'COMPLETED'
@@ -37,8 +34,6 @@ function OrderCard({ order, action, now }: { order: Order; action?: string; now:
         timeZone: 'Asia/Ho_Chi_Minh',
       }).format(timestamp)
     : null
-  const isUrgent = preparationAge !== null && preparationAge >= 15
-
   return (
     <article className="rounded-xl border border-[#e9ede9] bg-white p-4 shadow-[0_2px_8px_rgba(27,52,39,0.03)]">
       <div className="flex items-start justify-between gap-2">
@@ -47,9 +42,9 @@ function OrderCard({ order, action, now }: { order: Order; action?: string; now:
           <p className="mt-1 text-[11px] text-[#8b978f]">{order.customerName}</p>
         </div>
         {timestampLabel && (
-          <span className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold ${isUrgent ? 'bg-[#fff0ed] text-[#bd5c4c]' : 'bg-[#f3f5f3] text-[#718078]'}`}>
+          <span className="flex items-center gap-1 rounded-full bg-[#f3f5f3] px-2 py-1 text-[10px] font-semibold text-[#718078]">
             <Clock3 className="size-3" />
-            {order.status === 'PREPARING' ? `Bắt đầu ${timestampLabel} · ${preparationAge} phút` : `Hoàn tất ${timestampLabel}`}
+            {order.status === 'PREPARING' ? `Bắt đầu ${timestampLabel}` : `Hoàn tất ${timestampLabel}`}
           </span>
         )}
       </div>
@@ -119,7 +114,6 @@ function OrderCard({ order, action, now }: { order: Order; action?: string; now:
 
 export function OrdersBoardContent({ embedded = false }: { embedded?: boolean }) {
   const orders = orderStore.useStore()
-  const [now, setNow] = useState(() => Date.now())
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<CategoryId>('all')
   const [historyOpen, setHistoryOpen] = useState(false)
@@ -139,10 +133,6 @@ export function OrdersBoardContent({ embedded = false }: { embedded?: boolean })
       window.clearInterval(timer)
       window.clearInterval(syncTimer)
     }
-  }, [])
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 30_000)
-    return () => window.clearInterval(timer)
   }, [])
   const filteredOrders = useMemo(() => {
     const text = query.trim().toLowerCase().replace(/^#/, '')
@@ -240,12 +230,11 @@ export function OrdersBoardContent({ embedded = false }: { embedded?: boolean })
                     </span>
                     <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${column.tone}`}>{columnOrders.length}</span>
                   </header>
-                  <div className="space-y-3">
+                  <div className={`space-y-3 ${embedded ? 'max-h-[calc(100dvh-400px)] overflow-y-auto pr-1' : ''}`}>
                     {columnOrders.map((order) => (
                       <OrderCard
                         key={order.code}
                         order={order}
-                        now={now}
                         action={order.status === 'PENDING' || order.status === 'COMPLETED' ? undefined : column.action}
                       />
                     ))}

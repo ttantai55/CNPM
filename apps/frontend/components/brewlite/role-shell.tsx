@@ -48,7 +48,7 @@ export function DashboardHeader({ role, title }: { role: Role; title: string }) 
 
   return (
     <>
-    <header className={`flex h-[76px] items-center justify-between border-b px-8 ${isCustomer ? 'border-[#ede8e1] bg-[#fcfbf7]' : 'border-[#e9ede9] bg-white'}`}>
+    <header className={`flex h-[76px] shrink-0 items-center justify-between border-b px-8 ${isCustomer ? 'border-[#ede8e1] bg-[#fcfbf7]' : 'border-[#e9ede9] bg-white'}`}>
       <div className="flex items-center gap-3">
         <span className={`flex size-10 items-center justify-center rounded-xl text-white ${isCustomer ? 'bg-[#5c4033]' : 'bg-[#285b4b]'}`}><Coffee className="size-5" /></span>
         <div>

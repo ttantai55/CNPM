@@ -170,7 +170,7 @@ export function PromotionManagement() {
             </button>
           </div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="max-h-[calc(100dvh-280px)] overflow-auto">
           <table className="w-full min-w-[850px] text-left">
             <thead>
               <tr className="bg-[#fafbfa] text-[10px] font-semibold uppercase tracking-wide text-[#9aa49c]">

@@ -115,14 +115,18 @@ export function BrewLiteApp() {
     let active = true
     authApi.profile(session.id)
       .then((user) => {
-        if (active) setProfile({
-          name: user.fullName || user.username,
-          phone: user.phone ?? '',
-          address: user.address ?? '',
-          gender: user.gender ?? false,
-          dateOfBirth: user.dateOfBirth ?? '',
-          avatarUrl: user.avatarUrl ?? '',
-        })
+        if (active) {
+          const name = user.fullName || user.username
+          setProfile({
+            name,
+            phone: user.phone ?? '',
+            address: user.address ?? '',
+            gender: user.gender ?? false,
+            dateOfBirth: user.dateOfBirth ?? '',
+            avatarUrl: user.avatarUrl ?? '',
+          })
+          authStore.set((current) => current?.id === session.id ? { ...current, name } : current)
+        }
       })
       .catch((error: unknown) => {
         if (active) showToast(error instanceof Error ? error.message : 'Không tải được hồ sơ.')
@@ -304,7 +308,7 @@ export function BrewLiteApp() {
           showToast('Bạn đã đăng xuất')
         }}
         onOpenProfile={() => setProfileOpen(true)}
-        latestOrderCode={activeOrders[0]?.code}
+        latestActiveOrderCode={activeOrders[0]?.code}
         activeOrderCount={activeOrders.length}
         customerOrders={customerOrders}
         onResumePayment={(order) => {
@@ -343,14 +347,16 @@ export function BrewLiteApp() {
               dateOfBirth: nextProfile.dateOfBirth || undefined,
               avatarUrl: nextProfile.avatarUrl,
             })
+            const name = saved.fullName || nextProfile.name
             setProfile({
-              name: saved.fullName || nextProfile.name,
+              name,
               phone: saved.phone ?? '',
               address: saved.address ?? '',
               gender: saved.gender ?? false,
               dateOfBirth: saved.dateOfBirth ?? '',
               avatarUrl: saved.avatarUrl ?? '',
             })
+            authStore.set((current) => current?.id === session.id ? { ...current, name } : current)
             showToast('Đã lưu hồ sơ của bạn')
           }}
         />

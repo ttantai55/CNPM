@@ -226,7 +226,7 @@ function OrderTrackingContent() {
                         <h2 className="flex items-center gap-2 text-sm font-semibold text-[#2e2520]">
                           <MapPin className="size-4 text-[#5c4033]" /> Thông tin đơn hàng
                         </h2>
-                        <p className="mt-4 text-xs font-semibold text-[#2e2520]">{order.customerName}</p>
+                        <p className="mt-4 text-xs font-semibold text-[#2e2520]">{session?.name || order.customerName}</p>
                         <p className="mt-1 text-[11px] text-[#81766d]">{order.phone}</p>
                         <p className="mt-3 text-[11px] text-[#81766d]">Nhận tại quầy BrewLite</p>
                         <div className="mt-3 flex justify-between border-t border-[#ede8e1] pt-3 text-[11px]">

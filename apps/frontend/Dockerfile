@@ -12,9 +12,9 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 
 COPY . .
 
-# Truyền URL của Backend vào lúc build (Next.js đóng gói biến NEXT_PUBLIC_* ở bước build)
-ARG NEXT_PUBLIC_API_URL=http://localhost:8080
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# Cấu hình URL backend cho rewrite server-side của Next.js
+ARG BACKEND_URL=http://backend:8081
+ENV BACKEND_URL=$BACKEND_URL
 
 RUN mkdir -p /app/public && pnpm run build
 
