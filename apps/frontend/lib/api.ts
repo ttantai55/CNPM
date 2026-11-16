@@ -1,6 +1,9 @@
 import type { UnitType } from './raw-material-inventory'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '/api'
+const configuredApiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? '/api').replace(/\/+$/, '')
+const API_BASE_URL = configuredApiBaseUrl.endsWith('/api')
+  ? configuredApiBaseUrl
+  : `${configuredApiBaseUrl}/api`
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = typeof window === 'undefined'
