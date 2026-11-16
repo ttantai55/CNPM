@@ -26,10 +26,10 @@ services:
     ports:
       - "8081:8081"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/drinkshop_db
-      SPRING_DATASOURCE_USERNAME: brewlite
-      SPRING_DATASOURCE_PASSWORD: taidz@2026
-      DATABASE_PASSWORD: taidz@2026
+      SPRING_DATASOURCE_URL: ${DATABASE_URL:-jdbc:postgresql://postgres:5432/drinkshop_db}
+      SPRING_DATASOURCE_USERNAME: ${DATABASE_USERNAME:-brewlite}
+      SPRING_DATASOURCE_PASSWORD: ${DATABASE_PASSWORD:-taidz@2026}
+      SPRING_SQL_INIT_MODE: ${SQL_INIT_MODE:-always}
     depends_on:
       postgres:
         condition: service_healthy

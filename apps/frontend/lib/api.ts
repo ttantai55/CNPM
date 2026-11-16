@@ -1,3 +1,5 @@
+import type { UnitType } from './raw-material-inventory'
+
 const API_BASE_URL = '/api'
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -102,7 +104,7 @@ export type ApiPromotion = {
 export type ApiIngredient = {
   id: string
   name: string
-  unit: 'PACK' | 'CAN' | 'BOX' | 'PIECE' | 'KG' | 'BOTTLE'
+  unit: UnitType
   currentStock: number
   minAlertThreshold: number
   isBelowThreshold: boolean
