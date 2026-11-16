@@ -19,6 +19,7 @@ public class UserResponse {
     private String fullName;
     private String phone;
     private String position;
+    private int loyaltyPoints;
     private Boolean gender;
     private LocalDate dateOfBirth;
     private String address;
@@ -88,6 +89,8 @@ public class UserResponse {
     public String getPhone() {
         return phone;
     }
+    public int getLoyaltyPoints() { return loyaltyPoints; }
+    public void setLoyaltyPoints(int loyaltyPoints) { this.loyaltyPoints = loyaltyPoints; }
     public String getPosition() { return position; }
     public void setPosition(String position) { this.position = position; }
     public Boolean getGender() { return gender; }

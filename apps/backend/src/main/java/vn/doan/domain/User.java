@@ -56,6 +56,9 @@ public class User {
     @Column(name = "full_name")
     private String fullName;
 
+    @Column(name = "loyalty_points", nullable = false)
+    private int loyaltyPoints;
+
     @Column(length = 20)
     private String position;
 
@@ -211,4 +214,6 @@ public String getFullName() { return fullName == null ? username : fullName; }
 public void setFullName(String fullName) { this.fullName = fullName; }
 public String getPosition() { return position; }
 public void setPosition(String position) { this.position = position; }
+public int getLoyaltyPoints() { return loyaltyPoints; }
+public void setLoyaltyPoints(int loyaltyPoints) { this.loyaltyPoints = loyaltyPoints; }
 }

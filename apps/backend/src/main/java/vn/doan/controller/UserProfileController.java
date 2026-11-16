@@ -80,6 +80,7 @@ public class UserProfileController {
             response.setAddress(user.getInfo().getAddress());
         }
         response.setPosition(user.getPosition());
+        response.setLoyaltyPoints(user.getLoyaltyPoints());
         return response;
     }
 }
