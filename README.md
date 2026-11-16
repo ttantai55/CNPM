@@ -9,7 +9,7 @@
 BrewLite là hệ thống đặt đồ uống tự động hóa áp dụng kiến trúc hiện đại, tách biệt hoàn toàn giữa Frontend và Backend. Để đảm bảo hiệu suất ổn định, dữ liệu nhất quán và tối ưu quy trình làm việc nhóm, dự án tích hợp một hệ sinh thái công nghệ đồng bộ:
 
 - **Nền tảng ứng dụng:** Java Spring Boot, Next.js
-- **Quản trị dữ liệu:** PostgreSQL, Redis, Flyway
+- **Quản trị dữ liệu:** PostgreSQL
 - **DevOps & Kiểm thử tự động:** Docker, Testcontainers, Cypress, GitHub Actions
 
 Tài liệu này cung cấp cái nhìn toàn diện về kiến trúc, bộ công cụ phát triển, quy trình kiểm thử và triển khai hệ thống, giúp các thành viên mới nhanh chóng thiết lập môi trường local và tham gia phát triển.
@@ -60,7 +60,7 @@ Tài liệu này cung cấp cái nhìn toàn diện về kiến trúc, bộ côn
 | :--- | :--- |
 | **Frontend** | Next.js (App Router), React, TailwindCSS, Axios |
 | **Backend** | Java 21+, Spring Boot, Spring Security (JWT), Spring Data JPA, Flyway |
-| **Cơ sở dữ liệu & Cache** | PostgreSQL, Redis, DBeaver |
+| **Cơ sở dữ liệu & Cache** | PostgreSQL, DBeaver |
 | **Kiểm thử** | JUnit 5 / Spring Boot Test, Testcontainers (PostgreSQL), Cypress (E2E) |
 | **Triển khai (DevOps)** | Docker, Docker Compose, Supabase, Render, Vercel, GitHub Actions |
 
@@ -80,7 +80,7 @@ brewlite/
 ├── test/                       # Kiểm thử tự động Cypress E2E
 │   ├── cypress.config.js
 │   └── e2e/                    # Kịch bản luồng đặt hàng & thanh toán
-├── docker-compose.yml          # Chạy toàn bộ hệ thống local (PostgreSQL, Redis, Backend, Frontend)
+├── docker-compose.yml          # Chạy toàn bộ hệ thống local (PostgreSQL, Backend, Frontend)
 └── README.md
 ```
 
@@ -93,15 +93,15 @@ brewlite/
 | Công cụ | Mục đích | Mức độ |
 | :--- | :--- | :--- |
 | **Git** | Clone mã nguồn và quản lý phiên bản | Bắt buộc |
-| **Docker Desktop** | Chạy các dịch vụ PostgreSQL, Redis qua Docker Compose | Bắt buộc (nếu chạy Docker) |
+| **Docker Desktop** | Chạy các dịch vụ PostgreSQL qua Docker Compose | Bắt buộc (nếu chạy Docker) |
 | **Java JDK 21+** | Biên dịch và chạy Spring Boot *(đã có sẵn Maven Wrapper `./mvnw`)* | Bắt buộc (nếu chạy local) |
 | **Node.js (LTS 18+) & pnpm** | Cài thư viện, chạy Frontend và bộ test Cypress | Bắt buộc (nếu chạy local/Cypress) |
-| **PostgreSQL & Redis** | Hệ quản trị CSDL và bộ nhớ đệm | Bắt buộc (nếu không dùng Docker) |
+| **PostgreSQL** | Hệ quản trị CSDL và bộ nhớ đệm | Bắt buộc (nếu không dùng Docker) |
 | **VS Code / DBeaver / REST Client** | Soạn code, quản trị CSDL, kiểm thử API | Khuyến nghị |
 
 ### 2. Lưu ý cấu hình trước khi chạy
 
-1. **Khởi động Docker Desktop** trước khi chạy `docker compose up -d db redis`.
+1. **Khởi động Docker Desktop** trước khi chạy `docker compose up -d`.
 2. **Biến môi trường:**
    - **Backend:** cấu hình URL kết nối PostgreSQL trong `application.properties` hoặc qua biến môi trường.
    - **Frontend:** tạo file `.env.local` từ `.env.example` và đặt `NEXT_PUBLIC_API_URL` trỏ về Backend.
@@ -114,7 +114,7 @@ brewlite/
 
 ## 🚀 Hướng dẫn chạy dự án ở Local
 
-Hướng dẫn chạy hệ thống BrewLite (PostgreSQL + Redis + Backend + Frontend) trên máy cá nhân.
+Hướng dẫn chạy hệ thống BrewLite (PostgreSQL + Backend + Frontend) trên máy cá nhân.
 
 ### Bước 1. Chuẩn bị
 
@@ -129,7 +129,7 @@ cd <TEN_THU_MUC_DU_AN>
 
 #### Cách 1 — Chạy toàn bộ bằng Docker Compose (khuyên dùng)
 
-Chỉ cần Docker đang chạy. Lệnh dưới khởi động đủ 4 dịch vụ: PostgreSQL, Redis, Backend, Frontend.
+Chỉ cần Docker đang chạy. Lệnh dưới khởi động đủ 4 dịch vụ: PostgreSQL, Backend, Frontend.
 
 ```bash
 docker compose up --build
@@ -143,12 +143,12 @@ docker compose down
 
 #### Cách 2 — Chạy Backend và Frontend thủ công
 
-Dùng Docker cho PostgreSQL và Redis; Backend và Frontend chạy trực tiếp trên máy (tiện để debug).
+Dùng Docker cho PostgreSQL; Backend và Frontend chạy trực tiếp trên máy (tiện để debug).
 
-**2.1. Khởi động PostgreSQL và Redis**
+**2.1. Khởi động PostgreSQL**
 
 ```bash
-docker compose up -d db redis
+docker compose up -d 
 ```
 
 Thông tin kết nối (đã khớp sẵn với `docker-compose.yml` và `application.properties`, không cần sửa):
@@ -156,7 +156,6 @@ Thông tin kết nối (đã khớp sẵn với `docker-compose.yml` và `applic
 | Dịch vụ | Địa chỉ | Thông tin |
 | :--- | :--- | :--- |
 | PostgreSQL | `localhost:5432` | database `drinkshop_db`, user `brewlite`, mật khẩu `taidz@2026` |
-| Redis | `localhost:6379` | cổng mặc định |
 
 > [!NOTE]
 > Nếu máy đã cài PostgreSQL riêng, hãy tắt service đó hoặc đổi cổng để tránh trùng cổng `5432` của Docker.
