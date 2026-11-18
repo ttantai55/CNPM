@@ -24,7 +24,7 @@ jobs:
       - name: Cài đặt Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 'latest'
 
       - name: Đẩy cấu trúc và dữ liệu lên Supabase
         working-directory: ./ # Ép chạy ở thư mục gốc chứa thư mục supabase/
@@ -38,7 +38,7 @@ jobs:
       # ==========================================
 
       - name: Cài đặt môi trường Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
