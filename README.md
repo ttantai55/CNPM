@@ -198,9 +198,9 @@ Khởi động Frontend:
 pnpm dev
 ```
 
-### Flyway và migration
+### Supabase và migration
 
-Flyway tự chạy các file SQL theo thứ tự khi Backend khởi động:
+Supabase tự chạy các file SQL theo thứ tự khi Backend khởi động:
 
 - `V1__init_schema.sql`: tạo schema ban đầu.
 - `V2__seed_demo_data.sql`: dữ liệu demo cho local và E2E.
