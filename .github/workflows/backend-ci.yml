@@ -33,8 +33,8 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: |
-          supabase link --project-ref $SUPABASE_PROJECT_ID
-          supabase db push --remote
+          supabase link --project-ref $SUPABASE_PROJECT_ID --password $SUPABASE_DB_PASSWORD
+          supabase db push --remote --password $SUPABASE_DB_PASSWORD
       # ==========================================
 
       - name: Cài đặt môi trường Java 17
