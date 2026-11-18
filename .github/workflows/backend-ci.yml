@@ -24,7 +24,7 @@ jobs:
       - name: Cài đặt Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: 'v1.220.8'
+          version: 'lastest'
 
       - name: Đẩy cấu trúc và dữ liệu lên Supabase
         working-directory: ./ # Ép chạy ở thư mục gốc chứa thư mục supabase/
