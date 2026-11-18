@@ -78,8 +78,10 @@ public class OrderService {
         if (customer == null) {
             customer = new Customer();
             customer.setUser(user);
-            customer.setName(request.getCustomerName() == null ? (user == null ? "Khách" : user.getFullName()) : request.getCustomerName());
-            customer.setPhone(request.getPhone() == null ? (user == null ? null : user.getPhone()) : request.getPhone());
+            customer.setName(request.getCustomerName() == null ? (user == null ? "Khách"
+                    : user.getInfo() == null ? user.getUsername() : user.getInfo().getName())
+                    : request.getCustomerName());
+            customer.setPhone(request.getPhone());
             if (user == null) customer = customerRepository.save(customer);
             else user.setInfo(customer);
         }

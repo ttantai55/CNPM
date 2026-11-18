@@ -31,15 +31,15 @@ public class StaffController {
     @PostMapping
     @Transactional
     public UserResponse create(@Valid @RequestBody StaffRequest request) {
-        Barista barista = baristas.save(new Barista(
+        Barista barista = new Barista(
                 request.getFullName() == null || request.getFullName().isBlank()
                         ? request.getUsername()
-                        : request.getFullName().trim()));
+                        : request.getFullName().trim());
+        barista.setPhone(request.getPhone());
+        barista = baristas.save(barista);
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
-        user.setFullName(request.getFullName());
         user.setPosition(request.getPosition());
         user.setRole("STAFF");
         user.setHashPassword(passwordEncoder.encode(request.getPassword()));
@@ -52,8 +52,9 @@ public class StaffController {
         User user = users.findById(id).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy nhân viên."));
         if (request.getUsername() != null) user.setUsername(request.getUsername());
         if (request.getEmail() != null) user.setEmail(request.getEmail());
-        if (request.getPhone() != null) user.setPhone(request.getPhone());
-        if (request.getFullName() != null) user.setFullName(request.getFullName());
+        Barista barista = user.getBarista();
+        if (barista != null && request.getPhone() != null) barista.setPhone(request.getPhone());
+        if (barista != null && request.getFullName() != null) barista.setName(request.getFullName());
         if (request.getPosition() != null) user.setPosition(request.getPosition());
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             user.setHashPassword(passwordEncoder.encode(request.getPassword()));
@@ -77,7 +78,10 @@ public class StaffController {
                 user.getAvatarUrl(), user.getCreatedAt(), user.getUpdatedAt(),
                 user.getInfo() == null ? null : user.getInfo().getId(),
                 user.getBarista() == null ? null : user.getBarista().getId(),
-                user.getFullName(), user.getPhone());
+                user.getBarista() != null ? user.getBarista().getName()
+                        : user.getInfo() == null ? null : user.getInfo().getName(),
+                user.getBarista() != null ? user.getBarista().getPhone()
+                        : user.getInfo() == null ? null : user.getInfo().getPhone());
         response.setPosition(user.getPosition());
         return response;
     }
