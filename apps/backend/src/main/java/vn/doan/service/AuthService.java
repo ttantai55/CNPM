@@ -22,15 +22,14 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail()) || userRepository.existsByUsername(request.getUsername())
-                || (request.getPhone() != null && !request.getPhone().isBlank() && userRepository.existsByPhone(request.getPhone()))) {
+                || (request.getPhone() != null && !request.getPhone().isBlank()
+                        && userRepository.existsByInfo_Phone(request.getPhone()))) {
             throw new BusinessValidationException("Email, tên đăng nhập hoặc số điện thoại đã được sử dụng!");
         }
 
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
-        user.setFullName(request.getFullName());
         user.setHashPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole("ROLE_CUSTOMER");
         Customer customer = new Customer();
@@ -48,7 +47,7 @@ public class AuthService {
         String loginId = request.getLoginId().trim();
         User user = userRepository.findByEmailIgnoreCase(loginId)
                 .or(() -> userRepository.findByUsernameIgnoreCase(loginId))
-                .or(() -> userRepository.findByPhone(loginId))
+                .or(() -> userRepository.findByInfo_Phone(loginId))
                 .orElseThrow(() -> new BusinessValidationException("Tài khoản hoặc mật khẩu không chính xác"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getHashPassword())) {
@@ -62,7 +61,11 @@ public class AuthService {
         UserResponse response = new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.getRole(),
                 user.getAvatarUrl(), user.getCreatedAt(), user.getUpdatedAt(),
                 user.getInfo() == null ? null : user.getInfo().getId(),
-                user.getBarista() == null ? null : user.getBarista().getId(), user.getFullName(), user.getPhone());
+                user.getBarista() == null ? null : user.getBarista().getId(),
+                user.getInfo() != null ? user.getInfo().getName()
+                        : user.getBarista() == null ? null : user.getBarista().getName(),
+                user.getInfo() != null ? user.getInfo().getPhone()
+                        : user.getBarista() == null ? null : user.getBarista().getPhone());
         return new AuthResponse("bl_" + java.util.UUID.randomUUID(), response);
     }
 }

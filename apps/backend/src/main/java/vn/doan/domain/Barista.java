@@ -1,6 +1,7 @@
 package vn.doan.domain;
 
 import jakarta.persistence.*;
+import vn.doan.domain.enums.BaristaStatus;
 
 @Entity
 @Table(name = "baristas")
@@ -16,6 +17,12 @@ public class Barista {
 
     @Column(nullable = false, length = 100)
     private String name;
+
+    private String phone;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private BaristaStatus status = BaristaStatus.OFFLINE;
 
     // BẮT BUỘC CHO JPA: Constructor không tham số
     public Barista() {
@@ -46,6 +53,22 @@ public class Barista {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public BaristaStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(BaristaStatus status) {
+        this.status = status;
     }
 
 }

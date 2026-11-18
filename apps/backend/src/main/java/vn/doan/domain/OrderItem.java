@@ -37,6 +37,11 @@ public class OrderItem {
     @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItemTopping> orderItemToppings = new ArrayList<>();
 
+    @ElementCollection
+    @CollectionTable(name = "order_item_custom_toppings", joinColumns = @JoinColumn(name = "order_item_id"))
+    @Column(name = "topping")
+    private List<String> customToppings = new ArrayList<>();
+
     @PrePersist
     private void assignId() {
         if (id == null) id = Ids.next("ITEM");
@@ -131,5 +136,13 @@ public class OrderItem {
 
     public void setOrderItemToppings(List<OrderItemTopping> orderItemToppings) {
         this.orderItemToppings = orderItemToppings;
+    }
+
+    public List<String> getCustomToppings() {
+        return customToppings;
+    }
+
+    public void setCustomToppings(List<String> customToppings) {
+        this.customToppings = customToppings;
     }
 }

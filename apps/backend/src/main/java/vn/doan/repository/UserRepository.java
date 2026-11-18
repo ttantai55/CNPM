@@ -22,11 +22,11 @@ public interface UserRepository extends JpaRepository<User, String> {
     boolean existsByEmail(String email);
 
     // 2. Dùng lúc Đăng ký: Kiểm tra xem Số điện thoại có ai xài chưa
-    boolean existsByPhone(String phone);
+    boolean existsByInfo_Phone(String phone);
 
     // 3. Dùng lúc Đăng nhập: Tìm kiếm thông tin User bằng Email
     Optional<User> findByEmail(String email);
     Optional<User> findByEmailIgnoreCase(String email);
     Optional<User> findByUsernameIgnoreCase(String username);
-    Optional<User> findByPhone(String phone);
+    Optional<User> findByInfo_Phone(String phone);
 }

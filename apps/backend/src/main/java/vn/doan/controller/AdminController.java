@@ -95,21 +95,18 @@ public class AdminController {
             user.setUsername(request.getUsername());
         }
         if (request.getEmail() != null) user.setEmail(request.getEmail());
-        if (request.getPhone() != null) user.setPhone(request.getPhone());
         if (request.getAvatarUrl() != null) user.setAvatarUrl(request.getAvatarUrl());
-        if (request.getFullName() != null) {
-            user.setFullName(request.getFullName());
-            Customer customer = user.getInfo();
-            if (customer == null) {
-                customer = new Customer();
-                customer.setUser(user);
-                user.setInfo(customer);
-            }
-            customer.setName(request.getFullName());
-            customer.setPhone(request.getPhone() == null ? user.getPhone() : request.getPhone());
-        }
+        boolean hasCustomerUpdates = request.getFullName() != null || request.getPhone() != null
+                || request.getGender() != null || request.getDateOfBirth() != null || request.getAddress() != null;
         Customer customer = user.getInfo();
+        if (customer == null && hasCustomerUpdates) {
+            customer = new Customer();
+            customer.setUser(user);
+            user.setInfo(customer);
+        }
         if (customer != null) {
+            if (request.getFullName() != null) customer.setName(request.getFullName());
+            if (request.getPhone() != null) customer.setPhone(request.getPhone());
             if (request.getGender() != null) customer.setGender(request.getGender());
             if (request.getDateOfBirth() != null) customer.setDateOfBirth(request.getDateOfBirth());
             if (request.getAddress() != null) customer.setAddress(request.getAddress());
@@ -173,7 +170,10 @@ public class AdminController {
                 user.getAvatarUrl(), user.getCreatedAt(), user.getUpdatedAt(),
                 user.getInfo() == null ? null : user.getInfo().getId(),
                 user.getBarista() == null ? null : user.getBarista().getId(),
-                user.getFullName(), user.getPhone());
+                user.getInfo() != null ? user.getInfo().getName()
+                        : user.getBarista() == null ? null : user.getBarista().getName(),
+                user.getInfo() != null ? user.getInfo().getPhone()
+                        : user.getBarista() == null ? null : user.getBarista().getPhone());
         if (user.getInfo() != null) {
             response.setGender(user.getInfo().isGender());
             response.setAddress(user.getInfo().getAddress());

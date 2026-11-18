@@ -6,6 +6,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.doan.domain.Barista;
 import vn.doan.domain.User;
 import vn.doan.dto.request.ChangePasswordRequest;
 import vn.doan.dto.request.UpdateRoleRequest;
@@ -16,6 +17,7 @@ import vn.doan.dto.response.UserResponse;
 import vn.doan.exception.BusinessValidationException;
 import vn.doan.exception.ResourceNotFoundException;
 import vn.doan.repository.UserRepository;
+import vn.doan.repository.BaristaRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ import vn.doan.repository.UserRepository;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final BaristaRepository baristaRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -66,8 +69,10 @@ public class UserService {
         // Nhớ mã hóa mật khẩu (password encoder) trước khi lưu nếu dự án có xài Spring Security nhé!
         user.setHashPassword(passwordEncoder.encode(request.getPassword())); 
         user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
         user.setRole("STAFF"); // Gán cứng quyền mặc định khi tạo mới là nhân viên
+        Barista barista = new Barista(request.getUsername());
+        barista.setPhone(request.getPhone());
+        user.setBarista(baristaRepository.save(barista));
 
         // 3. Lưu vào Database
         User savedUser = userRepository.save(user);
@@ -84,9 +89,9 @@ public class UserService {
         savedUser.getCreatedAt(),
         savedUser.getUpdatedAt(),
         null, // customerId
-        null, // baristaId
-        null, // fullName (hoặc savedUser.getFullName() nếu có)
-        savedUser.getPhone()
+        savedUser.getBarista() == null ? null : savedUser.getBarista().getId(),
+        savedUser.getBarista() == null ? null : savedUser.getBarista().getName(),
+        savedUser.getBarista() == null ? null : savedUser.getBarista().getPhone()
     );
     }
 
