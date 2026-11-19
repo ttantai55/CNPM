@@ -17,7 +17,7 @@ import { ordersApi, paymentsApi, type ApiOrder } from './api'
 import { publishPaymentNotification } from './notifications'
 
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'COMPLETED' | 'CANCELLED'
-export type PaymentMethod = 'MOMO' | 'VIETQR'
+export type PaymentMethod = 'MOMO' | 'VIET_QR'
 export type Fulfillment = 'pickup'
 
 export type OrderLine = {
@@ -66,7 +66,10 @@ export type OrderDraft = Omit<
   'code' | 'paymentMethod' | 'status' | 'createdAt' | 'updatedAt' | 'paymentCompletedAt' | 'preparedAt' | 'preparationTime' | 'completedAt' | 'isArchived'
 >
 
-export const PAYMENT_LABEL: Record<PaymentMethod, string> = { MOMO: 'Ví MoMo', VIETQR: 'VietQR' }
+export const PAYMENT_LABEL: Record<PaymentMethod, string> = {
+  MOMO: 'Ví MoMo',
+  VIET_QR: 'VietQR',
+}
 
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   PENDING: 'Chờ thanh toán',

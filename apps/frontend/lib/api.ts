@@ -101,7 +101,7 @@ export type ApiOrder = {
   completedAt?: string | null
   processes?: Array<{ status: string; updateAt: string }>
   voucherCode?: string | null
-  paymentMethod?: 'MOMO' | 'VIETQR' | null
+  paymentMethod?: 'MOMO' | 'VIET_QR' | null
   items?: Array<ApiOrderItem & { productName: string; unitPrice: number; subtotal: number }> | null
 }
 export type ApiPromotion = {
@@ -181,9 +181,9 @@ export const ordersApi = {
     api<ApiOrder>(`/api/orders/${encodeURIComponent(id)}/status`, json('PATCH', { status })),
 }
 export const paymentsApi = {
-  create: (orderId: string, method: 'MOMO' | 'VIETQR', amount: number) =>
+  create: (orderId: string, method: 'MOMO' | 'VIET_QR', amount: number) =>
     api<{ orderId: string; paymentUrl: string; expiredAt: string }>('/api/payments/create', json('POST', { orderId, method, amount })),
-  confirm: (orderId: string, method: 'MOMO' | 'VIETQR', amount: number) =>
+  confirm: (orderId: string, method: 'MOMO' | 'VIET_QR', amount: number) =>
     api<{ status: string; message: string; orderId: string }>('/api/payments/confirm', json('POST', { orderId, method, amount })),
 }
 export const staffApi = {

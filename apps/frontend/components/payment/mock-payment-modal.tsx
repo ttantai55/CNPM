@@ -314,7 +314,7 @@ const METHODS = [
     dotClass: 'border-[#a50064] bg-[#a50064]',
   },
   {
-    id: 'VIETQR' as const,
+    id: 'VIET_QR' as const,
     title: 'Chuyển khoản Ngân hàng (VietQR)',
     hint: 'Quét mã VietQR hoặc chuyển khoản',
     logo: <VietQrLogo />,
