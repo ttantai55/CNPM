@@ -28,10 +28,13 @@ import vn.doan.dto.response.UserResponse;
 import vn.doan.dto.response.IngredientResponse;
 import vn.doan.dto.response.InventoryTransactionResponse;
 import vn.doan.dto.response.PromotionAdminResponse;
+import vn.doan.dto.response.ToppingResponse;
+import vn.doan.dto.request.ToppingAvailabilityRequest;
 import vn.doan.repository.UserRepository;
 import vn.doan.service.InventoryService;
 import vn.doan.service.PromotionService;
 import vn.doan.service.OrderService;
+import vn.doan.service.ToppingService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -56,6 +59,7 @@ public class AdminController {
     @Autowired private InventoryService inventoryService;
     @Autowired private PromotionService promotionService;
     @Autowired private OrderService orderService;
+    @Autowired private ToppingService toppingService;
 
     // ==========================================
     // 1. QUẢN LÝ MENU (SẢN PHẨM)
@@ -135,6 +139,18 @@ public class AdminController {
 
     @GetMapping("/promotions")
     public List<PromotionAdminResponse> promotions() { return promotionService.getAdminPromotions(); }
+
+    @GetMapping("/toppings")
+    public List<ToppingResponse> toppings() { return toppingService.getAllToppings(); }
+
+    @PatchMapping("/toppings/{id}/status")
+    public ToppingResponse toppingStatus(@PathVariable String id,
+                                         @RequestBody ToppingAvailabilityRequest request) {
+        if (request.getIsAvailable() == null) {
+            throw new IllegalArgumentException("Trạng thái topping không được để trống.");
+        }
+        return toppingService.updateAvailability(id, request.getIsAvailable());
+    }
 
     @PostMapping("/promotions")
     public PromotionAdminResponse createPromotion(@RequestBody PromotionAdminRequest request) {
@@ -220,6 +236,11 @@ public class AdminController {
     // ==========================================
     // 3. QUẢN LÝ DANH MỤC (CATEGORIES) - BẢO MẬT BỞI ADMIN
     // ==========================================
+
+    @GetMapping("/categories")
+    public List<CategoryResponse> categories() {
+        return categoryService.getAllCategories();
+    }
 
     // THÊM DANH MỤC MỚI (POST: /api/admin/categories)
     @PostMapping("/categories")

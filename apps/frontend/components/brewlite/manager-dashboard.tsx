@@ -53,6 +53,7 @@ import { PromotionManagement } from './promotion-management'
 import { CategoryManagement } from './category-management'
 import { StaffManagement } from './staff-management'
 import { CustomerManagement } from './customer-management'
+import { ToppingManagement } from './topping-management'
 import { DashboardHeader, RoleGuard } from './role-shell'
 import { publishBatchNotification } from '@/lib/notifications'
 import { adminApi, menuApi } from '@/lib/api'
@@ -85,6 +86,7 @@ const NAV_ITEMS = [
   { id: 'overview', label: 'Tổng quan', icon: LayoutDashboard },
   { id: 'orders', label: 'Quản lý đơn hàng', icon: ShoppingBag },
   { id: 'inventory', label: 'Quản lý Menu', icon: Boxes },
+  { id: 'toppings', label: 'Quản lý Topping', icon: Coffee },
   { id: 'categories', label: 'Quản lý danh mục', icon: ListTree },
   { id: 'staff', label: 'Quản lý nhân viên', icon: UsersRound },
   { id: 'customers', label: 'Quản lý khách hàng', icon: UserRound },
@@ -115,7 +117,7 @@ function ManagerContent() {
 
   useEffect(() => {
     let active = true
-    Promise.all([menuApi.products(), menuApi.categories()])
+    Promise.all([menuApi.products(), adminApi.categories()])
       .then(([products, remoteCategories]) => {
         if (!active) return
         menuProductStore.set(fromApiProducts(products))
@@ -627,6 +629,8 @@ function ManagerContent() {
                 </table>
               </div>
             </section>
+
+            <ToppingManagement />
 
             <RawMaterialInventory />
 

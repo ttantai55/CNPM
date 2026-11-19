@@ -66,6 +66,17 @@ export type ApiProduct = {
 }
 export type ApiCategory = { id: string; name: string; description?: string; slug: string; isActive: boolean }
 export type ApiTopping = { id: string; name: string; price: number; isAvailable: boolean }
+export type ApiCartItem = {
+  id?: string
+  productId: string
+  quantity: number
+  size: 'S' | 'M' | 'L'
+  sugarPercent: number
+  icePercent: number
+  note?: string | null
+  toppingIds: string[]
+}
+export type ApiCart = { id: string; userId: string; totalCartAmount: number; items: ApiCartItem[] }
 export type ApiOrderItem = {
   productId: string
   quantity: number
@@ -78,8 +89,8 @@ export type ApiOrderItem = {
 export type ApiOrder = {
   id: string
   customerId?: string
-  customerName: string
-  customerPhone: string
+  customerName?: string | null
+  customerPhone?: string | null
   totalAmount: number
   discountAmount: number
   finalAmount: number
@@ -91,7 +102,7 @@ export type ApiOrder = {
   processes?: Array<{ status: string; updateAt: string }>
   voucherCode?: string | null
   paymentMethod?: 'MOMO' | 'VIETQR' | null
-  items: Array<ApiOrderItem & { productName: string; unitPrice: number; subtotal: number }>
+  items?: Array<ApiOrderItem & { productName: string; unitPrice: number; subtotal: number }> | null
 }
 export type ApiPromotion = {
   id: string
@@ -105,6 +116,7 @@ export type ApiPromotion = {
   usedCount: number
   isActive: boolean
 }
+export type ApiPromotionWrite = Omit<ApiPromotion, 'id' | 'usedCount'>
 export type ApiIngredient = {
   id: string
   name: string
@@ -149,6 +161,11 @@ export const menuApi = {
     api<ApiCategory>(`/api/categories/${encodeURIComponent(id)}`, json('PUT', body)),
   toggleCategory: (id: string) => api<ApiCategory>(`/api/categories/${encodeURIComponent(id)}/status`, json('PATCH')),
 }
+export const cartApi = {
+  get: (userId: string) => api<ApiCart>(`/api/users/${encodeURIComponent(userId)}/cart`),
+  replace: (userId: string, items: ApiCartItem[]) =>
+    api<ApiCart>(`/api/users/${encodeURIComponent(userId)}/cart`, json('PUT', items)),
+}
 export const ordersApi = {
   list: (query = '') => api<ApiOrder[]>(`/api/orders${query}`),
   get: (id: string) => api<ApiOrder>(`/api/orders/${encodeURIComponent(id)}`),
@@ -176,6 +193,10 @@ export const staffApi = {
   delete: (id: string) => api<void>(`/api/admin/staff/${encodeURIComponent(id)}`, json('DELETE')),
 }
 export const adminApi = {
+  categories: () => api<ApiCategory[]>('/api/admin/categories'),
+  toppings: () => api<ApiTopping[]>('/api/admin/toppings'),
+  updateToppingAvailability: (id: string, isAvailable: boolean) =>
+    api<ApiTopping>(`/api/admin/toppings/${encodeURIComponent(id)}/status`, json('PATCH', { isAvailable })),
   customers: () => api<ApiUser[]>('/api/admin/customers'),
   updateCustomer: (id: string, body: Record<string, unknown>) => api<ApiUser>(`/api/admin/customers/${encodeURIComponent(id)}`, json('PUT', body)),
   inventory: () => api<ApiIngredient[]>('/api/admin/inventory'),
@@ -183,8 +204,8 @@ export const adminApi = {
   createIngredient: (body: Record<string, unknown>) => api<ApiIngredient>('/api/admin/inventory', json('POST', body)),
   inventoryTransaction: (body: Record<string, unknown>) => api<void>('/api/admin/inventory/transactions', json('POST', body)),
   promotions: () => api<ApiPromotion[]>('/api/admin/promotions'),
-  createPromotion: (body: Partial<ApiPromotion>) => api<ApiPromotion>('/api/admin/promotions', json('POST', body)),
-  updatePromotion: (id: string, body: Partial<ApiPromotion>) => api<ApiPromotion>(`/api/admin/promotions/${encodeURIComponent(id)}`, json('PUT', body)),
+  createPromotion: (body: ApiPromotionWrite) => api<ApiPromotion>('/api/admin/promotions', json('POST', body)),
+  updatePromotion: (id: string, body: ApiPromotionWrite) => api<ApiPromotion>(`/api/admin/promotions/${encodeURIComponent(id)}`, json('PUT', body)),
   deletePromotion: (id: string) => api<void>(`/api/admin/promotions/${encodeURIComponent(id)}`, json('DELETE')),
   revenue: (from?: string, to?: string) =>
     api<{ from: string; to: string; revenue: number; orders: number }>(`/api/admin/reports/revenue${from ? `?from=${from}&to=${to ?? from}` : ''}`),

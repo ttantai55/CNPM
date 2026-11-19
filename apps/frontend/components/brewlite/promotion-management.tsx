@@ -95,7 +95,16 @@ export function PromotionManagement() {
     if (Object.values(errors).some(Boolean)) {
       return
     }
-    const value = { ...form, voucherCode, description: form.description.trim() }
+    const value = {
+      voucherCode,
+      description: form.description.trim(),
+      discountType: form.discountType,
+      discountValue: form.discountValue,
+      startDate: form.startDate,
+      endDate: form.endDate,
+      usageLimit: form.usageLimit,
+      isActive: form.isActive,
+    }
     try {
       const saved = editing
         ? await adminApi.updatePromotion(editing.id, value)
@@ -113,10 +122,8 @@ export function PromotionManagement() {
 
   async function toggle(promotion: Promotion) {
     try {
-      const saved = await adminApi.updatePromotion(promotion.id, {
-        ...promotion,
-        isActive: !promotion.isActive,
-      })
+      const { id, usedCount: _usedCount, ...editable } = promotion
+      const saved = await adminApi.updatePromotion(id, { ...editable, isActive: !promotion.isActive })
       promotionStore.set((current) => current.map((item) => item.id === promotion.id ? saved : item))
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Không thể cập nhật khuyến mãi.')
@@ -279,6 +286,12 @@ export function PromotionManagement() {
               <input required type="date" value={form.endDate} onChange={(event) => setForm({ ...form, endDate: event.target.value })} aria-invalid={Boolean(fieldErrors.endDate)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2', fieldErrors.endDate)} />
               <FieldError error={fieldErrors.endDate} />
             </label>
+            {editing && (
+              <label className="text-xs font-medium text-[#536257]">
+                Lượt đã sử dụng (chỉ đọc)
+                <input type="number" value={editing.usedCount} readOnly className="mt-1.5 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-500" />
+              </label>
+            )}
             <label className="flex items-center gap-2 text-xs font-medium text-[#536257] sm:col-span-2">
               <input type="checkbox" checked={form.isActive} onChange={(event) => setForm({ ...form, isActive: event.target.checked })} />
               Kích hoạt khuyến mãi

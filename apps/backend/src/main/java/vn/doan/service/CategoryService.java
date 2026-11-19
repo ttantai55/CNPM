@@ -23,9 +23,6 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     public List<CategoryResponse> getAllCategories() {
-        // Tùy theo thiết kế Entity, nếu có trường isActive và displayOrder thì ông dùng hàm tự custom:
-        // return categoryRepository.findByIsActiveTrueOrderByDisplayOrderAsc().stream()...
-        
         return categoryRepository.findAll().stream()
                 .map(category -> new CategoryResponse(
                         category.getId(), 
@@ -36,9 +33,19 @@ public class CategoryService {
                 )).collect(Collectors.toList());
     }
 
+    public List<CategoryResponse> getActiveCategories() {
+        return categoryRepository.findByIsActiveTrue().stream()
+                .map(category -> new CategoryResponse(category.getId(), category.getName(),
+                        category.getDescription(), category.getSlug(), category.isActive()))
+                .collect(Collectors.toList());
+    }
+
     public CategoryResponse getCategoryById(String categoryId) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục với ID: " + categoryId));
+        if (!category.isActive()) {
+            throw new ResourceNotFoundException("Không tìm thấy danh mục với ID: " + categoryId);
+        }
         
         return new CategoryResponse(category.getId(), category.getName(), category.getDescription(), category.getSlug(), category.isActive());
     }
@@ -56,10 +63,10 @@ public class CategoryService {
         category.setName(request.getName());
         category.setDescription(request.getDescription());
         category.setSlug(request.getSlug() == null || request.getSlug().isBlank() ? slugify(request.getName()) : slugify(request.getSlug()));
-        // Nếu DB có cột trạng thái, set mặc định: category.setActive(true);
+        category.setActive(true);
 
         // 3. Lưu xuống DB
-        Category savedCategory = categoryRepository.save(category);
+        Category savedCategory = categoryRepository.saveAndFlush(category);
 
         return new CategoryResponse(savedCategory.getId(), savedCategory.getName(), savedCategory.getDescription(), savedCategory.getSlug(), savedCategory.isActive());
     }

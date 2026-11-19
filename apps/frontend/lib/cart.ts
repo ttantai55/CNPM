@@ -1,7 +1,8 @@
 'use client'
 
 import { MAX_ITEM_QUANTITY, buildCartKey, type CartItem } from './menu'
-import { createPersistentStore } from './persistent-store'
+import { cartApi, type ApiCartItem } from './api'
+import { createPersistentStore, createStore } from './persistent-store'
 
 export type CartAction =
   | { type: 'add'; item: Omit<CartItem, 'key'> }
@@ -55,9 +56,89 @@ function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
 }
 
 export const cartStore = createPersistentStore<CartItem[]>('brewlite.cart', [])
+export const cartOwnerStore = createPersistentStore<string | null>('brewlite.cart-owner', null)
+export const cartSyncErrorStore = createStore<string | null>(null)
+
+let persistenceUserId: string | null = null
+let syncTimer: ReturnType<typeof setTimeout> | null = null
+let pendingSync: Promise<void> = Promise.resolve()
+
+function toApiCartItem({ key: _key, ...item }: CartItem): ApiCartItem {
+  return {
+    ...item,
+    sugarPercent: Number.parseInt(item.sugar, 10),
+    icePercent: item.ice === 'Không đá' ? 0 : item.ice === 'Ít đá' ? 25 : item.ice === 'Nhiều đá' ? 100 : 50,
+  }
+}
+
+function fromApiCartItems(items: ApiCartItem[]): CartItem[] {
+  return items.map((item) => {
+    const cartItem = {
+      productId: item.productId,
+      size: item.size ?? 'M',
+      sugar: `${item.sugarPercent ?? 50}%` as CartItem['sugar'],
+      ice: ({ 0: 'Không đá', 25: 'Ít đá', 50: 'Đá vừa', 100: 'Nhiều đá' }[item.icePercent ?? 50] ?? 'Đá vừa') as CartItem['ice'],
+      toppingIds: item.toppingIds ?? [],
+      note: item.note ?? '',
+      quantity: item.quantity,
+    }
+    return { ...cartItem, key: buildCartKey(cartItem) }
+  })
+}
+
+export function setCartPersistenceUser(userId: string | null) {
+  persistenceUserId = userId
+  if (!userId && syncTimer) {
+    clearTimeout(syncTimer)
+    syncTimer = null
+  }
+}
+
+export async function loadUserCart(
+  userId: string,
+  guestItems: CartItem[],
+  startingItems: CartItem[],
+) {
+  const response = await cartApi.get(userId)
+  if (persistenceUserId !== userId) return
+
+  const itemsToMerge = cartStore.get() === startingItems ? guestItems : cartStore.get()
+  cartStore.set(fromApiCartItems(response.items ?? []))
+  cartOwnerStore.set(userId)
+  for (const item of itemsToMerge) {
+    const { key: _key, ...cartItem } = item
+    dispatchCart({ type: 'add', item: cartItem })
+  }
+}
+
+function queueCartSync(userId: string, items: CartItem[]) {
+  const request = pendingSync.then(async () => {
+    await cartApi.replace(userId, items.map(toApiCartItem))
+    cartSyncErrorStore.set(null)
+  })
+  pendingSync = request.catch((cause: unknown) => {
+    cartSyncErrorStore.set(cause instanceof Error ? cause.message : 'Không thể lưu giỏ hàng.')
+  })
+  return request
+}
+
+export function flushCartSync(userId: string) {
+  if (syncTimer) {
+    clearTimeout(syncTimer)
+    syncTimer = null
+  }
+  return queueCartSync(userId, cartStore.get())
+}
 
 export function dispatchCart(action: CartAction) {
   cartStore.set((state) => cartReducer(state, action))
+  if (!persistenceUserId) return
+  if (syncTimer) clearTimeout(syncTimer)
+  const userId = persistenceUserId
+  syncTimer = setTimeout(() => {
+    syncTimer = null
+    void queueCartSync(userId, cartStore.get()).catch(() => undefined)
+  }, 200)
 }
 
 export function cartContainsItems(items: CartItem[]) {

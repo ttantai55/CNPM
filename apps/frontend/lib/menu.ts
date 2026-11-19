@@ -29,7 +29,7 @@ export type SizeOption = 'S' | 'M' | 'L'
 export type SugarOption = '0%' | '25%' | '50%' | '75%' | '100%'
 export type IceOption = 'Không đá' | 'Ít đá' | 'Đá vừa' | 'Nhiều đá'
 
-export type Topping = { id: string; name: string; price: number }
+export type Topping = { id: string; name: string; price: number; isAvailable: boolean }
 
 export type CartItem = {
   key: string
@@ -97,7 +97,7 @@ export function fromApiCategories(items: ApiCategory[]): MenuCategory[] {
 }
 
 export function fromApiToppings(items: ApiTopping[]): Topping[] {
-  return items.filter((item) => item.isAvailable).map(({ id, name, price }) => ({ id, name, price }))
+  return items.map(({ id, name, price, isAvailable }) => ({ id, name, price, isAvailable }))
 }
 
 export const MAX_ITEM_QUANTITY = 20

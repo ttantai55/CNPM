@@ -11,7 +11,6 @@ public class PromotionAdminRequest {
     private LocalDate startDate;
     private LocalDate endDate;
     private Long usageLimit;
-    private Long usedCount;
     private Boolean isActive;
 
     public String getVoucherCode() { return voucherCode; }
@@ -28,8 +27,6 @@ public class PromotionAdminRequest {
     public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
     public Long getUsageLimit() { return usageLimit; }
     public void setUsageLimit(Long usageLimit) { this.usageLimit = usageLimit; }
-    public Long getUsedCount() { return usedCount; }
-    public void setUsedCount(Long usedCount) { this.usedCount = usedCount; }
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean active) { isActive = active; }
 }

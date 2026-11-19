@@ -41,7 +41,6 @@ public class PromotionService {
         Promotion promotion = new Promotion(request.getVoucherCode().trim().toUpperCase(),
                 request.getDescription(), request.getDiscountType(), request.getDiscountValue(),
                 request.getStartDate(), request.getEndDate(), request.getUsageLimit());
-        promotion.setUsedCount(request.getUsedCount() == null ? 0 : request.getUsedCount());
         promotion.setActive(request.getIsActive() == null || request.getIsActive());
         return new PromotionAdminResponse(promotionRepository.save(promotion));
     }
@@ -61,7 +60,6 @@ public class PromotionService {
         promotion.setStartDate(request.getStartDate());
         promotion.setEndDate(request.getEndDate());
         promotion.setUsageLimit(request.getUsageLimit());
-        if (request.getUsedCount() != null) promotion.setUsedCount(request.getUsedCount());
         if (request.getIsActive() != null) promotion.setActive(request.getIsActive());
         return new PromotionAdminResponse(promotion);
     }
@@ -205,8 +203,9 @@ public class PromotionService {
                     "Voucher không còn hợp lệ hoặc đã hết lượt sử dụng.");
         }
 
-        promotion.setUsedCount(Math.addExact(promotion.getUsedCount(), 1));
-        // promotion đang ở trạng thái Managed; JPA Dirty Checking sẽ tự cập nhật.
+        if (promotionRepository.incrementUsageIfAvailable(promotion.getId(), LocalDate.now()) != 1) {
+            throw new BusinessValidationException("Voucher không còn hợp lệ hoặc đã hết lượt sử dụng.");
+        }
     }
 
     /** Bật/tắt chương trình khuyến mãi theo ID. */

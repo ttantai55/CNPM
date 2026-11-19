@@ -29,7 +29,7 @@ public class MenuController {
 
     @GetMapping("/categories")
     public ResponseEntity<Map<String,Object>>  getAllCategories() {
-        List<CategoryResponse> categories = categoryService.getAllCategories();
+        List<CategoryResponse> categories = categoryService.getActiveCategories();
         
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);

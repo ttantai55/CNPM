@@ -26,6 +26,7 @@ export function CategoryManagement() {
   const [slug, setSlug] = useState('')
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; slug?: string }>({})
+  const [pendingCategoryId, setPendingCategoryId] = useState<string | null>(null)
 
   function startAdd() {
     setEditing(null)
@@ -82,6 +83,8 @@ export function CategoryManagement() {
   }
 
   async function toggle(category: MenuCategory) {
+    setPendingCategoryId(category.id)
+    setError('')
     try {
       const updated = await menuApi.toggleCategory(category.id)
       categoryStore.set((current) => current.map((item) =>
@@ -89,6 +92,8 @@ export function CategoryManagement() {
       ))
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Không thể cập nhật danh mục.')
+    } finally {
+      setPendingCategoryId(null)
     }
   }
 
@@ -111,6 +116,7 @@ export function CategoryManagement() {
             <Plus className="size-3.5" /> Thêm danh mục
           </button>
         </div>
+        {error && <p role="alert" className="px-5 pt-3 text-xs text-red-700">{error}</p>}
         <ul className="max-h-[calc(100dvh-280px)] divide-y divide-[#f0f2f0] overflow-y-auto">
           {categories.map((category) => (
             <li key={category.id} className="flex items-center gap-3 px-5 py-3">
@@ -131,8 +137,9 @@ export function CategoryManagement() {
                 role="switch"
                 aria-checked={category.isActive}
                 aria-label={`${category.isActive ? 'Tắt' : 'Bật'} danh mục ${category.name}`}
+                disabled={pendingCategoryId === category.id}
                 onClick={() => toggle(category)}
-                className={`relative h-6 w-11 rounded-full transition ${category.isActive ? 'bg-[#548565]' : 'bg-gray-300'}`}
+                className={`relative h-6 w-11 rounded-full transition disabled:opacity-50 ${category.isActive ? 'bg-[#548565]' : 'bg-gray-300'}`}
               >
                 <span className={`absolute top-0.5 size-5 rounded-full bg-white transition ${category.isActive ? 'left-5' : 'left-0.5'}`} />
               </button>

@@ -21,6 +21,8 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
     // 1. Tìm thông tin thanh toán theo đơn hàng (Mỗi đơn hàng liên kết với giao dịch thanh toán)
     Optional<Payment> findByOrder(Order order);
 
+    List<Payment> findByOrder_IdIn(List<String> orderIds);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Payment p WHERE p.order = :order")
     Optional<Payment> findByOrderForUpdate(@Param("order") Order order);
