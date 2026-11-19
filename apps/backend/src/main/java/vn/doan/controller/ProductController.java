@@ -8,9 +8,9 @@ import vn.doan.dto.request.ProductCreateRequest;
 import vn.doan.dto.response.CategoryResponse;
 import vn.doan.dto.response.ProductResponse;
 import vn.doan.dto.response.ToppingResponse;
-import vn.doan.repository.ToppingRepository;
 import vn.doan.service.CategoryService;
 import vn.doan.service.ProductService;
+import vn.doan.service.ToppingService;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ import java.util.List;
 public class ProductController {
     private final ProductService productService;
     private final CategoryService categoryService;
-    private final ToppingRepository toppingRepository;
+    private final ToppingService toppingService;
 
     @GetMapping("/api/products")
     public List<ProductResponse> products() { return productService.getAllProducts(); }
@@ -29,14 +29,11 @@ public class ProductController {
     public ProductResponse product(@PathVariable String id) { return productService.getProductById(id); }
 
     @GetMapping("/api/categories")
-    public List<CategoryResponse> categories() { return categoryService.getAllCategories(); }
+    public List<CategoryResponse> categories() { return categoryService.getActiveCategories(); }
 
     @GetMapping("/api/toppings")
     public List<ToppingResponse> toppings() {
-        return toppingRepository.findByIsAvailableTrue().stream()
-                .map(topping -> new ToppingResponse(
-                        topping.getId(), topping.getName(), topping.getPrice(), topping.isAvailable()))
-                .toList();
+        return toppingService.getAllToppings();
     }
 
     @PostMapping("/api/categories")

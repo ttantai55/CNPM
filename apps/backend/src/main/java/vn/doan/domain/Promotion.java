@@ -33,7 +33,7 @@ public class Promotion {
     @Column(name = "usage_limit")
     private long usageLimit;
 
-    @Column(name = "used_count")
+    @Column(name = "used_count", nullable = false)
     private long usedCount;
 
     @Column(name = "is_active", nullable = false)
@@ -167,10 +167,6 @@ public class Promotion {
 
     public long getUsedCount() {
         return usedCount;
-    }
-
-    public void setUsedCount(long usedCount) {
-        this.usedCount = usedCount;
     }
 
     public boolean isActive() {

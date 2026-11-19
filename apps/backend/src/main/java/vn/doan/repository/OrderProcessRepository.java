@@ -14,6 +14,8 @@ public interface OrderProcessRepository extends JpaRepository<OrderProcess, Stri
     // 1. Lấy toàn bộ lịch sử tiến trình của một đơn hàng, sắp xếp theo thời gian cập nhật tăng dần
     List<OrderProcess> findByOrderOrderByUpdatedAtAsc(Order order);
 
+    List<OrderProcess> findByOrder_IdInOrderByUpdatedAtAsc(List<String> orderIds);
+
     // 2. Tìm tất cả các tiến trình theo một trạng thái cụ thể
     List<OrderProcess> findByStatus(OrderStatus status);
 

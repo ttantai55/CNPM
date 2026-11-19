@@ -1,6 +1,7 @@
 package vn.doan.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 import vn.doan.domain.Order;
 import vn.doan.domain.OrderItem;
@@ -13,6 +14,9 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
 
     // 1. Lấy toàn bộ danh sách các món thuộc về một đơn hàng cụ thể
     List<OrderItem> findByOrder(Order order);
+
+    @EntityGraph(attributePaths = {"product", "orderItemToppings.topping"})
+    List<OrderItem> findDistinctByOrder_IdIn(List<String> orderIds);
 
     // 2. Tìm các OrderItem liên quan đến một sản phẩm cụ thể (hữu ích cho thống kê sản phẩm đã bán)
     List<OrderItem> findByProduct(Product product);

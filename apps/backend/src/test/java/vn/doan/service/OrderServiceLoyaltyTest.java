@@ -18,6 +18,8 @@ import vn.doan.dto.request.OrderItemRequest;
 import vn.doan.repository.CustomerRepository;
 import vn.doan.repository.LoyaltyTransactionRepo;
 import vn.doan.repository.OrderRepository;
+import vn.doan.repository.OrderItemRepository;
+import vn.doan.repository.OrderProcessRepository;
 import vn.doan.repository.PaymentRepository;
 import vn.doan.repository.ProductRepository;
 import vn.doan.repository.PromotionRepository;
@@ -37,6 +39,8 @@ import static org.mockito.Mockito.when;
 class OrderServiceLoyaltyTest {
 
     @Mock private OrderRepository orderRepository;
+    @Mock private OrderItemRepository orderItemRepository;
+    @Mock private OrderProcessRepository orderProcessRepository;
     @Mock private PaymentRepository paymentRepository;
     @Mock private ProductRepository productRepository;
     @Mock private UserRepository userRepository;
@@ -51,6 +55,8 @@ class OrderServiceLoyaltyTest {
     void setUp() {
         orderService = new OrderService(
                 orderRepository,
+                orderItemRepository,
+                orderProcessRepository,
                 paymentRepository,
                 productRepository,
                 userRepository,

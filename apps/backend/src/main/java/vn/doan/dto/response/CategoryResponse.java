@@ -1,5 +1,7 @@
 package vn.doan.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class CategoryResponse {
     private String id;
     private String name;
@@ -41,7 +43,8 @@ public CategoryResponse(String id, String name, String description, String slug,
     }
     public String getSlug() { return slug; }
 
-    public boolean isActive() {
+    @JsonProperty("isActive")
+    public boolean getIsActive() {
         return isActive;
     }
 }

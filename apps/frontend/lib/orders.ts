@@ -195,7 +195,7 @@ export function fromApiOrder(remote: ApiOrder): Order {
     customerName: remote.customerName ?? '',
     phone: remote.customerPhone ?? '',
     fulfillment: 'pickup',
-    lines: remote.items.map((item) => ({
+    lines: (remote.items ?? []).map((item) => ({
       productId: item.productId,
       name: item.productName,
       category: getProduct(item.productId)?.category ?? 'coffee',

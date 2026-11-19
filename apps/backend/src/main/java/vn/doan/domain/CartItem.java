@@ -2,6 +2,8 @@ package vn.doan.domain;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "cart_items")
@@ -26,6 +28,24 @@ public class CartItem implements Serializable {
 
     @Column(nullable = false)
     private int quantity;
+
+    @Column(nullable = false, length = 1)
+    private String size = "M";
+
+    @Column(name = "sugar_percent", nullable = false)
+    private int sugarPercent = 50;
+
+    @Column(name = "ice_percent", nullable = false)
+    private int icePercent = 50;
+
+    @Column(length = 100)
+    private String note;
+
+    @ElementCollection
+    @CollectionTable(name = "cart_item_toppings", joinColumns = @JoinColumn(name = "cart_item_id"))
+    @OrderColumn(name = "position")
+    @Column(name = "topping_id", nullable = false)
+    private List<String> toppingIds = new ArrayList<>();
 
     // BẮT BUỘC CHO JPA: Constructor không tham số
     public CartItem() {
@@ -85,4 +105,15 @@ public class CartItem implements Serializable {
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
+
+    public String getSize() { return size; }
+    public void setSize(String size) { this.size = size; }
+    public int getSugarPercent() { return sugarPercent; }
+    public void setSugarPercent(int sugarPercent) { this.sugarPercent = sugarPercent; }
+    public int getIcePercent() { return icePercent; }
+    public void setIcePercent(int icePercent) { this.icePercent = icePercent; }
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
+    public List<String> getToppingIds() { return toppingIds; }
+    public void setToppingIds(List<String> toppingIds) { this.toppingIds = toppingIds; }
 }

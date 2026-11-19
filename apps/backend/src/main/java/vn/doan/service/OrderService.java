@@ -13,6 +13,8 @@ import vn.doan.dto.response.OrderItemResponse;
 import vn.doan.dto.response.OrderProcessResponse;
 import vn.doan.dto.response.OrderResponse;
 import vn.doan.repository.OrderRepository;
+import vn.doan.repository.OrderItemRepository;
+import vn.doan.repository.OrderProcessRepository;
 import vn.doan.repository.LoyaltyTransactionRepo;
 import vn.doan.repository.PaymentRepository;
 import vn.doan.repository.ProductRepository;
@@ -24,6 +26,7 @@ import vn.doan.repository.CustomerRepository;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.time.LocalDateTime; 
 import java.util.stream.Collectors;
 
@@ -33,6 +36,8 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final OrderProcessRepository orderProcessRepository;
     private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository; 
@@ -43,13 +48,33 @@ public class OrderService {
 
     // * 1. Lấy thông tin chi tiết một đơn hàng
     public OrderResponse getOrderDetails(String orderId) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findWithCustomerAndPromotionById(orderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng: " + orderId));
-        return mapToResponse(order);
+        List<OrderItem> items = orderItemRepository.findDistinctByOrder_IdIn(List.of(orderId));
+        List<OrderProcess> processes = orderProcessRepository.findByOrder_IdInOrderByUpdatedAtAsc(List.of(orderId));
+        String paymentMethod = paymentRepository.findByOrder(order)
+                .map(payment -> payment.getPaymentMethod().name()).orElse(null);
+        return mapToResponse(order, items, processes, paymentMethod);
     }
 
     public List<OrderResponse> getAllOrders() {
-        return orderRepository.findAll().stream().map(this::mapToResponse).collect(Collectors.toList());
+        List<Order> orders = orderRepository.findAllWithCustomerAndPromotion();
+        if (orders.isEmpty()) return List.of();
+
+        List<String> orderIds = orders.stream().map(Order::getId).toList();
+        Map<String, List<OrderItem>> itemsByOrder = orderItemRepository.findDistinctByOrder_IdIn(orderIds).stream()
+                .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
+        Map<String, List<OrderProcess>> processesByOrder =
+                orderProcessRepository.findByOrder_IdInOrderByUpdatedAtAsc(orderIds).stream()
+                        .collect(Collectors.groupingBy(process -> process.getOrder().getId()));
+        Map<String, String> paymentMethods = paymentRepository.findByOrder_IdIn(orderIds).stream()
+                .collect(Collectors.toMap(payment -> payment.getOrder().getId(),
+                        payment -> payment.getPaymentMethod().name()));
+
+        return orders.stream().map(order -> mapToResponse(order,
+                itemsByOrder.getOrDefault(order.getId(), List.of()),
+                processesByOrder.getOrDefault(order.getId(), List.of()),
+                paymentMethods.get(order.getId()))).toList();
     }
 
     // * 2. Lấy danh sách các đơn hàng đang chờ pha chế (Dành cho Barista)
@@ -154,7 +179,7 @@ public class OrderService {
         // Kiểm tra xem có nhập mã khuyến mãi không
         if (request.getVoucherCode() != null && !request.getVoucherCode().trim().isEmpty()) {
             
-            Promotion promotion = promotionRepository.findByVoucherCode(request.getVoucherCode())
+            Promotion promotion = promotionRepository.findByVoucherCode(request.getVoucherCode().trim().toUpperCase(java.util.Locale.ROOT))
                     .orElseThrow(() -> new RuntimeException("Mã giảm giá không tồn tại."));
 
             if (!promotion.isValid()) {
@@ -165,7 +190,9 @@ public class OrderService {
             finalAmount = totalAmount - discountAmount;
 
             order.setDiscount(promotion);
-            promotion.setUsedCount(promotion.getUsedCount() + 1); 
+            if (promotionRepository.incrementUsageIfAvailable(promotion.getId(), java.time.LocalDate.now()) != 1) {
+                throw new IllegalStateException("Mã giảm giá đã hết lượt sử dụng.");
+            }
         }
 
         if (request.getLoyaltyRewardCode() != null && !request.getLoyaltyRewardCode().isBlank()) {
@@ -281,9 +308,14 @@ public class OrderService {
 
     // --- HÀM TIỆN ÍCH MAP SANG DTO RESPONSE ---
     private OrderResponse mapToResponse(Order order) {
-        
+        return mapToResponse(order, order.getItems(), order.getProcesses(),
+                paymentRepository.findByOrder(order).map(payment -> payment.getPaymentMethod().name()).orElse(null));
+    }
+
+    private OrderResponse mapToResponse(Order order, List<OrderItem> orderItems,
+                                         List<OrderProcess> orderProcesses, String paymentMethod) {
         // Map danh sách món hàng kèm tên Topping
-        List<OrderItemResponse> itemResponses = order.getItems().stream().map(item -> {
+        List<OrderItemResponse> itemResponses = orderItems.stream().map(item -> {
             
             // Lấy tên các topping từ bảng trung gian
             List<String> toppingNames = item.getOrderItemToppings().stream()
@@ -306,7 +338,7 @@ public class OrderService {
             );
         }).collect(Collectors.toList());
 
-        List<OrderProcessResponse> processResponses = order.getProcesses().stream().map(process ->
+        List<OrderProcessResponse> processResponses = orderProcesses.stream().map(process ->
                 new OrderProcessResponse(
                         process.getId(),
                         order.getId(),
@@ -338,9 +370,7 @@ public class OrderService {
                 itemResponses,
                 processResponses,
                 voucherCode,
-                paymentRepository.findByOrder(order)
-                        .map(payment -> payment.getPaymentMethod().name())
-                        .orElse(null)
+                paymentMethod
         );
     }
 }

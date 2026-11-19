@@ -31,7 +31,18 @@ import { CustomizeDialog } from './customize-dialog'
 import { CheckoutDialog } from './checkout-dialog'
 import { Modal } from './modal'
 import { authStore } from '@/lib/session'
-import { cartContainsItems, cartStore, dispatchCart, removeCartItems, restoreCartItems } from '@/lib/cart'
+import {
+  cartContainsItems,
+  cartOwnerStore,
+  cartStore,
+  cartSyncErrorStore,
+  dispatchCart,
+  flushCartSync,
+  loadUserCart,
+  removeCartItems,
+  restoreCartItems,
+  setCartPersistenceUser,
+} from '@/lib/cart'
 import { useHydrated } from '@/lib/persistent-store'
 import { MockPaymentModal } from '@/components/payment/mock-payment-modal'
 import type { CustomerProfile } from '@/lib/customer-profile'
@@ -59,6 +70,7 @@ export function BrewLiteApp() {
   const hydrated = useHydrated()
   const session = authStore.useStore()
   const cart = cartStore.useStore()
+  const cartSyncError = cartSyncErrorStore.useStore()
   const orders = orderStore.useStore()
   const products = menuProductStore.useStore()
   const categories = categoryStore.useStore()
@@ -92,6 +104,35 @@ export function BrewLiteApp() {
       }
     : null
   const availablePromotions = promotions
+
+  useEffect(() => {
+    if (!hydrated) return
+    if (!session || session.role !== 'CUSTOMER') {
+      setCartPersistenceUser(null)
+      return
+    }
+
+    const guestItems = cartOwnerStore.get() === null ? cartStore.get() : []
+    const startingItems = cartStore.get()
+    setCartPersistenceUser(session.id)
+    let active = true
+    loadUserCart(session.id, guestItems, startingItems).catch((error: unknown) => {
+      if (active) {
+        setCartPersistenceUser(null)
+        showToast(error instanceof Error ? error.message : 'Không thể tải giỏ hàng.')
+      }
+    })
+    return () => {
+      active = false
+      setCartPersistenceUser(null)
+    }
+  }, [hydrated, session?.id, session?.role])
+
+  useEffect(() => {
+    if (!cartSyncError) return
+    showToast(cartSyncError)
+    cartSyncErrorStore.set(null)
+  }, [cartSyncError])
 
   useEffect(() => {
     if (!hydrated) return
@@ -331,6 +372,11 @@ export function BrewLiteApp() {
         isAuthenticated={Boolean(session)}
         onOpenAuth={() => router.push('/login')}
         onLogout={() => {
+          if (session?.id) {
+            void flushCartSync(session.id).catch(() => undefined)
+          }
+          setCartPersistenceUser(null)
+          cartOwnerStore.set(null)
           authStore.set(null)
           dispatchCart({ type: 'clear' })
           router.replace('/login')

@@ -166,18 +166,20 @@ function CustomizeForm({
                   className={cn(
                     'flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-colors',
                     checked ? 'border-caramel bg-caramel-soft/40' : 'border-border hover:bg-muted',
-                    disabled && 'cursor-not-allowed opacity-50',
+                    (disabled || !t.isAvailable) && 'cursor-not-allowed opacity-50',
                   )}
                 >
                   <input
                     type="checkbox"
                     checked={checked}
-                    disabled={disabled}
+                    disabled={disabled || (!t.isAvailable && !checked)}
                     onChange={() => toggleTopping(t.id)}
                     className="size-4 accent-[var(--primary)]"
                   />
                   <span className="flex-1 text-foreground">{t.name}</span>
-                  <span className="text-xs font-semibold text-muted-foreground">+{formatPrice(t.price)}</span>
+                  {t.isAvailable
+                    ? <span className="text-xs font-semibold text-muted-foreground">+{formatPrice(t.price)}</span>
+                    : <span className="text-xs font-semibold text-red-600">Hết hàng</span>}
                 </label>
               )
             })}

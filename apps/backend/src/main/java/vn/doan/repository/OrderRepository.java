@@ -3,6 +3,7 @@ package vn.doan.repository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import vn.doan.domain.Order;
@@ -14,6 +15,12 @@ import java.util.List;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, String> {
+
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.customer LEFT JOIN FETCH o.discount")
+    List<Order> findAllWithCustomerAndPromotion();
+
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.customer LEFT JOIN FETCH o.discount WHERE o.id = :id")
+    Optional<Order> findWithCustomerAndPromotionById(@Param("id") String id);
 
     List<Order> findByStatus(OrderStatus status);
 

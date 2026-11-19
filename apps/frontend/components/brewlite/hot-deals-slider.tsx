@@ -62,6 +62,9 @@ export function HotDealsSlider({
                 <p className="mt-1 text-[10px] text-muted-foreground">
                   HSD: {promotion.endDate}
                 </p>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  Đã dùng {promotion.usedCount}/{promotion.usageLimit} lượt
+                </p>
               </div>
               <button
                 type="button"
