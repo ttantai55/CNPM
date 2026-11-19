@@ -12,6 +12,7 @@ import vn.doan.domain.Payment;
 import vn.doan.domain.Product;
 import vn.doan.domain.enums.PaymentMethod;
 import vn.doan.dto.request.PaymentCallbackDTO;
+import vn.doan.dto.request.PaymentCreateRequest;
 import vn.doan.repository.LoyaltyTransactionRepo;
 import vn.doan.repository.OrderRepository;
 import vn.doan.repository.PaymentRepository;
@@ -19,6 +20,7 @@ import vn.doan.repository.ProductRepository;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,6 +68,20 @@ class PaymentServiceTest {
         paymentService.processPaymentCallback(callback("05"));
 
         verifyNoInteractions(productRepository);
+    }
+
+    @Test
+    void rejectsLegacyMethodsWhenCreatingOnlinePayments() {
+        Order order = new Order();
+        order.setId("ORD_TEST");
+        when(orderRepository.findById("ORD_TEST")).thenReturn(Optional.of(order));
+
+        assertThrows(IllegalArgumentException.class, () -> paymentService.createPaymentTransaction(
+                new PaymentCreateRequest("ORD_TEST", 0, "CASH")));
+        assertThrows(IllegalArgumentException.class, () -> paymentService.createPaymentTransaction(
+                new PaymentCreateRequest("ORD_TEST", 0, "VN_PAY")));
+
+        verifyNoInteractions(paymentRepository);
     }
 
     private Order createOrderWithItem(long quantity) {
