@@ -87,7 +87,7 @@ public List<IngredientResponse> getAllIngredients() {
         }
 
         // 1. Tìm nguyên liệu và Barista thực hiện
-        Ingredient ingredient = ingredientRepository.findById(request.getIngredientId())
+        Ingredient ingredient = ingredientRepository.findByIdForUpdate(request.getIngredientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nguyên liệu"));
         
         Barista barista = baristaRepository.findById(baristaId)
@@ -112,6 +112,7 @@ public List<IngredientResponse> getAllIngredients() {
             }
             ingredient.setCurrentStock(currentStock - transactionQty);
         }
+        ingredientRepository.save(ingredient);
 
         // 3. Tạo phiếu giao dịch (Bảng inventory_transactions)
         InventoryTransaction transaction = new InventoryTransaction(

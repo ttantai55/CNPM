@@ -17,7 +17,6 @@ import vn.doan.service.UserService;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class UserProfileController {
     private final UserRepository users;
     private final UserService userService;

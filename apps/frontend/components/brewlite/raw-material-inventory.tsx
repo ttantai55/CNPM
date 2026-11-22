@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import {
   AlertTriangle,
   ClipboardList,
@@ -84,6 +84,8 @@ export function RawMaterialInventory() {
   const [historyIngredientId, setHistoryIngredientId] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState<TransactionForm>(EMPTY_FORM)
+  const [savingTransaction, setSavingTransaction] = useState(false)
+  const savingTransactionRef = useRef(false)
   const [formError, setFormError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<TransactionFieldErrors>({})
 
@@ -171,6 +173,7 @@ export function RawMaterialInventory() {
 
   async function saveTransaction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (savingTransactionRef.current) return
 
     const name = form.name.trim()
     const quantity = Number(form.quantity)
@@ -203,45 +206,41 @@ export function RawMaterialInventory() {
       return
     }
 
-    let ingredient: Ingredient | undefined = currentIngredient
-    if (form.mode === 'NEW') {
-      try {
-        ingredient = await adminApi.createIngredient({
-          name,
-          unit: form.unit,
-          currentStock: 0,
-          minAlertThreshold,
-        })
-      } catch (cause) {
-        setFormError(cause instanceof Error ? cause.message : 'Không thể tạo nguyên liệu.')
-        return
-      }
-    }
-    if (!ingredient) {
-      setFormError('Không tìm thấy nguyên liệu đã chọn. Vui lòng tải lại và thử lại.')
-      return
-    }
-
     const updatedStock = form.type === 'IMPORT'
-      ? ingredient.currentStock + quantity
+      ? (currentIngredient?.currentStock ?? 0) + quantity
       : form.type === 'EXPORT'
-        ? Math.max(0, ingredient.currentStock - quantity)
+        ? Math.max(0, (currentIngredient?.currentStock ?? 0) - quantity)
         : quantity
-
     if (
-      (form.type === 'EXPORT' && quantity > ingredient.currentStock) ||
+      (form.type === 'EXPORT' && currentIngredient && quantity > currentIngredient.currentStock) ||
       !Number.isSafeInteger(updatedStock) ||
       updatedStock > 2147483647
     ) {
       setFormError(
-        quantity > ingredient.currentStock && form.type === 'EXPORT'
+        form.type === 'EXPORT' && currentIngredient && quantity > currentIngredient.currentStock
           ? 'Số lượng xuất vượt quá tồn kho hiện tại.'
           : 'Tồn kho sau giao dịch vượt quá giới hạn cho phép.',
       )
       return
     }
 
+    savingTransactionRef.current = true
+    setSavingTransaction(true)
     try {
+      let ingredient: Ingredient | undefined = currentIngredient
+      if (form.mode === 'NEW') {
+        ingredient = await adminApi.createIngredient({
+          name,
+          unit: form.unit,
+          currentStock: 0,
+          minAlertThreshold,
+        })
+      }
+      if (!ingredient) {
+        setFormError('Không tìm thấy nguyên liệu đã chọn. Vui lòng tải lại và thử lại.')
+        return
+      }
+
       await adminApi.inventoryTransaction({
         type: form.type,
         ingredientId: ingredient.id,
@@ -267,6 +266,9 @@ export function RawMaterialInventory() {
       setFormError('')
     } catch (cause) {
       setFormError(cause instanceof Error ? cause.message : 'Không thể lưu giao dịch kho.')
+    } finally {
+      savingTransactionRef.current = false
+      setSavingTransaction(false)
     }
   }
 
@@ -817,10 +819,11 @@ export function RawMaterialInventory() {
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 rounded-lg bg-[#548565] px-4 py-2 text-xs font-semibold text-white hover:bg-[#436b51]"
+                  disabled={savingTransaction}
+                  className="flex items-center gap-1.5 rounded-lg bg-[#548565] px-4 py-2 text-xs font-semibold text-white hover:bg-[#436b51] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <PackagePlus className="size-3.5" />
-                  Xác nhận
+                  {savingTransaction ? 'Đang lưu...' : 'Xác nhận'}
                 </button>
               </div>
             </form>
