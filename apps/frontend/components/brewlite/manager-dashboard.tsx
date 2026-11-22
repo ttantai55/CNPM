@@ -60,30 +60,49 @@ import { adminApi, menuApi } from '@/lib/api'
 import { FieldError, fieldErrorClass } from './form-field'
 
 function dateInputValue(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  const parts = new Intl.DateTimeFormat('en', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date)
+  const part = (type: 'year' | 'month' | 'day') => parts.find((value) => value.type === type)?.value ?? ''
+  return `${part('year')}-${part('month')}-${part('day')}`
 }
 
-function getDateRange(preset: 'today' | 'yesterday' | 'last7' | 'custom', customDate: string) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const start = new Date(today)
-  if (preset === 'yesterday') start.setDate(start.getDate() - 1)
-  if (preset === 'last7') start.setDate(start.getDate() - 6)
-  if (preset === 'custom') {
-    const parsed = new Date(`${customDate}T00:00:00`)
-    if (customDate && !Number.isNaN(parsed.getTime())) start.setTime(parsed.getTime())
+function addCalendarDays(date: string, days: number) {
+  const [year, month, day] = date.split('-').map(Number)
+  const result = new Date(Date.UTC(year, month - 1, day + days))
+  return `${result.getUTCFullYear()}-${String(result.getUTCMonth() + 1).padStart(2, '0')}-${String(result.getUTCDate()).padStart(2, '0')}`
+}
+
+function getDateRange(
+  preset: 'today' | 'yesterday' | 'last7' | 'last30' | 'custom',
+  customFrom: string,
+  customTo: string,
+) {
+  const today = dateInputValue(new Date())
+  if (preset === 'yesterday') {
+    const yesterday = addCalendarDays(today, -1)
+    return { from: yesterday, to: yesterday }
   }
-  const end = new Date(start)
-  end.setHours(23, 59, 59, 999)
-  if (preset === 'last7') end.setTime(today.getTime() + 24 * 60 * 60 * 1000 - 1)
-  return { start: start.getTime(), end: end.getTime() }
+  if (preset === 'last7') return { from: addCalendarDays(today, -6), to: today }
+  if (preset === 'last30') return { from: addCalendarDays(today, -29), to: today }
+  if (preset === 'custom') return { from: customFrom || today, to: customTo || customFrom || today }
+  return { from: today, to: today }
+}
+
+function formatReportDate(date: string) {
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    timeZone: 'UTC',
+  }).format(new Date(`${date}T00:00:00Z`))
 }
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Tổng quan', icon: LayoutDashboard },
+  { id: 'revenue', label: 'Báo cáo Doanh thu', icon: BarChart3 },
   { id: 'orders', label: 'Quản lý đơn hàng', icon: ShoppingBag },
   { id: 'inventory', label: 'Quản lý Menu', icon: Boxes },
   { id: 'toppings', label: 'Quản lý Topping', icon: Coffee },
@@ -91,7 +110,6 @@ const NAV_ITEMS = [
   { id: 'staff', label: 'Quản lý nhân viên', icon: UsersRound },
   { id: 'customers', label: 'Quản lý khách hàng', icon: UserRound },
   { id: 'raw-materials', label: 'Quản lý kho nguyên liệu', icon: PackageCheck },
-  { id: 'revenue', label: 'Báo cáo Doanh thu', icon: BarChart3 },
   { id: 'promotions', label: 'Cấu hình Khuyến mãi', icon: Percent },
 ] as const
 
@@ -100,13 +118,19 @@ function ManagerContent() {
   const categories = categoryStore.useStore()
   const [activeNav, setActiveNav] = useState<(typeof NAV_ITEMS)[number]['id']>('overview')
   const [search, setSearch] = useState('')
-  const [datePreset, setDatePreset] = useState<'today' | 'yesterday' | 'last7' | 'custom'>('today')
-  const [customDate, setCustomDate] = useState(() => dateInputValue(new Date()))
-  const [revenueReport, setRevenueReport] = useState<{ revenue: number; orders: number } | null>(null)
+  const [datePreset, setDatePreset] = useState<'today' | 'yesterday' | 'last7' | 'last30' | 'custom'>('today')
+  const [customFrom, setCustomFrom] = useState(() => dateInputValue(new Date()))
+  const [customTo, setCustomTo] = useState(() => dateInputValue(new Date()))
+  const [revenueReport, setRevenueReport] = useState<{
+    revenue: number
+    orders: number
+    hourly: boolean
+    series: { label: string; revenue: number }[]
+  } | null>(null)
   const [revenueError, setRevenueError] = useState('')
 
   const productsList = menuProductStore.useStore()
-  const dateBounds = getDateRange(datePreset, customDate)
+  const dateBounds = getDateRange(datePreset, customFrom, customTo)
 
   useEffect(() => {
     const normalized = normalizeMenuProducts(productsList)
@@ -129,10 +153,9 @@ function ManagerContent() {
 
   useEffect(() => {
     let active = true
-    const from = dateInputValue(new Date(dateBounds.start))
-    const to = dateInputValue(new Date(dateBounds.end))
     setRevenueError('')
-    adminApi.revenue(from, to)
+    setRevenueReport(null)
+    adminApi.revenue(dateBounds.from, dateBounds.to)
       .then((report) => {
         if (active) setRevenueReport(report)
       })
@@ -140,7 +163,7 @@ function ManagerContent() {
         if (active) setRevenueError(cause instanceof Error ? cause.message : 'Không tải được báo cáo doanh thu.')
       })
     return () => { active = false }
-  }, [dateBounds.end, dateBounds.start])
+  }, [dateBounds.from, dateBounds.to])
 
   // State cho Modal Thêm / Chỉnh sửa món
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -167,34 +190,22 @@ function ManagerContent() {
   const [deletingProductBusy, setDeletingProductBusy] = useState(false)
   const [deleteProductError, setDeleteProductError] = useState('')
 
+  const startTime = new Date(`${dateBounds.from}T00:00:00+07:00`).getTime()
+  const endTime = new Date(`${addCalendarDays(dateBounds.to, 1)}T00:00:00+07:00`).getTime()
   const selectedOrders = useMemo(
-    () => orders.filter((order) => order.createdAt >= dateBounds.start && order.createdAt <= dateBounds.end),
-    [dateBounds.end, dateBounds.start, orders],
+    () => orders.filter((order) => order.createdAt >= startTime && order.createdAt < endTime),
+    [endTime, orders, startTime],
   )
   const revenueSelected = revenueReport?.revenue ?? 0
-  const completedCount = selectedOrders.filter((order) => order.status === 'COMPLETED').length
+  const completedCount = revenueReport?.orders ?? 0
   const cancelledCount = selectedOrders.filter((order) => order.status === 'CANCELLED').length
-  const hourlyRevenue = useMemo(
-    () =>
-      Array.from({ length: 24 }, (_, hour) => ({
-        hour: `${String(hour).padStart(2, '0')}:00`,
-        revenue: selectedOrders
-          .filter(
-            (order) =>
-              order.createdAt >= dateBounds.start &&
-              order.createdAt <= dateBounds.end &&
-              new Date(order.createdAt).getHours() === hour &&
-              order.status === 'COMPLETED',
-          )
-          .reduce((sum, order) => sum + order.total, 0),
-      })),
-    [dateBounds.end, dateBounds.start, selectedOrders],
-  )
   const selectedDateLabel =
     datePreset === 'today' ? 'Hôm nay'
       : datePreset === 'yesterday' ? 'Hôm qua'
         : datePreset === 'last7' ? '7 ngày qua'
-          : new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium' }).format(new Date(`${customDate}T00:00:00`))
+          : datePreset === 'last30' ? '30 ngày qua'
+            : `${formatReportDate(dateBounds.from)} – ${formatReportDate(dateBounds.to)}`
+  const isHourlyReport = revenueReport?.hourly ?? dateBounds.from === dateBounds.to
   const disabledProductCount = productsList.filter((product) => !product.status).length
 
   const categoryNames = useMemo(
@@ -374,16 +385,32 @@ function ManagerContent() {
                   <option value="today">Hôm nay</option>
                   <option value="yesterday">Hôm qua</option>
                   <option value="last7">7 ngày qua</option>
-                  <option value="custom">Ngày tùy chọn</option>
+                  <option value="last30">30 ngày qua</option>
+                  <option value="custom">Khoảng ngày tùy chỉnh</option>
                 </select>
                 {datePreset === 'custom' && (
-                  <input
-                    type="date"
-                    aria-label="Chọn ngày"
-                    value={customDate}
-                    onChange={(event) => setCustomDate(event.target.value)}
-                    className="h-9 rounded-lg border border-[#e5eae5] bg-white px-2 text-[11px] text-[#68766d]"
-                  />
+                  <>
+                    <label className="flex items-center gap-1 text-[10px] text-[#68766d]">
+                      Từ
+                      <input
+                        type="date"
+                        aria-label="Từ ngày"
+                        value={customFrom}
+                        onChange={(event) => setCustomFrom(event.target.value)}
+                        className="h-9 rounded-lg border border-[#e5eae5] bg-white px-2 text-[11px]"
+                      />
+                    </label>
+                    <label className="flex items-center gap-1 text-[10px] text-[#68766d]">
+                      Đến
+                      <input
+                        type="date"
+                        aria-label="Đến ngày"
+                        value={customTo}
+                        onChange={(event) => setCustomTo(event.target.value)}
+                        className="h-9 rounded-lg border border-[#e5eae5] bg-white px-2 text-[11px]"
+                      />
+                    </label>
+                  </>
                 )}
               </div>
             </div>
@@ -423,10 +450,6 @@ function ManagerContent() {
               />
             </section>
 
-            <section id="orders" className="mt-5 scroll-mt-5 rounded-2xl border border-[#e8ede8] bg-white p-4">
-              <OrdersBoardContent embedded />
-            </section>
-
             <section
               id="revenue"
               className="mt-5 scroll-mt-5 rounded-2xl border border-[#e8ede8] bg-white p-5 xl:p-6"
@@ -434,13 +457,17 @@ function ManagerContent() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-semibold text-[#354a3c]">Doanh thu theo khung giờ</h2>
+                    <h2 className="text-sm font-semibold text-[#354a3c]">
+                      {isHourlyReport ? 'Doanh thu theo khung giờ' : 'Doanh thu theo ngày'}
+                    </h2>
                     <span className="rounded-full bg-[#edf4ef] px-2 py-0.5 text-[9px] font-semibold text-[#528161]">
                       {selectedDateLabel.toLocaleUpperCase('vi-VN')}
                     </span>
                   </div>
                   <p className="mt-1 text-[11px] text-[#99a39c]">
-                    Doanh thu theo giờ tạo đơn trong khoảng đã chọn
+                    {isHourlyReport
+                      ? 'Doanh thu đơn hoàn tất theo giờ tạo đơn'
+                      : 'Doanh thu đơn hoàn tất theo ngày tạo đơn'}
                   </p>
                 </div>
                 <span className="text-[11px] font-semibold text-[#5b8b68]">{formatPrice(revenueSelected)}</span>
@@ -448,7 +475,7 @@ function ManagerContent() {
               <div className="mt-5 h-[220px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
-                    data={hourlyRevenue}
+                    data={revenueReport?.series ?? []}
                     margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
                   >
                     <defs>
@@ -459,7 +486,7 @@ function ManagerContent() {
                     </defs>
                     <CartesianGrid stroke="#eef1ee" vertical={false} />
                     <XAxis
-                      dataKey="hour"
+                      dataKey="label"
                       tickLine={false}
                       axisLine={false}
                       tick={{ fontSize: 10, fill: '#9aa49c' }}
@@ -489,6 +516,10 @@ function ManagerContent() {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
+            </section>
+
+            <section id="orders" className="mt-5 scroll-mt-5 rounded-2xl border border-[#e8ede8] bg-white p-4">
+              <OrdersBoardContent embedded />
             </section>
 
             {/* PHẦN QUẢN LÝ MENU */}

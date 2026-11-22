@@ -230,7 +230,7 @@ export function OrdersBoardContent({ embedded = false }: { embedded?: boolean })
                     </span>
                     <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${column.tone}`}>{columnOrders.length}</span>
                   </header>
-                  <div className={`space-y-3 ${embedded ? 'max-h-[calc(100dvh-400px)] overflow-y-auto pr-1' : ''}`}>
+                  <div className="space-y-3">
                     {columnOrders.map((order) => (
                       <OrderCard
                         key={order.code}

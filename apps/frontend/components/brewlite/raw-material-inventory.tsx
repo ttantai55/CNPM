@@ -186,7 +186,13 @@ export function RawMaterialInventory() {
       minAlertThreshold: form.mode === 'NEW' && (!Number.isFinite(minAlertThreshold) || minAlertThreshold < 0)
         ? 'Ngưỡng cảnh báo phải là số không âm.'
         : undefined,
-      quantity: Number.isInteger(quantity) && quantity > 0 ? undefined : 'Số lượng phải là số nguyên lớn hơn 0.',
+      quantity: form.quantity.trim() !== '' &&
+        Number.isSafeInteger(quantity) &&
+        (form.type === 'ADJUSTMENT' ? quantity >= 0 : quantity > 0)
+        ? undefined
+        : form.type === 'ADJUSTMENT'
+          ? 'Tồn thực tế phải là số nguyên không âm.'
+          : 'Số lượng phải là số nguyên lớn hơn 0.',
       price: Number.isSafeInteger(price) && price > 0 ? undefined : 'Giá trị giao dịch phải là số nguyên lớn hơn 0.',
       note: note ? undefined : 'Vui lòng nhập lý do hoặc ghi chú.',
       staffName: isValidPersonName(staffName) ? undefined : 'Tên nhân sự phải có ít nhất 2 chữ cái hợp lệ.',
@@ -224,7 +230,8 @@ export function RawMaterialInventory() {
 
     if (
       (form.type === 'EXPORT' && quantity > ingredient.currentStock) ||
-      !Number.isSafeInteger(updatedStock)
+      !Number.isSafeInteger(updatedStock) ||
+      updatedStock > 2147483647
     ) {
       setFormError(
         quantity > ingredient.currentStock && form.type === 'EXPORT'
@@ -742,7 +749,7 @@ export function RawMaterialInventory() {
                   <input
                     id="transaction-quantity"
                     type="number"
-                    min="1"
+                    min={form.type === 'ADJUSTMENT' ? '0' : '1'}
                     step="1"
                     required
                     value={form.quantity}

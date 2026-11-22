@@ -77,6 +77,15 @@ public List<IngredientResponse> getAllIngredients() {
      */
     @Transactional
     public void createInventoryTransaction(InventoryTransactionCreateRequest request, String baristaId) {
+        if (request == null || request.getType() == null
+                || request.getIngredientId() == null || request.getIngredientId().isBlank()
+                || !Double.isFinite(request.getQuantity())
+                || request.getQuantity() < (request.getType() == InventoryTransactionType.ADJUSTMENT ? 0 : 1)
+                || request.getQuantity() > Integer.MAX_VALUE
+                || request.getQuantity() != Math.rint(request.getQuantity())) {
+            throw new BusinessValidationException("Thông tin giao dịch kho không hợp lệ.");
+        }
+
         // 1. Tìm nguyên liệu và Barista thực hiện
         Ingredient ingredient = ingredientRepository.findById(request.getIngredientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nguyên liệu"));
@@ -89,6 +98,9 @@ public List<IngredientResponse> getAllIngredients() {
 
         // 2. Tính toán tồn kho dựa trên Enum InventoryTransactionType
         if (request.getType() == InventoryTransactionType.IMPORT) {
+            if ((long) currentStock + transactionQty > Integer.MAX_VALUE) {
+                throw new BusinessValidationException("Tồn kho sau khi nhập vượt quá giới hạn cho phép.");
+            }
             ingredient.setCurrentStock(currentStock + transactionQty);
         } 
         else if (request.getType() == InventoryTransactionType.ADJUSTMENT) {
