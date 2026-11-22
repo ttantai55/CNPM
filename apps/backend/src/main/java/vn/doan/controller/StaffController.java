@@ -17,7 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/staff")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class StaffController {
     private final UserRepository users;
     private final BaristaRepository baristas;
