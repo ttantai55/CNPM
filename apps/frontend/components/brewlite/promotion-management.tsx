@@ -36,7 +36,7 @@ export function PromotionManagement() {
   const [editing, setEditing] = useState<Promotion | null>(null)
   const [form, setForm] = useState<Promotion>(emptyPromotion)
   const [error, setError] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<'voucherCode' | 'description' | 'discountValue' | 'startDate' | 'endDate', string>>>({})
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<'voucherCode' | 'description' | 'discountValue' | 'startDate' | 'endDate' | 'usageLimit', string>>>({})
   const [notifyCustomers, setNotifyCustomers] = useState(false)
   const [deleting, setDeleting] = useState<Promotion | null>(null)
   useEffect(() => {
@@ -90,6 +90,9 @@ export function PromotionManagement() {
         : form.startDate && form.startDate > form.endDate
           ? 'Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.'
           : '',
+      usageLimit: !editing && (!Number.isSafeInteger(form.usageLimit) || form.usageLimit < 1)
+        ? 'Giới hạn lượt sử dụng phải từ 1 trở lên.'
+        : '',
     }
     setFieldErrors(errors)
     if (Object.values(errors).some(Boolean)) {
@@ -285,6 +288,21 @@ export function PromotionManagement() {
             <label className="text-xs font-medium text-[#536257]">Ngày kết thúc
               <input required type="date" value={form.endDate} onChange={(event) => setForm({ ...form, endDate: event.target.value })} aria-invalid={Boolean(fieldErrors.endDate)} className={fieldErrorClass('mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2', fieldErrors.endDate)} />
               <FieldError error={fieldErrors.endDate} />
+            </label>
+            <label className="text-xs font-medium text-[#536257]">
+              Giới hạn lượt sử dụng {editing ? '(không thể thay đổi)' : ''}
+              <input
+                required
+                type="number"
+                min="1"
+                step="1"
+                value={form.usageLimit}
+                disabled={Boolean(editing)}
+                onChange={(event) => setForm({ ...form, usageLimit: Number(event.target.value) })}
+                aria-invalid={Boolean(fieldErrors.usageLimit)}
+                className={fieldErrorClass('mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 disabled:bg-gray-50 disabled:text-gray-500', fieldErrors.usageLimit)}
+              />
+              <FieldError error={fieldErrors.usageLimit} />
             </label>
             {editing && (
               <label className="text-xs font-medium text-[#536257]">

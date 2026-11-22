@@ -35,8 +35,12 @@ import vn.doan.service.InventoryService;
 import vn.doan.service.PromotionService;
 import vn.doan.service.OrderService;
 import vn.doan.service.ToppingService;
+import vn.doan.domain.Order;
+import vn.doan.exception.BusinessValidationException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -127,9 +131,10 @@ public class AdminController {
     }
 
     @PostMapping("/inventory/transactions")
-    public ResponseEntity<Void> inventoryTransaction(@RequestBody InventoryTransactionCreateRequest request) {
+    public ResponseEntity<Map<String, String>> inventoryTransaction(@RequestBody InventoryTransactionCreateRequest request) {
         inventoryService.createInventoryTransaction(request, request.getBaristaId());
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("message", "Tạo giao dịch kho thành công."));
     }
 
     @GetMapping("/inventory/transactions")
@@ -172,13 +177,45 @@ public class AdminController {
     public Map<String, Object> revenue(
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to) {
-        LocalDate start = from == null ? LocalDate.now() : from;
+        ZoneId vietnamZone = ZoneId.of("Asia/Ho_Chi_Minh");
+        LocalDate today = LocalDate.now(vietnamZone);
+        LocalDate start = from == null ? (to == null ? today : to) : from;
         LocalDate end = to == null ? start : to;
+        if (end.isBefore(start)) {
+            throw new BusinessValidationException("Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.");
+        }
         LocalDateTime startTime = start.atStartOfDay();
-        LocalDateTime endTime = end.plusDays(1).atStartOfDay().minusNanos(1);
+        LocalDateTime endExclusive = end.plusDays(1).atStartOfDay();
+        List<Order> completedOrders = orderService.getCompletedOrdersForRevenue(startTime, endExclusive);
+        boolean hourly = start.equals(end);
+        List<Map<String, Object>> series = new ArrayList<>();
+        if (hourly) {
+            Map<Integer, Long> hourlyRevenue = new HashMap<>();
+            for (Order order : completedOrders) {
+                int hour = order.getCreatedAt().getHour();
+                hourlyRevenue.merge(hour, order.getFinalAmount(), Long::sum);
+            }
+            for (int hour = 0; hour < 24; hour++) {
+                series.add(Map.of(
+                        "label", String.format("%02d:00", hour),
+                        "revenue", hourlyRevenue.getOrDefault(hour, 0L)));
+            }
+        } else {
+            Map<LocalDate, Long> dailyRevenue = new HashMap<>();
+            for (Order order : completedOrders) {
+                dailyRevenue.merge(order.getCreatedAt().toLocalDate(), order.getFinalAmount(), Long::sum);
+            }
+            for (LocalDate day = start; !day.isAfter(end); day = day.plusDays(1)) {
+                series.add(Map.of(
+                        "label", String.format("%02d/%02d", day.getDayOfMonth(), day.getMonthValue()),
+                        "revenue", dailyRevenue.getOrDefault(day, 0L)));
+            }
+        }
         return Map.of("from", start, "to", end,
-                "revenue", orderService.calculateRevenue(startTime, endTime),
-                "orders", orderService.getCompletedOrdersInRange(startTime, endTime).size());
+                "revenue", completedOrders.stream().mapToLong(Order::getFinalAmount).sum(),
+                "orders", completedOrders.size(),
+                "hourly", hourly,
+                "series", series);
     }
 
     private UserResponse mapUser(User user) {

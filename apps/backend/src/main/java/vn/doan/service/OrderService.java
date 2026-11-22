@@ -296,6 +296,11 @@ public class OrderService {
                 .sum();
     }
 
+    public List<Order> getCompletedOrdersForRevenue(LocalDateTime startInclusive, LocalDateTime endExclusive) {
+        return orderRepository.findByCreatedAtGreaterThanEqualAndCreatedAtLessThanAndStatus(
+                startInclusive, endExclusive, OrderStatus.COMPLETED);
+    }
+
     // * 8. Lấy chi tiết ds các đơn hàng thành công
     public List<OrderResponse> getCompletedOrdersInRange(LocalDateTime startDate, LocalDateTime endDate) {
         List<Order> ordersInRange = orderRepository.findByCreatedAtBetween(startDate, endDate);

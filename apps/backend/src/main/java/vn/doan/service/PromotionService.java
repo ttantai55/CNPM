@@ -37,7 +37,7 @@ public class PromotionService {
 
     @Transactional
     public PromotionAdminResponse createAdminPromotion(PromotionAdminRequest request) {
-        validateAdminRequest(request);
+        validateAdminRequest(request, true);
         Promotion promotion = new Promotion(request.getVoucherCode().trim().toUpperCase(),
                 request.getDescription(), request.getDiscountType(), request.getDiscountValue(),
                 request.getStartDate(), request.getEndDate(), request.getUsageLimit());
@@ -49,7 +49,7 @@ public class PromotionService {
     public PromotionAdminResponse updateAdminPromotion(String id, PromotionAdminRequest request) {
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khuyến mãi."));
-        validateAdminRequest(request);
+        validateAdminRequest(request, false);
         promotionRepository.findByVoucherCode(request.getVoucherCode().trim().toUpperCase())
                 .filter(existing -> !existing.getId().equals(id))
                 .ifPresent(existing -> { throw new BusinessValidationException("Mã khuyến mãi đã tồn tại."); });
@@ -59,17 +59,16 @@ public class PromotionService {
         promotion.setDiscountValue(request.getDiscountValue());
         promotion.setStartDate(request.getStartDate());
         promotion.setEndDate(request.getEndDate());
-        promotion.setUsageLimit(request.getUsageLimit());
         if (request.getIsActive() != null) promotion.setActive(request.getIsActive());
         return new PromotionAdminResponse(promotion);
     }
 
-    private void validateAdminRequest(PromotionAdminRequest request) {
+    private void validateAdminRequest(PromotionAdminRequest request, boolean requireUsageLimit) {
         if (request == null || request.getVoucherCode() == null || request.getVoucherCode().isBlank()
                 || request.getDiscountType() == null || request.getDiscountValue() == null || request.getDiscountValue() <= 0
                 || request.getStartDate() == null || request.getEndDate() == null
                 || request.getEndDate().isBefore(request.getStartDate())
-                || request.getUsageLimit() == null || request.getUsageLimit() < 1) {
+                || (requireUsageLimit && (request.getUsageLimit() == null || request.getUsageLimit() < 1))) {
             throw new BusinessValidationException("Thông tin khuyến mãi không hợp lệ.");
         }
         if (request.getDiscountType() == DiscountType.PERCENTAGE && request.getDiscountValue() > 100) {

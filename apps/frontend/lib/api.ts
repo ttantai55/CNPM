@@ -24,12 +24,21 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
       ...init.headers,
     },
   })
-  if (!response.ok) {
-    const body = await response.json().catch(() => null) as { message?: string; error?: string } | null
-    throw new Error(body?.message ?? body?.error ?? `API request failed (${response.status})`)
+  const responseText = await response.text()
+  let body: unknown
+  if (responseText.trim()) {
+    try {
+      body = JSON.parse(responseText)
+    } catch {
+      if (!response.ok) throw new Error(responseText)
+      throw new Error(`API returned an invalid response (${response.status})`)
+    }
   }
-  if (response.status === 204) return undefined as T
-  return response.json() as Promise<T>
+  if (!response.ok) {
+    const errorBody = body as { message?: string; error?: string } | undefined
+    throw new Error(errorBody?.message ?? errorBody?.error ?? `API request failed (${response.status})`)
+  }
+  return body as T
 }
 
 const json = (method: string, body?: unknown): RequestInit => ({
@@ -202,11 +211,11 @@ export const adminApi = {
   inventory: () => api<ApiIngredient[]>('/api/admin/inventory'),
   inventoryTransactions: () => api<ApiInventoryTransaction[]>('/api/admin/inventory/transactions'),
   createIngredient: (body: Record<string, unknown>) => api<ApiIngredient>('/api/admin/inventory', json('POST', body)),
-  inventoryTransaction: (body: Record<string, unknown>) => api<void>('/api/admin/inventory/transactions', json('POST', body)),
+  inventoryTransaction: (body: Record<string, unknown>) => api<{ message: string }>('/api/admin/inventory/transactions', json('POST', body)),
   promotions: () => api<ApiPromotion[]>('/api/admin/promotions'),
   createPromotion: (body: ApiPromotionWrite) => api<ApiPromotion>('/api/admin/promotions', json('POST', body)),
   updatePromotion: (id: string, body: ApiPromotionWrite) => api<ApiPromotion>(`/api/admin/promotions/${encodeURIComponent(id)}`, json('PUT', body)),
   deletePromotion: (id: string) => api<void>(`/api/admin/promotions/${encodeURIComponent(id)}`, json('DELETE')),
   revenue: (from?: string, to?: string) =>
-    api<{ from: string; to: string; revenue: number; orders: number }>(`/api/admin/reports/revenue${from ? `?from=${from}&to=${to ?? from}` : ''}`),
+    api<{ from: string; to: string; revenue: number; orders: number; hourly: boolean; series: { label: string; revenue: number }[] }>(`/api/admin/reports/revenue${from ? `?from=${from}&to=${to ?? from}` : ''}`),
 }
