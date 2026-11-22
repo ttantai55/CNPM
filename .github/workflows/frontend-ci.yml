@@ -34,8 +34,12 @@ jobs:
       - name: Bước 1 - Cài đặt Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Bước 2 - Kiểm tra TypeScript
-        run: pnpm exec tsc --noEmit
+      - name: Bước 2 - Lint (không chặn CI)
+        run: pnpm run lint
+        continue-on-error: true
 
-      - name: Bước 3 - Biên dịch Build Frontend
+      - name: Bước 3 - Kiểm tra TypeScript
+        run: pnpm run typecheck
+
+      - name: Bước 4 - Biên dịch Build Frontend
         run: pnpm run build
