@@ -137,7 +137,7 @@ export function BrewLiteApp() {
   useEffect(() => {
     if (!hydrated) return
     let active = true
-    Promise.all([menuApi.products(), menuApi.categories(), menuApi.toppings(), adminApi.promotions()])
+    Promise.all([menuApi.products(), menuApi.categories(), menuApi.toppings(), menuApi.publicPromotions()])
       .then(([remoteProducts, remoteCategories, remoteToppings, remotePromotions]) => {
         if (!active) return
         menuProductStore.set(fromApiProducts(remoteProducts))
@@ -543,7 +543,7 @@ export function BrewLiteApp() {
         preserveCartOnPayment.current = false
         paymentItemsRestored.current = false
         if (selectedPromotion) {
-          void adminApi.promotions()
+          void menuApi.publicPromotions()
             .then((remotePromotions) => promotionStore.set(remotePromotions))
             .catch((error: unknown) => showToast(error instanceof Error ? error.message : 'Không cập nhật được lượt dùng mã.'))
         }
