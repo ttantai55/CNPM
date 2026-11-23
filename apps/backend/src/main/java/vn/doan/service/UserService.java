@@ -18,6 +18,8 @@ import vn.doan.exception.BusinessValidationException;
 import vn.doan.exception.ResourceNotFoundException;
 import vn.doan.repository.UserRepository;
 import vn.doan.repository.BaristaRepository;
+import java.util.Locale;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -56,7 +58,7 @@ public class UserService {
         );
     }
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public UserResponse createStaff(UserCreateRequest request) {
         // 1. Kiểm tra xem username hoặc email đã tồn tại chưa (nếu cần)
         if (userRepository.existsByUsername(request.getUsername())) {
@@ -96,14 +98,20 @@ public class UserService {
     }
 
    @Transactional
-   @PreAuthorize("hasRole('ADMIN')")
+   @PreAuthorize("hasRole('MANAGER')")
     public UpdateRoleResponse updateStaffRole( String targetUserId, UpdateRoleRequest request) {
         // 1. Tìm nhân viên cần đổi quyền trong DB
         User user = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng này trong hệ thống"));
 
         // 2. Cập nhật role mới (Hibernate tự động Dirty Checking)
-        user.setRole(request.getNewRole());
+        String newRole = request == null || request.getNewRole() == null
+                ? ""
+                : request.getNewRole().trim().toUpperCase(Locale.ROOT);
+        if (!Set.of("CUSTOMER", "STAFF", "MANAGER").contains(newRole)) {
+            throw new BusinessValidationException("Vai trò không hợp lệ.");
+        }
+        user.setRole(newRole);
 
         // 3. Đúc gói Response trả về cho Frontend
         return new UpdateRoleResponse(

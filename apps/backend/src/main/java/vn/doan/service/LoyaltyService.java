@@ -1,6 +1,7 @@
 package vn.doan.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.doan.domain.LoyaltyTransaction;
@@ -36,6 +37,7 @@ public class LoyaltyService {
 
     // * 2. Tạo giao dịch điểm thủ công
     @Transactional
+    @PreAuthorize("hasRole('MANAGER')")
     public LoyaltyTransactionResponse processManualTransaction(LoyaltyTransactionRequest request) {
         // Kiểm tra User
         User user = userRepository.findByIdForUpdate(request.getUserId())

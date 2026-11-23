@@ -55,7 +55,7 @@ public class ProductService {
      * Tạo mới một món nước
      */
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ProductResponse createProduct(ProductCreateRequest request) {
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục món"));
@@ -78,7 +78,7 @@ public class ProductService {
      * Cập nhật thông tin món nước
      */
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public ProductResponse updateProduct(String id, ProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy món nước"));
@@ -101,7 +101,7 @@ public class ProductService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public void deleteProduct(String id) {
         if (!productRepository.existsById(id)) throw new ResourceNotFoundException("Không tìm thấy món nước");
         productRepository.deleteById(id);

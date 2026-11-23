@@ -51,7 +51,7 @@ public class CategoryService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')") 
+    @PreAuthorize("hasRole('MANAGER')")
     public CategoryResponse createCategory(CategoryCreateRequest request) {
         // 1. Kiểm tra trùng tên danh mục
         if (categoryRepository.existsByName(request.getName())) {
@@ -72,7 +72,7 @@ public class CategoryService {
     }
 
     @Transactional // Cho phép ghi dữ liệu (UPDATE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MANAGER')")
     public CategoryResponse updateCategory(String categoryId, CategoryCreateRequest request) { 
         // Lấy dữ liệu lên, nếu không có ném lỗi 404
         Category category = categoryRepository.findById(categoryId)
@@ -95,7 +95,7 @@ public class CategoryService {
     }
 
    @Transactional
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('MANAGER')")
 public CategoryResponse toggleCategoryStatus(String categoryId) {
     Category category = categoryRepository.findById(categoryId)
             .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục với ID: " + categoryId));

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { GoogleLogin } from '@react-oauth/google'
 import {
   ArrowRight,
   Check,
@@ -68,9 +69,10 @@ export function LoginPage() {
 
   function saveSession(result: Awaited<ReturnType<typeof authApi.login>>) {
     const user = result.user
-    const role: Role = user.role.toUpperCase().includes('STAFF')
+    const normalizedRole = user.role.replace(/^ROLE_/, '').toUpperCase()
+    const role: Role = normalizedRole === 'STAFF'
       ? 'STAFF'
-      : user.role.toUpperCase().includes('ADMIN') || user.role.toUpperCase().includes('MANAGER')
+      : normalizedRole === 'MANAGER'
         ? 'MANAGER'
         : 'CUSTOMER'
     const session = {
@@ -97,6 +99,23 @@ export function LoginPage() {
       saveSession(await authApi.login(loginId, loginPassword))
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Tên đăng nhập hoặc mật khẩu không chính xác.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function loginWithGoogle(idToken?: string) {
+    if (!idToken) {
+      setNotice('Google không trả về thông tin đăng nhập. Vui lòng thử lại.')
+      return
+    }
+
+    setSubmitting(true)
+    setNotice('')
+    try {
+      saveSession(await authApi.loginWithGoogle(idToken))
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Không thể đăng nhập bằng Google.')
     } finally {
       setSubmitting(false)
     }
@@ -328,6 +347,24 @@ export function LoginPage() {
                 <>Đăng nhập <ArrowRight className="size-4" /></>
               )}
             </button>
+            {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-xs text-[#98a29c]">
+                  <span className="h-px flex-1 bg-[#e9ede9]" />
+                  <span>Hoặc tiếp tục với</span>
+                  <span className="h-px flex-1 bg-[#e9ede9]" />
+                </div>
+                <div className={submitting ? 'pointer-events-none opacity-60' : 'flex justify-center'}>
+                  <GoogleLogin
+                    onSuccess={(response) => void loginWithGoogle(response.credential)}
+                    onError={() => setNotice('Đăng nhập Google thất bại. Vui lòng thử lại.')}
+                    text="continue_with"
+                    shape="rectangular"
+                    width="320"
+                  />
+                </div>
+              </div>
+            )}
             <div className="hidden space-y-2 border-t border-[#e9ede9] pt-4">
               <p className="text-center text-xs font-semibold text-[#66736b]">Đăng nhập nhanh để dùng thử</p>
               <div className="grid grid-cols-3 gap-2">
