@@ -1,5 +1,5 @@
 import type { UnitType } from './raw-material-inventory'
-import { authStore } from './session'
+import { getAuthToken } from './session'
 
 const configuredApiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? '/api').replace(/\/+$/, '')
 const API_BASE_URL = configuredApiBaseUrl.endsWith('/api')
@@ -7,17 +7,16 @@ const API_BASE_URL = configuredApiBaseUrl.endsWith('/api')
   : `${configuredApiBaseUrl}/api`
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = typeof window === 'undefined'
-    ? null
-    : authStore.get()?.token ?? null
+  const token = getAuthToken()
   const endpoint = path.replace(/^\/api(?=\/)/, '')
+  const headers = new Headers(init.headers)
+  headers.set('Content-Type', 'application/json')
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+  else headers.delete('Authorization')
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init.headers,
-    },
+    headers,
   })
   const responseText = await response.text()
   let body: unknown
