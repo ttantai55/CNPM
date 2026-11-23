@@ -2,6 +2,7 @@
 
 import { MAX_ITEM_QUANTITY, buildCartKey, type CartItem } from './menu'
 import { cartApi, type ApiCartItem } from './api'
+import { getAuthToken } from './session'
 import { createPersistentStore, createStore } from './persistent-store'
 
 export type CartAction =
@@ -87,8 +88,8 @@ function fromApiCartItems(items: ApiCartItem[]): CartItem[] {
 }
 
 export function setCartPersistenceUser(userId: string | null) {
-  persistenceUserId = userId
-  if (!userId && syncTimer) {
+  persistenceUserId = userId && getAuthToken() ? userId : null
+  if (!persistenceUserId && syncTimer) {
     clearTimeout(syncTimer)
     syncTimer = null
   }
@@ -99,6 +100,7 @@ export async function loadUserCart(
   guestItems: CartItem[],
   startingItems: CartItem[],
 ) {
+  if (!getAuthToken()) return
   const response = await cartApi.get(userId)
   if (persistenceUserId !== userId) return
 
@@ -113,6 +115,7 @@ export async function loadUserCart(
 
 function queueCartSync(userId: string, items: CartItem[]) {
   const request = pendingSync.then(async () => {
+    if (!getAuthToken()) return
     await cartApi.replace(userId, items.map(toApiCartItem))
     cartSyncErrorStore.set(null)
   })
@@ -127,12 +130,13 @@ export function flushCartSync(userId: string) {
     clearTimeout(syncTimer)
     syncTimer = null
   }
+  if (!getAuthToken()) return Promise.resolve()
   return queueCartSync(userId, cartStore.get())
 }
 
 export function dispatchCart(action: CartAction) {
   cartStore.set((state) => cartReducer(state, action))
-  if (!persistenceUserId) return
+  if (!persistenceUserId || !getAuthToken()) return
   if (syncTimer) clearTimeout(syncTimer)
   const userId = persistenceUserId
   syncTimer = setTimeout(() => {
