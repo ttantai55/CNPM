@@ -4,6 +4,16 @@
       "source": "/api/(.*)",
       "destination": "https://brewlite-backend-c625.onrender.com/api/$1"
     }
-    
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        }
+      ]
+    }
   ]
 }

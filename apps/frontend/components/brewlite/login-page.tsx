@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { GoogleLogin } from '@react-oauth/google'
+import { useGoogleOAuth, type CredentialResponse, type PromptMomentNotification } from '@react-oauth/google'
 import {
   ArrowRight,
   Check,
@@ -33,6 +33,109 @@ const LOGIN_HIGHLIGHTS = [
   { name: 'Cold brew', image: '/images/cold-brew.png', slogan: 'Ủ lạnh thật lâu, tỉnh táo thật sâu.' },
   { name: 'Thanh long xoài', image: '/images/thanh-long-xoai.png', slogan: 'Xoài chín, thanh long — mùa hè trong tay.' },
 ] as const
+
+type GoogleIdentitySdk = {
+  accounts: {
+    id: {
+      initialize: (options: {
+        client_id: string
+        callback: (response: CredentialResponse) => void
+        auto_select: boolean
+      }) => void
+      prompt: (listener?: (notification: PromptMomentNotification) => void) => void
+    }
+  }
+}
+
+let initializedGoogleClientId: string | null = null
+let googleSignInHandlers: {
+  onCredential: (credential: string) => void
+  onError: () => void
+} | null = null
+
+function GoogleSignInButton({
+  disabled,
+  onCredential,
+  onError,
+}: {
+  disabled: boolean
+  onCredential: (credential: string) => void
+  onError: () => void
+}) {
+  const { clientId, scriptLoadedSuccessfully } = useGoogleOAuth()
+  const [prompting, setPrompting] = useState(false)
+  const handlersRef = useRef({ onCredential, onError })
+  handlersRef.current = { onCredential, onError }
+
+  useEffect(() => {
+    if (!scriptLoadedSuccessfully) return
+    const google = (window as Window & { google?: GoogleIdentitySdk }).google
+    if (!google) return
+
+    const handlers = {
+      onCredential: (credential: string) => {
+        setPrompting(false)
+        handlersRef.current.onCredential(credential)
+      },
+      onError: () => {
+        setPrompting(false)
+        handlersRef.current.onError()
+      },
+    }
+    googleSignInHandlers = handlers
+
+    if (initializedGoogleClientId !== clientId) {
+      google.accounts.id.initialize({
+        client_id: clientId,
+        auto_select: false,
+        callback: (response) => {
+          if (response.credential) googleSignInHandlers?.onCredential(response.credential)
+          else googleSignInHandlers?.onError()
+        },
+      })
+      initializedGoogleClientId = clientId
+    }
+
+    return () => {
+      if (googleSignInHandlers === handlers) googleSignInHandlers = null
+    }
+  }, [clientId, scriptLoadedSuccessfully])
+
+  function startGoogleSignIn() {
+    const google = (window as Window & { google?: GoogleIdentitySdk }).google
+    if (!scriptLoadedSuccessfully || !google || initializedGoogleClientId !== clientId) {
+      onError()
+      return
+    }
+
+    setPrompting(true)
+    google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed()) {
+        setPrompting(false)
+        onError()
+      } else if (notification.isDismissedMoment() || notification.isSkippedMoment()) {
+        setPrompting(false)
+      }
+    })
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={disabled || prompting || !scriptLoadedSuccessfully}
+      onClick={startGoogleSignIn}
+      className="flex h-[52px] w-full items-center justify-center gap-3 rounded-xl border border-[#e4e9e5] bg-white px-4 text-sm font-semibold text-[#35463e] transition hover:border-[#cbd8d0] hover:bg-[#f8faf8] disabled:cursor-wait disabled:opacity-60"
+    >
+      <svg aria-hidden="true" viewBox="0 0 48 48" className="size-5">
+        <path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15Z" />
+        <path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z" />
+        <path fill="#FBBC05" d="M12.6 27.7a12 12 0 0 1 0-7.4V15H5.8a20 20 0 0 0 0 17.9l6.8-5.2Z" />
+        <path fill="#EA4335" d="M24 11.9c3 0 5.7 1 7.8 3.1l5.8-5.8A19.4 19.4 0 0 0 24 4 20 20 0 0 0 5.8 15l6.8 5.3c1.6-4.8 6.1-8.4 11.4-8.4Z" />
+      </svg>
+      <span>Tiếp tục đăng nhập với Google</span>
+    </button>
+  )
+}
 
 export function LoginPage() {
   const router = useRouter()
@@ -354,15 +457,11 @@ export function LoginPage() {
                   <span>Hoặc tiếp tục với</span>
                   <span className="h-px flex-1 bg-[#e9ede9]" />
                 </div>
-                <div className={submitting ? 'pointer-events-none opacity-60' : 'flex justify-center'}>
-                  <GoogleLogin
-                    onSuccess={(response) => void loginWithGoogle(response.credential)}
-                    onError={() => setNotice('Đăng nhập Google thất bại. Vui lòng thử lại.')}
-                    text="continue_with"
-                    shape="rectangular"
-                    width="320"
-                  />
-                </div>
+                <GoogleSignInButton
+                  disabled={submitting}
+                  onCredential={(credential) => void loginWithGoogle(credential)}
+                  onError={() => setNotice('Đăng nhập Google thất bại. Vui lòng thử lại.')}
+                />
               </div>
             )}
             <div className="hidden space-y-2 border-t border-[#e9ede9] pt-4">
