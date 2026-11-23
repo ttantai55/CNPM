@@ -29,4 +29,7 @@ public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByEmailIgnoreCase(String email);
     Optional<User> findByUsernameIgnoreCase(String username);
     Optional<User> findByInfo_Phone(String phone);
+
+    //4. Tim kiem theo gg sub
+    Optional<User> findByGoogleSub(String googleSub);
 }

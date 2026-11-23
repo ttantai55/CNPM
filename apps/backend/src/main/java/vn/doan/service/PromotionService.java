@@ -1,6 +1,7 @@
 package vn.doan.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.doan.domain.Promotion;
@@ -36,6 +37,7 @@ public class PromotionService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('MANAGER')")
     public PromotionAdminResponse createAdminPromotion(PromotionAdminRequest request) {
         validateAdminRequest(request, true);
         Promotion promotion = new Promotion(request.getVoucherCode().trim().toUpperCase(),
@@ -46,6 +48,7 @@ public class PromotionService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('MANAGER')")
     public PromotionAdminResponse updateAdminPromotion(String id, PromotionAdminRequest request) {
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khuyến mãi."));
@@ -110,6 +113,7 @@ public class PromotionService {
      * Tạo voucher mới từ DTO hiện có.
      */
     @Transactional
+    @PreAuthorize("hasRole('MANAGER')")
     public VoucherResponse createPromotion(VoucherCreateRequest request) {
         validateCreateRequest(request);
 
@@ -209,6 +213,7 @@ public class PromotionService {
 
     /** Bật/tắt chương trình khuyến mãi theo ID. */
     @Transactional
+    @PreAuthorize("hasRole('MANAGER')")
     public VoucherResponse updatePromotionStatus(String promotionId, boolean active) {
         Promotion promotion = promotionRepository.findById(promotionId)
                 .orElseThrow(() -> new ResourceNotFoundException(

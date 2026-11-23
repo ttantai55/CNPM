@@ -253,7 +253,7 @@ public class AdminController {
     }
 
     // THAY ĐỔI QUYỀN NHÂN VIÊN (PUT: /api/admin/staffs/{id}/role)
-    // Ví dụ: Đổi quyền từ BARISTA (Pha chế) sang MANAGER (Quản lý)
+    // Ví dụ: Đổi quyền từ STAFF (Pha chế) sang MANAGER (Quản lý)
   @PutMapping("/staffs/{targetUserId}/role")
     public ResponseEntity<Map<String,Object>>  updateStaffRole(
             @PathVariable String targetUserId, // Sửa thành String cho khớp với Service
@@ -270,7 +270,7 @@ public class AdminController {
     }
     
     // ==========================================
-    // 3. QUẢN LÝ DANH MỤC (CATEGORIES) - BẢO MẬT BỞI ADMIN
+    // 3. QUẢN LÝ DANH MỤC (CATEGORIES) - BẢO MẬT BỞI MANAGER
     // ==========================================
 
     @GetMapping("/categories")

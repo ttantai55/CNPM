@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import localFont from 'next/font/local'
 import './globals.css'
 import { ClearLocalStorage } from '@/components/brewlite/clear-local-storage'
+import { GoogleAuthProvider } from '@/components/brewlite/google-auth-provider'
 
 const beVietnam = localFont({
   src: [
@@ -52,8 +53,10 @@ export default function RootLayout({
   return (
     <html lang="vi" className={beVietnam.variable} suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
-        <ClearLocalStorage />
-        {children}
+        <GoogleAuthProvider>
+          <ClearLocalStorage />
+          {children}
+        </GoogleAuthProvider>
       </body>
     </html>
   )

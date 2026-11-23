@@ -148,6 +148,8 @@ export type ApiInventoryTransaction = {
 export const authApi = {
   login: (loginId: string, password: string) =>
     api<AuthResult>('/api/auth/login', json('POST', { loginId, password })),
+  loginWithGoogle: (idToken: string) =>
+    api<AuthResult>('/api/auth/google', json('POST', { idToken })),
   register: (body: { username: string; password: string; email: string; phone: string; fullName: string }) =>
     api<AuthResult>('/api/auth/register', json('POST', body)),
   changePassword: (id: string, body: { currentPassword: string; newPassword: string }) =>

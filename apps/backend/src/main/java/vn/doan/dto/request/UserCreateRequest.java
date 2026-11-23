@@ -19,7 +19,7 @@ public class UserCreateRequest {
     private String email;
 
     @NotBlank(message = "Quyền (Role) không được để trống")
-    private String role; // Ví dụ: "ADMIN", "USER", "BARISTA"
+    private String role; // Ví dụ: "CUSTOMER", "STAFF", "MANAGER"
 
     private String avatarUrl;
 

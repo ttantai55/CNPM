@@ -17,9 +17,9 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO users
     (id, username, hash_password, role, email, position, customer_id, barista_id, created_at, updated_at)
 VALUES
-    ('USER_DEMO_CUSTOMER', 'demo-customer', '$2a$10$YkAeIhMYVYxH8slwxnNqYuy8hLtB0g7hPSJVweKZnJc./MIrMkaw6', 'ROLE_CUSTOMER', 'user@brewlite.vn', NULL, 'CUST_DEMO', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    ('USER_DEMO_CUSTOMER', 'demo-customer', '$2a$10$YkAeIhMYVYxH8slwxnNqYuy8hLtB0g7hPSJVweKZnJc./MIrMkaw6', 'CUSTOMER', 'user@brewlite.vn', NULL, 'CUST_DEMO', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('USER_DEMO_STAFF', 'demo-staff', '$2a$10$YkAeIhMYVYxH8slwxnNqYuy8hLtB0g7hPSJVweKZnJc./MIrMkaw6', 'STAFF', 'staff@brewlite.vn', 'PHUC_VU', NULL, 'STAFF_DEMO', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('USER_DEMO_MANAGER', 'demo-manager', '$2a$10$YkAeIhMYVYxH8slwxnNqYuy8hLtB0g7hPSJVweKZnJc./MIrMkaw6', 'ROLE_MANAGER', 'manager@brewlite.vn', NULL, NULL, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ('USER_DEMO_MANAGER', 'demo-manager', '$2a$10$YkAeIhMYVYxH8slwxnNqYuy8hLtB0g7hPSJVweKZnJc./MIrMkaw6', 'MANAGER', 'manager@brewlite.vn', NULL, NULL, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET
     username = EXCLUDED.username,
     hash_password = EXCLUDED.hash_password,

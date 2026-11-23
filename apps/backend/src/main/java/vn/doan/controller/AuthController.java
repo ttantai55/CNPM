@@ -2,7 +2,9 @@ package vn.doan.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vn.doan.dto.request.GoogleLoginRequest;
 import vn.doan.dto.request.LoginRequest;
 import vn.doan.dto.request.RegisterRequest;
 import vn.doan.dto.response.AuthResponse;
@@ -22,5 +24,10 @@ public class AuthController {
     @PostMapping("/register")
     public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        return ResponseEntity.ok(authService.loginWithGoogle(request.getIdToken()));
     }
 }

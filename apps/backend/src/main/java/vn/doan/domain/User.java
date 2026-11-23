@@ -15,7 +15,7 @@ public class User {
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
-    @Column(name = "hash_password", nullable = false)
+    @Column(name = "hash_password", nullable = true)
     private String hashPassword;
 
     @Column(length = 30)
@@ -57,6 +57,12 @@ public class User {
     @Column(length = 20)
     private String position;
 
+    @Column(name = "provider", nullable = false, length = 20)
+    private String provider = "LOCAL";
+
+    @Column(name = "google_sub", unique = true)
+    private String googleSub;
+
     // BẮT BUỘC CHO JPA: Constructor không tham số
     public User() {
     }
@@ -91,6 +97,9 @@ public class User {
         }
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();
+        }
+        if (this.provider == null || this.provider.isBlank()) {
+            this.provider = "LOCAL";
         }
     }
 
@@ -211,5 +220,21 @@ public class User {
 
     public void setLoyaltyPoints(int loyaltyPoints) {
         this.loyaltyPoints = loyaltyPoints;
+    }
+
+    public String getProvider() {
+        return provider;
+    }
+
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
+
+    public String getGoogleSub() {
+        return googleSub;
+    }
+
+    public void setGoogleSub(String googleSub) {
+        this.googleSub = googleSub;
     }
 }
