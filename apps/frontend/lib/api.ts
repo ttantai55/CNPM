@@ -1,4 +1,5 @@
 import type { UnitType } from './raw-material-inventory'
+import { authStore } from './session'
 
 const configuredApiBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? '/api').replace(/\/+$/, '')
 const API_BASE_URL = configuredApiBaseUrl.endsWith('/api')
@@ -8,13 +9,7 @@ const API_BASE_URL = configuredApiBaseUrl.endsWith('/api')
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = typeof window === 'undefined'
     ? null
-    : (() => {
-        try {
-          return JSON.parse(window.localStorage.getItem('brewlite.session') ?? 'null')?.token as string | undefined
-        } catch {
-          return undefined
-        }
-      })()
+    : authStore.get()?.token ?? null
   const endpoint = path.replace(/^\/api(?=\/)/, '')
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...init,

@@ -7,6 +7,7 @@ import { Coffee, LogOut, UserRound } from 'lucide-react'
 import { authStore, dashboardForRole, type Role } from '@/lib/session'
 import { useHydrated } from '@/lib/persistent-store'
 import { useState } from 'react'
+import { googleLogout } from '@react-oauth/google'
 import { Modal } from './modal'
 
 export function RoleGuard({ role, children }: { role: Role; children: ReactNode }) {
@@ -42,6 +43,7 @@ export function DashboardHeader({ role, title }: { role: Role; title: string }) 
   const isCustomer = role === 'CUSTOMER'
 
   function signOut() {
+    googleLogout()
     authStore.set(null)
     router.replace('/login')
   }

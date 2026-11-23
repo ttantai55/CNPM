@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { googleLogout } from '@react-oauth/google'
 import { ShoppingBag } from 'lucide-react'
 import {
   categoryStore,
@@ -58,7 +59,7 @@ import {
   type PaymentMethod,
 } from '@/lib/orders'
 import { ProfileDialog } from './profile-dialog'
-import { adminApi, authApi, menuApi } from '@/lib/api'
+import { authApi, menuApi } from '@/lib/api'
 import { fromApiCategories, fromApiProducts, fromApiToppings } from '@/lib/menu'
 
 function normalize(text: string) {
@@ -375,6 +376,7 @@ export function BrewLiteApp() {
           if (session?.id) {
             void flushCartSync(session.id).catch(() => undefined)
           }
+          googleLogout()
           setCartPersistenceUser(null)
           cartOwnerStore.set(null)
           authStore.set(null)
