@@ -162,6 +162,7 @@ export const menuApi = {
   products: () => api<ApiProduct[]>('/api/products'),
   categories: () => api<ApiCategory[]>('/api/categories'),
   toppings: () => api<ApiTopping[]>('/api/toppings'),
+  publicPromotions: () => api<ApiPromotion[]>('/api/promotions'),
   createProduct: (body: Partial<ApiProduct>) => api<ApiProduct>('/api/admin/products', json('POST', body)),
   updateProduct: (id: string, body: Partial<ApiProduct>) =>
     api<ApiProduct>(`/api/admin/products/${encodeURIComponent(id)}`, json('PUT', body)),

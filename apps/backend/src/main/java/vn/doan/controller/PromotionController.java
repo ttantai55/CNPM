@@ -16,6 +16,7 @@ import vn.doan.dto.request.VoucherApplyRequest;
 import vn.doan.dto.request.LoyaltyTransactionRequest;
 
 import vn.doan.dto.response.VoucherResponse;
+import vn.doan.dto.response.PromotionAdminResponse;
 import vn.doan.dto.response.VoucherApplyResponse;
 import vn.doan.dto.response.LoyaltyTransactionResponse;
 
@@ -38,17 +39,8 @@ public class PromotionController {
     // GET: Lấy tất cả voucher
     // Endpoint: GET /api/promotions
     @GetMapping("/promotions")
-    public ResponseEntity<ApiResponse<List<VoucherResponse>>> getAllPromotions() {
-
-        List<VoucherResponse> data = promotionService.getAllPromotions();
-
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Lấy danh sách voucher thành công.",
-                        data
-                )
-        );
+    public List<PromotionAdminResponse> getAllPromotions() {
+        return promotionService.getAdminPromotions();
     }
 
     // GET: Lấy danh sách voucher đang hoạt động
